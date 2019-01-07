@@ -1,0 +1,11 @@
+# Directories
+/dist/
+
+# Files
+/carpenter
+/TODO
+.DS_Store
+c.out
+
+# Patterns
+.*.sw[op]
