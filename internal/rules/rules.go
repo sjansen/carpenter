@@ -17,7 +17,7 @@ func Load(filename string, src io.Reader) (*Rules, error) {
 	}
 
 	globals := starlark.StringDict{
-		"register_urls": starlark.NewBuiltin("register_urls", rules.registerUrls),
+		"register_urls": starlark.NewBuiltin("register_urls", rules.registerURLs),
 	}
 	thread := &starlark.Thread{}
 	_, err := starlark.ExecFile(thread, filename, src, globals)
@@ -28,7 +28,7 @@ func Load(filename string, src io.Reader) (*Rules, error) {
 	return rules, nil
 }
 
-func (r *Rules) registerUrls(
+func (r *Rules) registerURLs(
 	thread *starlark.Thread,
 	fn *starlark.Builtin,
 	args starlark.Tuple,
@@ -41,7 +41,7 @@ func (r *Rules) registerUrls(
 	}
 
 	for _, arg := range args {
-		if err := r.registerUrl(fnName, arg); err != nil {
+		if err := r.registerURL(fnName, arg); err != nil {
 			return nil, err
 		}
 	}
@@ -49,7 +49,7 @@ func (r *Rules) registerUrls(
 	return starlark.None, nil
 }
 
-func (r *Rules) registerUrl(fn string, arg starlark.Value) error {
+func (r *Rules) registerURL(fn string, arg starlark.Value) error {
 	rule, ok := arg.(*starlark.Dict)
 	if !ok {
 		err := fmt.Errorf("%s: expected Dict, got %s", fn, arg.Type())

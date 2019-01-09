@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"fmt"
 	"regexp"
 
 	"go.starlark.net/starlark"
@@ -8,11 +9,11 @@ import (
 
 type Matcher interface {
 	Match(string) (string, bool)
-	Rewrite(string) string
+	Rewrite(string) (string, error)
 }
 
 type Replacement interface {
-	Replace(string) string
+	Replace(string) (string, error)
 }
 
 type PlainPart struct {
@@ -28,8 +29,8 @@ func (p *PlainPart) Match(part string) (string, bool) {
 	return "", false
 }
 
-func (p *PlainPart) Rewrite(part string) string {
-	return part
+func (p *PlainPart) Rewrite(part string) (string, error) {
+	return part, nil
 }
 
 type RegexPart struct {
@@ -46,7 +47,7 @@ func (p *RegexPart) Match(part string) (string, bool) {
 	return "", false
 }
 
-func (p *RegexPart) Rewrite(part string) string {
+func (p *RegexPart) Rewrite(part string) (string, error) {
 	return p.replacement.Replace(part)
 }
 
@@ -54,14 +55,24 @@ type PlainReplacement struct {
 	value string
 }
 
-func (r *PlainReplacement) Replace(part string) string {
-	return r.value
+func (r *PlainReplacement) Replace(part string) (string, error) {
+	return r.value, nil
 }
 
 type FunctionReplacement struct {
-	fn starlark.Callable
+	thread *starlark.Thread
+	fn     starlark.Callable
 }
 
-func (r *FunctionReplacement) Replace(part string) string {
-	return part // TODO
+func (r *FunctionReplacement) Replace(part string) (string, error) {
+	args := starlark.Tuple{starlark.String(part)}
+	value, err := starlark.Call(r.thread, r.fn, args, nil)
+	if err != nil {
+		return "", err
+	}
+	s, ok := value.(starlark.String)
+	if !ok {
+		return "", fmt.Errorf("%s: expected String, got %s", r.fn, value.Type())
+	}
+	return s.GoString(), nil
 }
