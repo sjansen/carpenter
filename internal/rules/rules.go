@@ -36,7 +36,7 @@ func (r *Rules) registerURLs(
 ) (starlark.Value, error) {
 	fnName := fn.Name()
 	if len(kwargs) > 0 {
-		err := fmt.Errorf("%s: unexpected keyword arguments", fnName)
+		err := fmt.Errorf("%s: unexpected keyword argument", fnName)
 		return nil, err
 	}
 
@@ -52,23 +52,28 @@ func (r *Rules) registerURLs(
 func (r *Rules) registerURL(fn string, arg starlark.Value) error {
 	rule, ok := arg.(*starlark.Dict)
 	if !ok {
-		err := fmt.Errorf("%s: expected Dict, got %s", fn, arg.Type())
-		return err
+		return fmt.Errorf("%s: expected Dict, got %s", fn, arg.Type())
 	}
 
 	id, err := getStringFromDict(fn, rule, "id")
 	if err != nil {
 		return err
+	} else if id == "" {
+		return fmt.Errorf(`%s: missing required key: "id"`, fn)
 	}
 
 	parts, err := getIterableFromDict(fn, rule, "parts")
 	if err != nil {
 		return err
+	} else if parts == nil {
+		return fmt.Errorf(`%s: missing required key: "parts"`, fn)
 	}
 
 	slash, err := getStringFromDict(fn, rule, "slash")
 	if err != nil {
 		return err
+	} else if slash == "" {
+		return fmt.Errorf(`%s: missing required key: "slash"`, fn)
 	}
 
 	m := &PlainPart{
