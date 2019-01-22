@@ -14,8 +14,8 @@ test:
 
 test-coverage:
 	mkdir -p dist
-	go test -coverpkg ./... -coverprofile=dist/coverage.out -tags integration ./...
-	go tool cover -html=dist/coverage.out
+	go test -coverpkg ./... -coverprofile=dist/coverage.txt -tags integration ./...
+	go tool cover -html=dist/coverage.txt
 
 test-docker:
 	docker-compose --version
