@@ -1,0 +1,13 @@
+version: 1
+cli:
+  server: https://app.fossa.io
+  fetcher: custom
+  project: carpenter
+analyze:
+  modules:
+  - name: github.com/sjansen/carpenter
+    type: go
+    target: github.com/sjansen/carpenter
+    path: .
+    options:
+      all-tags: true

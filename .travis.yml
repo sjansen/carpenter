@@ -1,14 +1,22 @@
 dist: trusty
 language: go
+go:
+  - 1.11.x
+env:
+  - GO111MODULE=on
 services:
   - docker
 
 before_script:
+  - "curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash"
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
 
-script: docker-compose up --abort-on-container-exit --exit-code-from=go --force-recreate
+script:
+  - go get
+  - fossa analyze
+  - docker-compose up --abort-on-container-exit --exit-code-from=go --force-recreate
 
 after_script:
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
@@ -16,3 +24,4 @@ after_script:
 after_success:
   - mv dist/coverage.txt coverage.txt
   - bash <(curl -s https://codecov.io/bash)
+  - fossa test
