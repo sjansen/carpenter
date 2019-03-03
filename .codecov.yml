@@ -3,4 +3,6 @@ coverage:
   round: down
   precision: 2
 ignore:
+  - "main.go"
   - "scripts"
+  - "spikes"
