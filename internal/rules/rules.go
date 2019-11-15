@@ -3,6 +3,7 @@ package rules
 import (
 	"fmt"
 	"io"
+	"regexp"
 
 	"go.starlark.net/starlark"
 )
@@ -100,22 +101,66 @@ func (r *Rules) registerURL(fn string, arg starlark.Value) error {
 		return fmt.Errorf(`%s: missing required key: "slash"`, fn)
 	}
 
-	m := &PlainPart{
-		id:    id,
-		slash: slash,
-	}
-
 	iter := parts.Iterate()
 	defer iter.Done()
+
 	var value starlark.Value
 	iter.Next(&value)
-	s, ok := value.(starlark.String)
-	if !ok {
-		return fmt.Errorf("%s: expected String, got %s", fn, value.Type())
-	}
-	m.value = s.GoString()
 
+	m, err := transformPart(fn, id, slash, value)
+	if err != nil {
+		return err
+	}
 	r.Matchers = append(r.Matchers, m)
 
 	return nil
+}
+
+func transformPart(fn, id, slash string, value starlark.Value) (Matcher, error) {
+	switch v := value.(type) {
+	case starlark.String:
+		m := &PlainPart{
+			id:    id,
+			slash: slash,
+			value: v.GoString(),
+		}
+		return m, nil
+	case starlark.Tuple:
+		if n := v.Len(); n != 2 {
+			return nil, fmt.Errorf("%s: expected 2 item Tuple, got %d", fn, n)
+		}
+
+		m := &RegexPart{
+			id:    id,
+			slash: slash,
+		}
+
+		var value starlark.Value
+		iter := v.Iterate()
+		defer iter.Done()
+
+		iter.Next(&value)
+		expr, ok := value.(starlark.String)
+		if !ok {
+			return nil, fmt.Errorf("%s: expected String, got %s", fn, value.Type())
+		}
+
+		regex, err := regexp.Compile(expr.GoString())
+		if err != nil {
+			return nil, err
+		}
+		m.regex = regex
+
+		iter.Next(&value)
+		replacement, ok := value.(starlark.String)
+		if !ok {
+			return nil, fmt.Errorf("%s: expected String, got %s", fn, value.Type())
+		}
+
+		m.replacement = &PlainReplacement{
+			value: replacement.GoString(),
+		}
+		return m, nil
+	}
+	return nil, fmt.Errorf("%s: expected String or Tuple, got %s", fn, value.Type())
 }

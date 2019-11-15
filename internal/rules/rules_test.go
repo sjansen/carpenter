@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
@@ -20,6 +21,10 @@ register_urls({
     'id': 'views.baz',
     'parts': ['baz'],
     'slash': 'strip',
+}, {
+    'id': 'views.qux',
+    'parts': [('qux', 'quux')],
+    'slash': 'always',
 })
 `
 var expected = &Rules{Matchers: []Matcher{
@@ -37,6 +42,14 @@ var expected = &Rules{Matchers: []Matcher{
 		id:    "views.baz",
 		slash: "strip",
 		value: "baz",
+	},
+	&RegexPart{
+		id:    "views.qux",
+		slash: "always",
+		regex: regexp.MustCompile("qux"),
+		replacement: &PlainReplacement{
+			value: "quux",
+		},
 	},
 }}
 
@@ -83,7 +96,7 @@ func TestLoadErrors(t *testing.T) {
 		message: "expected String, got NoneType",
 	}, {
 		script:  `register_urls({'id': 'foo', 'parts': [42], 'slash': 'strip'})`,
-		message: "expected String, got int",
+		message: "expected String or Tuple, got int",
 	}} {
 		r := strings.NewReader(tc.script)
 		_, err := Load("<test script>", r)
