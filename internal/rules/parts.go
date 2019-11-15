@@ -7,64 +7,54 @@ import (
 	"go.starlark.net/starlark"
 )
 
-type Matcher interface {
-	Match(string) (string, bool)
+type matcher interface {
+	Match(string) bool
 	Rewrite(string) (string, error)
 }
 
-type Replacement interface {
+type replacement interface {
 	Replace(string) (string, error)
 }
 
-type PlainPart struct {
-	id    string
-	slash string
+type plainPart struct {
 	value string
 }
 
-func (p *PlainPart) Match(part string) (string, bool) {
-	if part == p.value {
-		return p.id, true
-	}
-	return "", false
+func (p *plainPart) Match(part string) bool {
+	return part == p.value
 }
 
-func (p *PlainPart) Rewrite(part string) (string, error) {
+func (p *plainPart) Rewrite(part string) (string, error) {
 	return part, nil
 }
 
-type RegexPart struct {
-	id          string
-	slash       string
+type regexPart struct {
 	regex       *regexp.Regexp
-	replacement Replacement
+	replacement replacement
 }
 
-func (p *RegexPart) Match(part string) (string, bool) {
-	if p.regex.MatchString(part) {
-		return p.id, true
-	}
-	return "", false
+func (p *regexPart) Match(part string) bool {
+	return p.regex.MatchString(part)
 }
 
-func (p *RegexPart) Rewrite(part string) (string, error) {
+func (p *regexPart) Rewrite(part string) (string, error) {
 	return p.replacement.Replace(part)
 }
 
-type PlainReplacement struct {
+type plainReplacement struct {
 	value string
 }
 
-func (r *PlainReplacement) Replace(part string) (string, error) {
+func (r *plainReplacement) Replace(part string) (string, error) {
 	return r.value, nil
 }
 
-type FunctionReplacement struct {
+type functionReplacement struct {
 	thread *starlark.Thread
 	fn     starlark.Callable
 }
 
-func (r *FunctionReplacement) Replace(part string) (string, error) {
+func (r *functionReplacement) Replace(part string) (string, error) {
 	args := starlark.Tuple{starlark.String(part)}
 	value, err := starlark.Call(r.thread, r.fn, args, nil)
 	if err != nil {

@@ -12,19 +12,15 @@ import (
 func TestPlainPart(t *testing.T) {
 	require := require.New(t)
 
-	p := &PlainPart{
-		id:    "id1",
-		slash: "always",
+	p := &plainPart{
 		value: "foo",
 	}
 
-	id, match := p.Match("foo")
+	match := p.Match("foo")
 	require.Equal(true, match)
-	require.Equal("id1", id)
 
-	id, match = p.Match("bar")
+	match = p.Match("bar")
 	require.Equal(false, match)
-	require.Equal("", id)
 
 	actual, err := p.Rewrite("foo")
 	require.NoError(err)
@@ -39,24 +35,20 @@ func TestRegexpPart(t *testing.T) {
 		match       string
 		replacement string
 		error       string
-		part        *RegexPart
+		part        *regexPart
 	}{{
 		"id1", "foo", "bar", "",
-		&RegexPart{
-			id:    "id1",
-			slash: "always",
+		&regexPart{
 			regex: regexp.MustCompile("^foo$"),
-			replacement: &PlainReplacement{
+			replacement: &plainReplacement{
 				value: "bar",
 			},
 		},
 	}, {
 		"id2", "qux", "quux", "",
-		&RegexPart{
-			id:    "id2",
-			slash: "never",
+		&regexPart{
 			regex: regexp.MustCompile("^qux$"),
-			replacement: &FunctionReplacement{
+			replacement: &functionReplacement{
 				thread: &starlark.Thread{},
 				fn: starlark.NewBuiltin("rewrite", func(
 					t *starlark.Thread,
@@ -70,11 +62,9 @@ func TestRegexpPart(t *testing.T) {
 		},
 	}, {
 		"id3", "corge", "", "expected String, got int",
-		&RegexPart{
-			id:    "id3",
-			slash: "strip",
+		&regexPart{
 			regex: regexp.MustCompile("^c.*$"),
-			replacement: &FunctionReplacement{
+			replacement: &functionReplacement{
 				thread: &starlark.Thread{},
 				fn: starlark.NewBuiltin("rewrite", func(
 					t *starlark.Thread,
@@ -88,11 +78,9 @@ func TestRegexpPart(t *testing.T) {
 		},
 	}, {
 		"id4", "grault", "", "418 I'm a teapot",
-		&RegexPart{
-			id:    "id4",
-			slash: "strip",
+		&regexPart{
 			regex: regexp.MustCompile("^g.....$"),
-			replacement: &FunctionReplacement{
+			replacement: &functionReplacement{
 				thread: &starlark.Thread{},
 				fn: starlark.NewBuiltin("rewrite", func(
 					t *starlark.Thread,
@@ -107,12 +95,10 @@ func TestRegexpPart(t *testing.T) {
 	}} {
 		p := tc.part
 
-		id, match := p.Match("should not match")
-		require.Equal("", id, tc.id)
+		match := p.Match("should not match")
 		require.Equal(false, match, tc.id)
 
-		id, match = p.Match(tc.match)
-		require.Equal(tc.id, id, tc.id)
+		match = p.Match(tc.match)
 		require.Equal(true, match, tc.id)
 
 		actual, err := p.Rewrite(tc.match)

@@ -27,31 +27,47 @@ register_urls({
     'slash': 'always',
 })
 `
-var expected = &Rules{Matchers: []Matcher{
-	&PlainPart{
+var expected = []*Rule{
+	{
 		id:    "views.foo",
 		slash: "always",
-		value: "foo",
-	},
-	&PlainPart{
-		id:    "views.bar",
-		slash: "never",
-		value: "bar",
-	},
-	&PlainPart{
-		id:    "views.baz",
-		slash: "strip",
-		value: "baz",
-	},
-	&RegexPart{
-		id:    "views.qux",
-		slash: "always",
-		regex: regexp.MustCompile("qux"),
-		replacement: &PlainReplacement{
-			value: "quux",
+		parts: []matcher{
+			&plainPart{
+				value: "foo",
+			},
 		},
 	},
-}}
+	{
+		id:    "views.bar",
+		slash: "never",
+		parts: []matcher{
+			&plainPart{
+				value: "bar",
+			},
+		},
+	},
+	{
+		id:    "views.baz",
+		slash: "strip",
+		parts: []matcher{
+			&plainPart{
+				value: "baz",
+			},
+		},
+	},
+	{
+		id:    "views.qux",
+		slash: "always",
+		parts: []matcher{
+			&regexPart{
+				regex: regexp.MustCompile("qux"),
+				replacement: &plainReplacement{
+					value: "quux",
+				},
+			},
+		},
+	},
+}
 
 func TestLoad(t *testing.T) {
 	require := require.New(t)

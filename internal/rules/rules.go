@@ -8,17 +8,23 @@ import (
 	"go.starlark.net/starlark"
 )
 
-type Rules struct {
-	Matchers []Matcher
+type Rule struct {
+	id    string
+	slash string
+	parts []matcher
 }
 
-func Load(filename string, src io.Reader) (*Rules, error) {
-	rules := &Rules{
-		Matchers: make([]Matcher, 0),
+type ruleFactory struct {
+	rules []*Rule
+}
+
+func Load(filename string, src io.Reader) ([]*Rule, error) {
+	f := &ruleFactory{
+		rules: make([]*Rule, 0),
 	}
 
 	globals := starlark.StringDict{
-		"register_urls": starlark.NewBuiltin("register_urls", rules.registerURLs),
+		"register_urls": starlark.NewBuiltin("register_urls", f.registerURLs),
 	}
 	thread := &starlark.Thread{}
 	_, err := starlark.ExecFile(thread, filename, src, globals)
@@ -26,7 +32,7 @@ func Load(filename string, src io.Reader) (*Rules, error) {
 		return nil, err
 	}
 
-	return rules, nil
+	return f.rules, nil
 }
 
 func getIterableFromDict(fn string, rule *starlark.Dict, key string) (starlark.Iterable, error) {
@@ -53,7 +59,7 @@ func getStringFromDict(fn string, rule *starlark.Dict, key string) (string, erro
 	return s.GoString(), nil
 }
 
-func (r *Rules) registerURLs(
+func (f *ruleFactory) registerURLs(
 	thread *starlark.Thread,
 	fn *starlark.Builtin,
 	args starlark.Tuple,
@@ -66,7 +72,7 @@ func (r *Rules) registerURLs(
 	}
 
 	for _, arg := range args {
-		if err := r.registerURL(fnName, arg); err != nil {
+		if err := f.registerURL(fnName, arg); err != nil {
 			return nil, err
 		}
 	}
@@ -74,54 +80,59 @@ func (r *Rules) registerURLs(
 	return starlark.None, nil
 }
 
-func (r *Rules) registerURL(fn string, arg starlark.Value) error {
-	rule, ok := arg.(*starlark.Dict)
+func (f *ruleFactory) registerURL(fn string, arg starlark.Value) error {
+	d, ok := arg.(*starlark.Dict)
 	if !ok {
 		return fmt.Errorf("%s: expected Dict, got %s", fn, arg.Type())
 	}
 
-	id, err := getStringFromDict(fn, rule, "id")
+	id, err := getStringFromDict(fn, d, "id")
 	if err != nil {
 		return err
 	} else if id == "" {
 		return fmt.Errorf(`%s: missing required key: "id"`, fn)
 	}
 
-	parts, err := getIterableFromDict(fn, rule, "parts")
+	parts, err := getIterableFromDict(fn, d, "parts")
 	if err != nil {
 		return err
 	} else if parts == nil {
 		return fmt.Errorf(`%s: missing required key: "parts"`, fn)
 	}
 
-	slash, err := getStringFromDict(fn, rule, "slash")
+	slash, err := getStringFromDict(fn, d, "slash")
 	if err != nil {
 		return err
 	} else if slash == "" {
 		return fmt.Errorf(`%s: missing required key: "slash"`, fn)
 	}
 
+	rule := &Rule{
+		id:    id,
+		slash: slash,
+		parts: make([]matcher, 0),
+	}
+
 	iter := parts.Iterate()
 	defer iter.Done()
 
 	var value starlark.Value
-	iter.Next(&value)
-
-	m, err := transformPart(fn, id, slash, value)
-	if err != nil {
-		return err
+	for iter.Next(&value) {
+		m, err := transformPart(fn, value)
+		if err != nil {
+			return err
+		}
+		rule.parts = append(rule.parts, m)
 	}
-	r.Matchers = append(r.Matchers, m)
 
+	f.rules = append(f.rules, rule)
 	return nil
 }
 
-func transformPart(fn, id, slash string, value starlark.Value) (Matcher, error) {
+func transformPart(fn string, value starlark.Value) (matcher, error) {
 	switch v := value.(type) {
 	case starlark.String:
-		m := &PlainPart{
-			id:    id,
-			slash: slash,
+		m := &plainPart{
 			value: v.GoString(),
 		}
 		return m, nil
@@ -130,10 +141,7 @@ func transformPart(fn, id, slash string, value starlark.Value) (Matcher, error) 
 			return nil, fmt.Errorf("%s: expected 2 item Tuple, got %d", fn, n)
 		}
 
-		m := &RegexPart{
-			id:    id,
-			slash: slash,
-		}
+		m := &regexPart{}
 
 		var value starlark.Value
 		iter := v.Iterate()
@@ -157,7 +165,7 @@ func transformPart(fn, id, slash string, value starlark.Value) (Matcher, error) 
 			return nil, fmt.Errorf("%s: expected String, got %s", fn, value.Type())
 		}
 
-		m.replacement = &PlainReplacement{
+		m.replacement = &plainReplacement{
 			value: replacement.GoString(),
 		}
 		return m, nil
