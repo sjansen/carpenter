@@ -28,6 +28,30 @@ func Load(filename string, src io.Reader) (*Rules, error) {
 	return rules, nil
 }
 
+func getIterableFromDict(fn string, rule *starlark.Dict, key string) (starlark.Iterable, error) {
+	value, found, err := rule.Get(starlark.String(key))
+	if err != nil || !found {
+		return nil, err
+	}
+	iter, ok := value.(starlark.Iterable)
+	if !ok {
+		return nil, fmt.Errorf("%s: expected Iterable, got %s", fn, value.Type())
+	}
+	return iter, nil
+}
+
+func getStringFromDict(fn string, rule *starlark.Dict, key string) (string, error) {
+	value, found, err := rule.Get(starlark.String(key))
+	if err != nil || !found {
+		return "", err
+	}
+	s, ok := value.(starlark.String)
+	if !ok {
+		return "", fmt.Errorf("%s: expected String, got %s", fn, value.Type())
+	}
+	return s.GoString(), nil
+}
+
 func (r *Rules) registerURLs(
 	thread *starlark.Thread,
 	fn *starlark.Builtin,
@@ -94,28 +118,4 @@ func (r *Rules) registerURL(fn string, arg starlark.Value) error {
 	r.Matchers = append(r.Matchers, m)
 
 	return nil
-}
-
-func getIterableFromDict(fn string, rule *starlark.Dict, key string) (starlark.Iterable, error) {
-	value, found, err := rule.Get(starlark.String(key))
-	if err != nil || !found {
-		return nil, err
-	}
-	iter, ok := value.(starlark.Iterable)
-	if !ok {
-		return nil, fmt.Errorf("%s: expected Iterable, got %s", fn, value.Type())
-	}
-	return iter, nil
-}
-
-func getStringFromDict(fn string, rule *starlark.Dict, key string) (string, error) {
-	value, found, err := rule.Get(starlark.String(key))
-	if err != nil || !found {
-		return "", err
-	}
-	s, ok := value.(starlark.String)
-	if !ok {
-		return "", fmt.Errorf("%s: expected String, got %s", fn, value.Type())
-	}
-	return s.GoString(), nil
 }

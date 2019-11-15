@@ -108,20 +108,20 @@ func TestRegexpPart(t *testing.T) {
 		p := tc.part
 
 		id, match := p.Match("should not match")
-		require.Equal(false, match, tc.id)
 		require.Equal("", id, tc.id)
+		require.Equal(false, match, tc.id)
 
 		id, match = p.Match(tc.match)
-		require.Equal(true, match, tc.id)
 		require.Equal(tc.id, id, tc.id)
+		require.Equal(true, match, tc.id)
 
 		actual, err := p.Rewrite(tc.match)
 		if tc.error != "" {
 			require.Equal("", actual, tc.id)
 			require.Contains(err.Error(), tc.error, tc.id)
 		} else {
-			require.NoError(err, tc.id)
 			require.Equal(tc.replacement, actual, tc.id)
+			require.NoError(err, tc.id)
 		}
 	}
 }

@@ -39,10 +39,14 @@ register_urls({
     },
 }, {
     'id': 'views.waldo',
-    'parts': [('waldo|fred', 'NAME'), metavariable],
+    'parts': [
+        ('waldo|fred', 'NAME'),
+        metavariable,
+    ],
     'slash': 'always',
     'tests': {
         '/waldo/plug/': '/NAME/A',
         '/fred/xyzzy/': '/NAME/B',
+        '/fred/thud/': '/NAME/C',
     },
 })
