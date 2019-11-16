@@ -4,5 +4,6 @@ coverage:
   precision: 2
 ignore:
   - "main.go"
+  - "internal/data"
   - "scripts"
   - "spikes"
