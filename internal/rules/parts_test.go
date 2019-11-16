@@ -16,13 +16,13 @@ func TestPlainPart(t *testing.T) {
 		value: "foo",
 	}
 
-	match := p.Match("foo")
+	match := p.match("foo")
 	require.Equal(true, match)
 
-	match = p.Match("bar")
+	match = p.match("bar")
 	require.Equal(false, match)
 
-	actual, err := p.Rewrite("foo")
+	actual, err := p.rewrite("foo")
 	require.NoError(err)
 	require.Equal("foo", actual)
 }
@@ -95,13 +95,13 @@ func TestRegexpPart(t *testing.T) {
 	}} {
 		p := tc.part
 
-		match := p.Match("should not match")
+		match := p.match("should not match")
 		require.Equal(false, match, tc.id)
 
-		match = p.Match(tc.match)
+		match = p.match(tc.match)
 		require.Equal(true, match, tc.id)
 
-		actual, err := p.Rewrite(tc.match)
+		actual, err := p.rewrite(tc.match)
 		if tc.error != "" {
 			require.Equal("", actual, tc.id)
 			require.Contains(err.Error(), tc.error, tc.id)

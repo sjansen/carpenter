@@ -7,11 +7,6 @@ import (
 	"go.starlark.net/starlark"
 )
 
-type matcher interface {
-	Match(string) bool
-	Rewrite(string) (string, error)
-}
-
 type replacement interface {
 	Replace(string) (string, error)
 }
@@ -20,11 +15,11 @@ type plainPart struct {
 	value string
 }
 
-func (p *plainPart) Match(part string) bool {
+func (p *plainPart) match(part string) bool {
 	return part == p.value
 }
 
-func (p *plainPart) Rewrite(part string) (string, error) {
+func (p *plainPart) rewrite(part string) (string, error) {
 	return part, nil
 }
 
@@ -33,11 +28,11 @@ type regexPart struct {
 	replacement replacement
 }
 
-func (p *regexPart) Match(part string) bool {
+func (p *regexPart) match(part string) bool {
 	return p.regex.MatchString(part)
 }
 
-func (p *regexPart) Rewrite(part string) (string, error) {
+func (p *regexPart) rewrite(part string) (string, error) {
 	return p.replacement.Replace(part)
 }
 

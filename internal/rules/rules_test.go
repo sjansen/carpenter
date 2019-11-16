@@ -25,9 +25,13 @@ register_urls({
     'id': 'views.qux',
     'parts': [('qux', 'quux')],
     'slash': 'always',
+}, {
+    'id': 'views.multi',
+    'parts': ['corge', ('grault', 'garply')],
+    'slash': 'always',
 })
 `
-var expected = []*Rule{
+var expected = Rules{
 	{
 		id:    "views.foo",
 		slash: "always",
@@ -36,8 +40,7 @@ var expected = []*Rule{
 				value: "foo",
 			},
 		},
-	},
-	{
+	}, {
 		id:    "views.bar",
 		slash: "never",
 		parts: []matcher{
@@ -45,8 +48,7 @@ var expected = []*Rule{
 				value: "bar",
 			},
 		},
-	},
-	{
+	}, {
 		id:    "views.baz",
 		slash: "strip",
 		parts: []matcher{
@@ -54,8 +56,7 @@ var expected = []*Rule{
 				value: "baz",
 			},
 		},
-	},
-	{
+	}, {
 		id:    "views.qux",
 		slash: "always",
 		parts: []matcher{
@@ -63,6 +64,20 @@ var expected = []*Rule{
 				regex: regexp.MustCompile("qux"),
 				replacement: &plainReplacement{
 					value: "quux",
+				},
+			},
+		},
+	}, {
+		id:    "views.multi",
+		slash: "always",
+		parts: []matcher{
+			&plainPart{
+				value: "corge",
+			},
+			&regexPart{
+				regex: regexp.MustCompile("grault"),
+				replacement: &plainReplacement{
+					value: "garply",
 				},
 			},
 		},

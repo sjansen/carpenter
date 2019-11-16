@@ -14,11 +14,18 @@ type Rule struct {
 	parts []matcher
 }
 
+type Rules []*Rule
+
+type matcher interface {
+	match(string) bool
+	rewrite(string) (string, error)
+}
+
 type ruleFactory struct {
 	rules []*Rule
 }
 
-func Load(filename string, src io.Reader) ([]*Rule, error) {
+func Load(filename string, src io.Reader) (Rules, error) {
 	f := &ruleFactory{
 		rules: make([]*Rule, 0),
 	}
