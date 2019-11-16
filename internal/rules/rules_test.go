@@ -35,7 +35,7 @@ var expected = Rules{
 	{
 		id:    "views.foo",
 		slash: "always",
-		parts: []matcher{
+		parts: []part{
 			&plainPart{
 				value: "foo",
 			},
@@ -43,7 +43,7 @@ var expected = Rules{
 	}, {
 		id:    "views.bar",
 		slash: "never",
-		parts: []matcher{
+		parts: []part{
 			&plainPart{
 				value: "bar",
 			},
@@ -51,7 +51,7 @@ var expected = Rules{
 	}, {
 		id:    "views.baz",
 		slash: "strip",
-		parts: []matcher{
+		parts: []part{
 			&plainPart{
 				value: "baz",
 			},
@@ -59,10 +59,10 @@ var expected = Rules{
 	}, {
 		id:    "views.qux",
 		slash: "always",
-		parts: []matcher{
+		parts: []part{
 			&regexPart{
 				regex: regexp.MustCompile("qux"),
-				replacement: &plainReplacement{
+				rewriter: &rewriteStatic{
 					value: "quux",
 				},
 			},
@@ -70,13 +70,13 @@ var expected = Rules{
 	}, {
 		id:    "views.multi",
 		slash: "always",
-		parts: []matcher{
+		parts: []part{
 			&plainPart{
 				value: "corge",
 			},
 			&regexPart{
 				regex: regexp.MustCompile("grault"),
-				replacement: &plainReplacement{
+				rewriter: &rewriteStatic{
 					value: "garply",
 				},
 			},

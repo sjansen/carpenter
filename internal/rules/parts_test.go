@@ -22,7 +22,7 @@ func TestPlainPart(t *testing.T) {
 	match = p.match("bar")
 	require.Equal(false, match)
 
-	actual, err := p.rewrite("foo")
+	actual, err := p.normalize("foo")
 	require.NoError(err)
 	require.Equal("foo", actual)
 }
@@ -40,7 +40,7 @@ func TestRegexpPart(t *testing.T) {
 		"id1", "foo", "bar", "",
 		&regexPart{
 			regex: regexp.MustCompile("^foo$"),
-			replacement: &plainReplacement{
+			rewriter: &rewriteStatic{
 				value: "bar",
 			},
 		},
@@ -48,7 +48,7 @@ func TestRegexpPart(t *testing.T) {
 		"id2", "qux", "quux", "",
 		&regexPart{
 			regex: regexp.MustCompile("^qux$"),
-			replacement: &functionReplacement{
+			rewriter: &rewriteFunction{
 				thread: &starlark.Thread{},
 				fn: starlark.NewBuiltin("rewrite", func(
 					t *starlark.Thread,
@@ -64,7 +64,7 @@ func TestRegexpPart(t *testing.T) {
 		"id3", "corge", "", "expected String, got int",
 		&regexPart{
 			regex: regexp.MustCompile("^c.*$"),
-			replacement: &functionReplacement{
+			rewriter: &rewriteFunction{
 				thread: &starlark.Thread{},
 				fn: starlark.NewBuiltin("rewrite", func(
 					t *starlark.Thread,
@@ -80,7 +80,7 @@ func TestRegexpPart(t *testing.T) {
 		"id4", "grault", "", "418 I'm a teapot",
 		&regexPart{
 			regex: regexp.MustCompile("^g.....$"),
-			replacement: &functionReplacement{
+			rewriter: &rewriteFunction{
 				thread: &starlark.Thread{},
 				fn: starlark.NewBuiltin("rewrite", func(
 					t *starlark.Thread,
@@ -101,7 +101,7 @@ func TestRegexpPart(t *testing.T) {
 		match = p.match(tc.match)
 		require.Equal(true, match, tc.id)
 
-		actual, err := p.rewrite(tc.match)
+		actual, err := p.normalize(tc.match)
 		if tc.error != "" {
 			require.Equal("", actual, tc.id)
 			require.Contains(err.Error(), tc.error, tc.id)
