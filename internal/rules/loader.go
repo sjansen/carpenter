@@ -137,15 +137,19 @@ func (l *rulesLoader) transformPart(value starlark.Value) (part, error) {
 		m.regex = regex
 
 		iter.Next(&value)
-		replacement, ok := value.(starlark.String)
-		if !ok {
-			return nil, fmt.Errorf("%s: expected String, got %s", l.Name(), value.Type())
+		switch v := value.(type) {
+		case starlark.Callable:
+			m.rewriter = &rewriteFunction{
+				Callable: v,
+			}
+			return m, nil
+		case starlark.String:
+			m.rewriter = &rewriteStatic{
+				value: v.GoString(),
+			}
+			return m, nil
 		}
-
-		m.rewriter = &rewriteStatic{
-			value: replacement.GoString(),
-		}
-		return m, nil
+		return nil, fmt.Errorf("%s: expected Callable or String, got %s", l.Name(), value.Type())
 	}
 	return nil, fmt.Errorf("%s: expected String or Tuple, got %s", l.Name(), value.Type())
 }

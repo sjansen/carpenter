@@ -22,7 +22,7 @@ func TestPlainPart(t *testing.T) {
 	match = p.match("bar")
 	require.Equal(false, match)
 
-	actual, err := p.normalize("foo")
+	actual, err := p.normalize(&starlark.Thread{}, "foo")
 	require.NoError(err)
 	require.Equal("foo", actual)
 }
@@ -49,8 +49,7 @@ func TestRegexpPart(t *testing.T) {
 		&regexPart{
 			regex: regexp.MustCompile("^qux$"),
 			rewriter: &rewriteFunction{
-				thread: &starlark.Thread{},
-				fn: starlark.NewBuiltin("rewrite", func(
+				Callable: starlark.NewBuiltin("rewrite", func(
 					t *starlark.Thread,
 					fn *starlark.Builtin,
 					args starlark.Tuple,
@@ -65,8 +64,7 @@ func TestRegexpPart(t *testing.T) {
 		&regexPart{
 			regex: regexp.MustCompile("^c.*$"),
 			rewriter: &rewriteFunction{
-				thread: &starlark.Thread{},
-				fn: starlark.NewBuiltin("rewrite", func(
+				Callable: starlark.NewBuiltin("rewrite", func(
 					t *starlark.Thread,
 					fn *starlark.Builtin,
 					args starlark.Tuple,
@@ -81,8 +79,7 @@ func TestRegexpPart(t *testing.T) {
 		&regexPart{
 			regex: regexp.MustCompile("^g.....$"),
 			rewriter: &rewriteFunction{
-				thread: &starlark.Thread{},
-				fn: starlark.NewBuiltin("rewrite", func(
+				Callable: starlark.NewBuiltin("rewrite", func(
 					t *starlark.Thread,
 					fn *starlark.Builtin,
 					args starlark.Tuple,
@@ -101,7 +98,7 @@ func TestRegexpPart(t *testing.T) {
 		match = p.match(tc.match)
 		require.Equal(true, match, tc.id)
 
-		actual, err := p.normalize(tc.match)
+		actual, err := p.normalize(&starlark.Thread{}, tc.match)
 		if tc.error != "" {
 			require.Equal("", actual, tc.id)
 			require.Contains(err.Error(), tc.error, tc.id)

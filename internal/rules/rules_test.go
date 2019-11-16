@@ -9,31 +9,43 @@ import (
 )
 
 var script = `
+names = ('waldo|fred', 'plugh')
+
+def fn(x):
+    if x == 'xyzzy':
+	return 'thud'
+    return 'X'
+
 register_urls({
-    'id': 'views.foo',
+    'id': 'views.always',
     'parts': ['foo'],
     'slash': 'always',
 }, {
-    'id': 'views.bar',
+    'id': 'views.never',
     'parts': ['bar'],
     'slash': 'never',
 }, {
-    'id': 'views.baz',
+    'id': 'views.strip',
     'parts': ['baz'],
     'slash': 'strip',
 }, {
-    'id': 'views.qux',
+    'id': 'views.regex',
     'parts': [('qux', 'quux')],
     'slash': 'always',
 }, {
     'id': 'views.multi',
-    'parts': ['corge', ('grault', 'garply')],
+    'parts': [
+	'corge',
+	('grault', 'garply'),
+	names,
+	('.+', fn),
+    ],
     'slash': 'always',
 })
 `
 var expected = Rules{
 	{
-		id:    "views.foo",
+		id:    "views.always",
 		slash: "always",
 		parts: []part{
 			&plainPart{
@@ -41,7 +53,7 @@ var expected = Rules{
 			},
 		},
 	}, {
-		id:    "views.bar",
+		id:    "views.never",
 		slash: "never",
 		parts: []part{
 			&plainPart{
@@ -49,7 +61,7 @@ var expected = Rules{
 			},
 		},
 	}, {
-		id:    "views.baz",
+		id:    "views.strip",
 		slash: "strip",
 		parts: []part{
 			&plainPart{
@@ -57,7 +69,7 @@ var expected = Rules{
 			},
 		},
 	}, {
-		id:    "views.qux",
+		id:    "views.regex",
 		slash: "always",
 		parts: []part{
 			&regexPart{
@@ -80,6 +92,16 @@ var expected = Rules{
 					value: "garply",
 				},
 			},
+			&regexPart{
+				regex: regexp.MustCompile("waldo|fred"),
+				rewriter: &rewriteStatic{
+					value: "plugh",
+				},
+			},
+			&regexPart{
+				regex:    regexp.MustCompile(".+"),
+				rewriter: nil,
+			},
 		},
 	},
 }
@@ -90,6 +112,14 @@ func TestLoad(t *testing.T) {
 	r := strings.NewReader(script)
 	actual, err := Load("<test script>", r)
 	require.NoError(err)
+
+	// It isn't possible to create an expected rewriteFunction
+	// that reflect.DeepEqual considers equal to actual.
+	actualPart := actual[4].parts[3].(*regexPart)
+	require.IsType(&rewriteFunction{}, actualPart.rewriter)
+	expectedPart := expected[4].parts[3].(*regexPart)
+	expectedPart.rewriter = actualPart.rewriter
+
 	require.Equal(expected, actual)
 }
 
