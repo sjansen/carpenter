@@ -12,6 +12,7 @@ register_urls({
     'parts': ['foo'],
     'slash': 'always',
     'tests': {
+        '/foo':   None,
         '/foo/': '/foo/',
     },
 }, {
@@ -20,6 +21,7 @@ register_urls({
     'slash': 'never',
     'tests': {
         '/bar/baz': '/bar/baz',
+        '/bar/baz/': None,
     },
 }, {
     'id': 'views.qux',

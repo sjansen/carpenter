@@ -13,26 +13,41 @@ type rulesLoader struct {
 	rules []*Rule
 }
 
-func (l *rulesLoader) getIterableFromDict(rule *starlark.Dict, key string) (starlark.Iterable, error) {
+func (l *rulesLoader) getDictFromDict(id, key string, rule *starlark.Dict) (*starlark.Dict, error) {
+	value, found, err := rule.Get(starlark.String(key))
+	if err != nil || !found {
+		return nil, err
+	}
+	dict, ok := value.(*starlark.Dict)
+	if !ok {
+		return nil, fmt.Errorf("%s: %q expected Dict, got %s", l.Name(), id, value.Type())
+	}
+	return dict, nil
+}
+
+func (l *rulesLoader) getIterableFromDict(id, key string, rule *starlark.Dict) (starlark.Iterable, error) {
 	value, found, err := rule.Get(starlark.String(key))
 	if err != nil || !found {
 		return nil, err
 	}
 	iter, ok := value.(starlark.Iterable)
 	if !ok {
-		return nil, fmt.Errorf("%s: expected Iterable, got %s", l.Name(), value.Type())
+		return nil, fmt.Errorf("%s: %q expected Iterable, got %s", l.Name(), id, value.Type())
 	}
 	return iter, nil
 }
 
-func (l *rulesLoader) getStringFromDict(rule *starlark.Dict, key string) (string, error) {
+func (l *rulesLoader) getStringFromDict(id, key string, rule *starlark.Dict) (string, error) {
 	value, found, err := rule.Get(starlark.String(key))
 	if err != nil || !found {
 		return "", err
 	}
 	s, ok := value.(starlark.String)
 	if !ok {
-		return "", fmt.Errorf("%s: expected String, got %s", l.Name(), value.Type())
+		if id == "" {
+			return "", fmt.Errorf("%s: expected String, got %s", l.Name(), value.Type())
+		}
+		return "", fmt.Errorf("%s: %q expected String, got %s", l.Name(), id, value.Type())
 	}
 	return s.GoString(), nil
 }
@@ -43,43 +58,47 @@ func (l *rulesLoader) registerURL(arg starlark.Value) error {
 		return fmt.Errorf("%s: expected Dict, got %s", l.Name(), arg.Type())
 	}
 
-	id, err := l.getStringFromDict(d, "id")
+	id, err := l.getStringFromDict("", "id", d)
 	if err != nil {
 		return err
 	} else if id == "" {
 		return fmt.Errorf(`%s: missing required key: "id"`, l.Name())
 	}
 
-	parts, err := l.getIterableFromDict(d, "parts")
+	parts, err := l.getIterableFromDict(id, "parts", d)
 	if err != nil {
 		return err
 	} else if parts == nil {
-		return fmt.Errorf(`%s: missing required key: "parts"`, l.Name())
+		return fmt.Errorf(`%s: %q missing required key: "parts"`, l.Name(), id)
 	}
 
-	slash, err := l.getStringFromDict(d, "slash")
+	slash, err := l.getStringFromDict(id, "slash", d)
 	if err != nil {
 		return err
 	} else if slash == "" {
-		return fmt.Errorf(`%s: missing required key: "slash"`, l.Name())
+		return fmt.Errorf(`%s: %q missing required key: "slash"`, l.Name(), id)
+	}
+
+	tests, err := l.getDictFromDict(id, "tests", d)
+	if err != nil {
+		return err
+	} else if tests == nil {
+		return fmt.Errorf(`%s: %q missing required key: "tests"`, l.Name(), id)
 	}
 
 	rule := &Rule{
 		id:    id,
 		slash: slash,
-		parts: make([]part, 0),
 	}
 
-	iter := parts.Iterate()
-	defer iter.Done()
+	rule.parts, err = l.transformParts(id, parts)
+	if err != nil {
+		return err
+	}
 
-	var value starlark.Value
-	for iter.Next(&value) {
-		m, err := l.transformPart(value)
-		if err != nil {
-			return err
-		}
-		rule.parts = append(rule.parts, m)
+	rule.tests, err = l.transformTests(id, tests)
+	if err != nil {
+		return err
 	}
 
 	l.rules = append(l.rules, rule)
@@ -106,7 +125,25 @@ func (l *rulesLoader) registerURLs(
 	return starlark.None, nil
 }
 
-func (l *rulesLoader) transformPart(value starlark.Value) (part, error) {
+func (l *rulesLoader) transformParts(id string, parts starlark.Iterable) ([]part, error) {
+	result := make([]part, 0)
+
+	iter := parts.Iterate()
+	defer iter.Done()
+
+	var value starlark.Value
+	for iter.Next(&value) {
+		part, err := l.transformPart(id, value)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, part)
+	}
+
+	return result, nil
+}
+
+func (l *rulesLoader) transformPart(id string, value starlark.Value) (part, error) {
 	switch v := value.(type) {
 	case starlark.String:
 		m := &plainPart{
@@ -115,7 +152,7 @@ func (l *rulesLoader) transformPart(value starlark.Value) (part, error) {
 		return m, nil
 	case starlark.Tuple:
 		if n := v.Len(); n != 2 {
-			return nil, fmt.Errorf("%s: expected 2 item Tuple, got %d", l.Name(), n)
+			return nil, fmt.Errorf("%s: %q expected 2 item Tuple, got %d", l.Name(), id, n)
 		}
 
 		m := &regexPart{}
@@ -127,7 +164,7 @@ func (l *rulesLoader) transformPart(value starlark.Value) (part, error) {
 		iter.Next(&value)
 		expr, ok := value.(starlark.String)
 		if !ok {
-			return nil, fmt.Errorf("%s: expected String, got %s", l.Name(), value.Type())
+			return nil, fmt.Errorf("%s: %q expected String, got %s", l.Name(), id, value.Type())
 		}
 
 		regex, err := regexp.Compile(expr.GoString())
@@ -149,7 +186,37 @@ func (l *rulesLoader) transformPart(value starlark.Value) (part, error) {
 			}
 			return m, nil
 		}
-		return nil, fmt.Errorf("%s: expected Callable or String, got %s", l.Name(), value.Type())
+		return nil, fmt.Errorf("%s: %q expected Callable or String, got %s", l.Name(), id, value.Type())
 	}
-	return nil, fmt.Errorf("%s: expected String or Tuple, got %s", l.Name(), value.Type())
+	return nil, fmt.Errorf("%s: %q expected String or Tuple, got %s", l.Name(), id, value.Type())
+}
+
+func (l *rulesLoader) transformTests(id string, tests *starlark.Dict) (map[string]string, error) {
+	result := make(map[string]string)
+
+	for _, item := range tests.Items() {
+		key := item.Index(0)
+		k, ok := key.(starlark.String)
+		if !ok {
+			return nil, fmt.Errorf(
+				"%s: %q expected String key, got %s",
+				l.Name(), id, key.Type(),
+			)
+		}
+
+		value := item.Index(1)
+		switch v := value.(type) {
+		case starlark.NoneType:
+			result[k.GoString()] = ""
+		case starlark.String:
+			result[k.GoString()] = v.GoString()
+		default:
+			return nil, fmt.Errorf(
+				"%s: %q expected None or String value, got %s",
+				l.Name(), id, value.Type(),
+			)
+		}
+	}
+
+	return result, nil
 }

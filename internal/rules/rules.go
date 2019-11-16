@@ -6,13 +6,14 @@ import (
 	"go.starlark.net/starlark"
 )
 
+type Rules []*Rule
+
 type Rule struct {
 	id    string
 	slash string
 	parts []part
+	tests map[string]string
 }
-
-type Rules []*Rule
 
 func Load(filename string, src io.Reader) (Rules, error) {
 	loader := &rulesLoader{
