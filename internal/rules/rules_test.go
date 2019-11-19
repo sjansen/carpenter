@@ -201,3 +201,16 @@ func TestLoadErrors(t *testing.T) {
 		})
 	}
 }
+
+func TestSelfTest(t *testing.T) {
+	require := require.New(t)
+
+	r, err := os.Open("testdata/valid.star")
+	require.NoError(err)
+
+	rules, err := Load("<test script>", r)
+	require.NoError(err)
+
+	err = rules.SelfTest()
+	require.NoError(err)
+}
