@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -8,60 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var script = `
-names = ('waldo|fred', 'plugh')
-
-def fn(x):
-    if x == 'xyzzy':
-	return 'thud'
-    return 'X'
-
-register_urls({
-    'id': 'views.always',
-    'parts': ['foo'],
-    'slash': 'always',
-    'tests': {
-        '/foo':   None,
-        '/foo/': '/foo/',
-    },
-}, {
-    'id': 'views.never',
-    'parts': ['bar'],
-    'slash': 'never',
-    'tests': {
-        '/bar': '/bar',
-        '/bar/': None,
-    },
-}, {
-    'id': 'views.strip',
-    'parts': ['baz'],
-    'slash': 'strip',
-    'tests': {
-        '/baz':  '/baz',
-        '/baz/': '/baz',
-    },
-}, {
-    'id': 'views.regex',
-    'parts': [('qux', 'quux')],
-    'slash': 'always',
-    'tests': {
-        '/qux/': '/quux/',
-    },
-}, {
-    'id': 'views.multi',
-    'parts': [
-	'corge',
-	('grault', 'garply'),
-	names,
-	('.+', fn),
-    ],
-    'slash': 'always',
-    'tests': {
-        '/corge/grault/waldo/xyzzy/': '/corge/garply/plugh/thud/',
-        '/corge/grault/fred/42/':     '/corge/garply/plugh/X/',
-    },
-})
-`
 var expected = Rules{
 	{
 		id:    "views.always",
@@ -147,7 +94,9 @@ var expected = Rules{
 func TestLoad(t *testing.T) {
 	require := require.New(t)
 
-	r := strings.NewReader(script)
+	r, err := os.Open("testdata/valid.star")
+	require.NoError(err)
+
 	actual, err := Load("<test script>", r)
 	require.NoError(err)
 
@@ -162,7 +111,7 @@ func TestLoad(t *testing.T) {
 }
 
 func TestLoadErrors(t *testing.T) {
-	require := require.New(t)
+	ws := regexp.MustCompile(`\s+`)
 
 	for _, tc := range []struct {
 		script  string
@@ -241,9 +190,14 @@ func TestLoadErrors(t *testing.T) {
 		})`,
 		message: `"tests-invalid-3" expected None or String value, got int`,
 	}} {
-		r := strings.NewReader(tc.script)
-		_, err := Load("<test script>", r)
-		require.Error(err)
-		require.Contains(err.Error(), tc.message)
+		tc := tc
+		t.Run(ws.ReplaceAllString(tc.script, " "), func(t *testing.T) {
+			require := require.New(t)
+
+			r := strings.NewReader(tc.script)
+			_, err := Load("<test script>", r)
+			require.Error(err)
+			require.Contains(err.Error(), tc.message)
+		})
 	}
 }
