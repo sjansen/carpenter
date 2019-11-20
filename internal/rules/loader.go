@@ -65,14 +65,21 @@ func (l *rulesLoader) registerURL(arg starlark.Value) error {
 		return fmt.Errorf(`%s: missing required key: "id"`, l.Name())
 	}
 
-	parts, err := l.getIterableFromDict(id, "parts", d)
+	path, err := l.getDictFromDict(id, "path", d)
+	if err != nil {
+		return err
+	} else if path == nil {
+		return fmt.Errorf(`%s: %q missing required key: "path"`, l.Name(), id)
+	}
+
+	parts, err := l.getIterableFromDict(id, "parts", path)
 	if err != nil {
 		return err
 	} else if parts == nil {
 		return fmt.Errorf(`%s: %q missing required key: "parts"`, l.Name(), id)
 	}
 
-	slash, err := l.getStringFromDict(id, "slash", d)
+	slash, err := l.getStringFromDict(id, "slash", path)
 	if err != nil {
 		return err
 	} else if slash == "" {

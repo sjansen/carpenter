@@ -141,62 +141,91 @@ func TestLoadErrors(t *testing.T) {
 		script:  `register_urls({'id': []})`,
 		message: "expected String, got list",
 	}, {
-		script:  `register_urls({'id': 'parts-missing'})`,
+		script:  `register_urls({'id': 'path-missing'})`,
+		message: `"path-missing" missing required key: "path"`,
+	}, {
+		script:  `register_urls({'id': 'parts-missing', 'path': {}})`,
 		message: `"parts-missing" missing required key: "parts"`,
 	}, {
-		script:  `register_urls({'id': 'slash-missing', 'parts': []})`,
+		script: `register_urls({
+		    'id': 'slash-missing',
+		    'path': {'parts': []},
+		})`,
 		message: `"slash-missing" missing required key: "slash"`,
 	}, {
-		script:  `register_urls({'id': 'tests-missing', 'parts': [], 'slash': 'always'})`,
+		script: `register_urls({
+		    'id': 'tests-missing',
+		    'path': {'parts': [], 'slash': 'always'},
+		})`,
 		message: `"tests-missing" missing required key: "tests"`,
 	}, {
 		script: `register_urls({
-		    'id': 'parts-invalid-1', 'parts': None, 'slash': 'always', 'tests': {},
+		    'id': 'parts-invalid-1',
+		    'path': {'parts': None, 'slash': 'always'},
+		    'tests': {},
 		})`,
 		message: `"parts-invalid-1" expected Iterable, got NoneType`,
 	}, {
 		script: `register_urls({
-		    'id': 'parts-invalid-2', 'parts': [42], 'slash': 'always', 'tests': {},
+		    'id': 'parts-invalid-2',
+		    'path': {'parts': [42], 'slash': 'always'},
+		    'tests': {},
 		})`,
 		message: `"parts-invalid-2" expected String or Tuple, got int`,
 	}, {
 		script: `register_urls({
-		    'id': 'parts-invalid-3', 'parts': [(1, 2, 3)], 'slash': 'always', 'tests': {},
+		    'id': 'parts-invalid-3',
+		    'path': {'parts': [(1, 2, 3)], 'slash': 'always'},
+		    'tests': {},
 		})`,
 		message: `"parts-invalid-3" expected 2 item Tuple, got 3`,
 	}, {
 		script: `register_urls({
-		    'id': 'parts-invalid-4', 'parts': [(1, 2)], 'slash': 'always', 'tests': {},
+		    'id': 'parts-invalid-4',
+		    'path': {'parts': [(1, 2)], 'slash': 'always'},
+		    'tests': {},
 		})`,
 		message: `"parts-invalid-4" expected String, got int`,
 	}, {
 		script: `register_urls({
-		    'id': 'parts-invalid-5', 'parts': [('answer', 42)], 'slash': 'always', 'tests': {},
+		    'id': 'parts-invalid-5',
+		    'path': {'parts': [('answer', 42)], 'slash': 'always'},
+		    'tests': {},
 		})`,
 		message: `"parts-invalid-5" expected Callable or String, got int`,
 	}, {
 		script: `register_urls({
-		    'id': 'parts-invalid-6', 'parts': [('[a-z', 'X')], 'slash': 'always', 'tests': {},
+		    'id': 'parts-invalid-6',
+		    'path': {'parts': [('[a-z', 'X')], 'slash': 'always'},
+		    'tests': {},
 		})`,
 		message: `error parsing regexp`,
 	}, {
 		script: `register_urls({
-		    'id': 'slash-invalid-1', 'parts': [], 'slash': None, 'tests': {},
+		    'id': 'slash-invalid-1',
+		    'path': {'parts': [], 'slash': None},
+		    'tests': {},
 		})`,
 		message: `"slash-invalid-1" expected String, got NoneType`,
 	}, {
 		script: `register_urls({
-		    'id': 'tests-invalid-1', 'parts': [], 'slash': 'always', 'tests': None,
+		    'id': 'tests-invalid-1',
+		    'path': {'parts': [], 'slash': 'always'},
+		    'tests': None,
 		})`,
 		message: `"tests-invalid-1" expected Dict, got NoneType`,
 	}, {
 		script: `register_urls({
-		    'id': 'tests-invalid-2', 'parts': [], 'slash': 'always', 'tests': {6: 9},
+		    'id': 'tests-invalid-2',
+		    'path': {'parts': [], 'slash': 'always'},
+		    'tests': {6: 9},
 		})`,
 		message: `"tests-invalid-2" expected String key, got int`,
 	}, {
 		script: `register_urls({
-		    'id': 'tests-invalid-3', 'parts': [], 'slash': 'always', 'tests': {'answer': 42},
+		    'id': 'tests-invalid-3',
+		    'path': {'parts': [], 'slash': 'always'},
+		    'tests': {'answer': 42},
 		})`,
 		message: `"tests-invalid-3" expected None or String value, got int`,
 	}} {

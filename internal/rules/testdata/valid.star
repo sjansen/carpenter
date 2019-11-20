@@ -7,52 +7,64 @@ def fn(x):
 
 register_urls({
     'id': 'views.root',
-    'parts': [],
-    'slash': 'always',
+    'path': {
+        'parts': [],
+        'slash': 'always',
+    },
     'tests': {
         '/':      '/',
         '/Spoon!': None,
     },
 }, {
     'id': 'views.always',
-    'parts': ['foo'],
-    'slash': 'always',
+    'path': {
+        'parts': ['foo'],
+        'slash': 'always',
+    },
     'tests': {
         '/foo':   None,
         '/foo/': '/foo/',
     },
 }, {
     'id': 'views.never',
-    'parts': ['bar'],
-    'slash': 'never',
+    'path': {
+        'parts': ['bar'],
+        'slash': 'never',
+    },
     'tests': {
         '/bar': '/bar',
         '/bar/': None,
     },
 }, {
     'id': 'views.strip',
-    'parts': ['baz'],
-    'slash': 'strip',
+    'path': {
+        'parts': ['baz'],
+        'slash': 'strip',
+    },
     'tests': {
         '/baz':  '/baz',
         '/baz/': '/baz',
     },
 }, {
     'id': 'views.regex',
-    'parts': [('qux', 'quux')],
-    'slash': 'always',
+    'path': {
+        'parts': [('qux', 'quux')],
+        'slash': 'always',
+    },
     'tests': {
         '/qux/': '/quux/',
     },
 }, {
     'id': 'views.multi',
-    'parts': [
-	'corge',
-	('grault', 'garply'),
-	names,
-	('.+', fn),
-    ],
-    'slash': 'always',
+    'path': {
+        'parts': [
+	    'corge',
+	    ('grault', 'garply'),
+	    names,
+	    ('.+', fn),
+        ],
+        'slash': 'always',
+    },
     'tests': {
         '/corge/grault/waldo/xyzzy/': '/corge/garply/plugh/thud/',
         '/corge/grault/fred/42/':     '/corge/garply/plugh/X/',
