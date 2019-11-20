@@ -104,7 +104,7 @@ func (r *Rule) rewriteURL(parts []string) (string, error) {
 
 func (r *Rule) splitPath(path string) ([]string, bool) {
 	plen := len(path)
-	if plen > 1 {
+	if plen > 0 {
 		switch r.slash {
 		case "always":
 			if path[plen-1] == '/' {

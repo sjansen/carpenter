@@ -6,6 +6,14 @@ def fn(x):
     return 'X'
 
 register_urls({
+    'id': 'views.root',
+    'parts': [],
+    'slash': 'always',
+    'tests': {
+        '/':      '/',
+        '/Spoon!': None,
+    },
+}, {
     'id': 'views.always',
     'parts': ['foo'],
     'slash': 'always',

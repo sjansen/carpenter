@@ -11,6 +11,14 @@ import (
 
 var expected = Rules{
 	{
+		id:    "views.root",
+		slash: "always",
+		parts: []part{},
+		tests: map[string]string{
+			"/":       "/",
+			"/Spoon!": "",
+		},
+	}, {
 		id:    "views.always",
 		slash: "always",
 		parts: []part{
@@ -102,9 +110,11 @@ func TestLoad(t *testing.T) {
 
 	// It isn't possible to create an expected rewriteFunction
 	// that reflect.DeepEqual considers equal to actual.
-	actualPart := actual[4].parts[3].(*regexPart)
+	require.Len(actual, 6)
+	require.Equal("views.multi", actual[5].id)
+	actualPart := actual[5].parts[3].(*regexPart)
 	require.IsType(&rewriteFunction{}, actualPart.rewriter)
-	expectedPart := expected[4].parts[3].(*regexPart)
+	expectedPart := expected[5].parts[3].(*regexPart)
 	expectedPart.rewriter = actualPart.rewriter
 
 	require.Equal(expected, actual)
