@@ -3,19 +3,18 @@ package rules
 import "go.starlark.net/starlark"
 
 type param struct {
-	dedup    string
 	remove   bool
 	rewriter rewriter
 }
 
-func (p *param) normalize(thread *starlark.Thread, values []string) ([]string, error) {
+func (p *param) normalize(thread *starlark.Thread, dedup string, values []string) ([]string, error) {
 	if p.remove {
 		return nil, nil
 	} else if len(values) < 1 {
 		return values, nil
 	}
 
-	switch p.dedup {
+	switch dedup {
 	case "first":
 		v, err := p.rewriter.rewrite(thread, values[0])
 		if err != nil {

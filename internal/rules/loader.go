@@ -4,8 +4,13 @@ import (
 	"fmt"
 	"regexp"
 
+	"go.starlark.net/resolve"
 	"go.starlark.net/starlark"
 )
+
+func init() {
+	resolve.AllowLambda = true
+}
 
 type rulesLoader struct {
 	*starlark.Builtin
@@ -86,6 +91,13 @@ func (l *rulesLoader) registerURL(arg starlark.Value) error {
 		return fmt.Errorf(`%s: %q missing required key: "slash"`, l.Name(), id)
 	}
 
+	query, err := l.getDictFromDict(id, "query", d)
+	if err != nil {
+		return err
+	} else if query == nil {
+		return fmt.Errorf(`%s: %q missing required key: "query"`, l.Name(), id)
+	}
+
 	tests, err := l.getDictFromDict(id, "tests", d)
 	if err != nil {
 		return err
@@ -99,6 +111,11 @@ func (l *rulesLoader) registerURL(arg starlark.Value) error {
 	}
 
 	rule.parts, err = l.transformParts(id, parts)
+	if err != nil {
+		return err
+	}
+
+	err = l.transformQuery(rule, query)
 	if err != nil {
 		return err
 	}
@@ -130,6 +147,49 @@ func (l *rulesLoader) registerURLs(
 	}
 
 	return starlark.None, nil
+}
+
+func (l *rulesLoader) transformParams(r *Rule, query *starlark.Dict) error {
+	result := make(map[string]*param)
+
+	for _, item := range query.Items() {
+		key := item.Index(0)
+		k, ok := key.(starlark.String)
+		if !ok {
+			return fmt.Errorf(
+				"%s: %q expected String key, got %s",
+				l.Name(), r.id, key.Type(),
+			)
+		}
+
+		value := item.Index(1)
+		switch v := value.(type) {
+		case starlark.Callable:
+			result[k.GoString()] = &param{
+				rewriter: &rewriteFunction{
+					Callable: v,
+				},
+			}
+		case starlark.NoneType:
+			result[k.GoString()] = &param{
+				remove: true,
+			}
+		case starlark.String:
+			result[k.GoString()] = &param{
+				rewriter: &rewriteStatic{
+					value: v.GoString(),
+				},
+			}
+		default:
+			return fmt.Errorf(
+				"%s: %q expected None or String value, got %s",
+				l.Name(), r.id, value.Type(),
+			)
+		}
+	}
+
+	r.params = result
+	return nil
 }
 
 func (l *rulesLoader) transformParts(id string, parts starlark.Iterable) ([]part, error) {
@@ -196,6 +256,51 @@ func (l *rulesLoader) transformPart(id string, value starlark.Value) (part, erro
 		return nil, fmt.Errorf("%s: %q expected Callable or String, got %s", l.Name(), id, value.Type())
 	}
 	return nil, fmt.Errorf("%s: %q expected String or Tuple, got %s", l.Name(), id, value.Type())
+}
+
+func (l *rulesLoader) transformQuery(r *Rule, query *starlark.Dict) error {
+	for _, item := range query.Items() {
+		key := item.Index(0)
+		k, ok := key.(starlark.String)
+		if !ok {
+			return fmt.Errorf(
+				"%s: %q expected String key, got %s",
+				l.Name(), r.id, key.Type(),
+			)
+		}
+
+		switch k {
+		case "dedup":
+			value := item.Index(1)
+			v, ok := value.(starlark.String)
+			if !ok {
+				return fmt.Errorf(
+					"%s: %q expected String, got %s",
+					l.Name(), r.id, value.Type(),
+				)
+			}
+			r.dedup = v.GoString()
+		case "params":
+			value := item.Index(1)
+			v, ok := value.(*starlark.Dict)
+			if !ok {
+				return fmt.Errorf(
+					"%s: %q expected Dict, got %s",
+					l.Name(), r.id, value.Type(),
+				)
+			}
+			if err := l.transformParams(r, v); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf(
+				`%s: %q expected "dedup" or "params", got %s`,
+				l.Name(), r.id, k,
+			)
+		}
+	}
+
+	return nil
 }
 
 func (l *rulesLoader) transformTests(id string, tests *starlark.Dict) (map[string]string, error) {

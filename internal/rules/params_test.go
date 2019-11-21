@@ -30,93 +30,86 @@ func TestParam(t *testing.T) {
 
 	for _, tc := range []struct {
 		id       string
+		dedup    string
 		error    string
 		expected []string
 		values   []string
 		param    *param
 	}{{
-		"p1", "",
+		"p1", "never", "",
 		[]string{},
 		[]string{},
 		&param{
-			dedup:  "never",
 			remove: false,
 			rewriter: &rewriteStatic{
 				value: "X",
 			},
 		},
 	}, {
-		"p2", "",
+		"p2", "never", "",
 		nil,
 		[]string{"foo", "bar", "baz"},
 		&param{
-			dedup:  "never",
 			remove: true,
 			rewriter: &rewriteStatic{
 				value: "X",
 			},
 		},
 	}, {
-		"p3", "",
+		"p3", "never", "",
 		[]string{"X", "X", "X"},
 		[]string{"foo", "bar", "baz"},
 		&param{
-			dedup:  "never",
 			remove: false,
 			rewriter: &rewriteStatic{
 				value: "X",
 			},
 		},
 	}, {
-		"p4", "",
+		"p4", "first", "",
 		[]string{"foo"},
 		[]string{"foo", "bar", "baz"},
 		&param{
-			dedup:  "first",
 			remove: false,
 			rewriter: &rewriteFunction{
 				Callable: echo,
 			},
 		},
 	}, {
-		"p5", "",
+		"p5", "last", "",
 		[]string{"baz"},
 		[]string{"foo", "bar", "baz"},
 		&param{
-			dedup:  "last",
 			remove: false,
 			rewriter: &rewriteFunction{
 				Callable: echo,
 			},
 		},
 	}, {
-		"p6", "i am error",
+		"p6", "first", "i am error",
 		nil,
 		[]string{"foo", "bar", "baz"},
 		&param{
-			dedup:  "first",
 			remove: false,
 			rewriter: &rewriteFunction{
 				Callable: fail,
 			},
 		},
 	}, {
-		"p7", "i am error",
+		"p7", "last", "i am error",
 		nil,
 		[]string{"foo", "bar", "baz"},
 		&param{
-			dedup:  "last",
 			remove: false,
 			rewriter: &rewriteFunction{
 				Callable: fail,
 			},
 		},
 	}, {
-		"p8", "i am error",
+		"p8", "never", "i am error",
 		nil,
 		[]string{"foo", "bar", "baz"},
 		&param{
-			dedup:  "never",
 			remove: false,
 			rewriter: &rewriteFunction{
 				Callable: fail,
@@ -125,7 +118,7 @@ func TestParam(t *testing.T) {
 	}} {
 		p := tc.param
 
-		actual, err := p.normalize(&starlark.Thread{}, tc.values)
+		actual, err := p.normalize(&starlark.Thread{}, tc.dedup, tc.values)
 		if tc.error != "" {
 			require.Contains(err.Error(), tc.error, tc.id)
 		} else {

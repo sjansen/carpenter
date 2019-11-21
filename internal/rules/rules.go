@@ -12,10 +12,12 @@ import (
 type Rules []*Rule
 
 type Rule struct {
-	id    string
-	slash string
-	parts []part
-	tests map[string]string
+	id     string
+	dedup  string
+	slash  string
+	parts  []part
+	params map[string]*param
+	tests  map[string]string
 }
 
 func Load(filename string, src io.Reader) (Rules, error) {
@@ -44,7 +46,7 @@ func (rules Rules) SelfTest() error {
 			if expected != "" {
 				if prev, ok := seen[rawurl]; ok {
 					return fmt.Errorf(
-						`invalid test case: %q (alreay matched by %q)`,
+						`invalid test case: %q (already matched by %q)`,
 						rawurl, prev,
 					)
 				}
@@ -80,10 +82,22 @@ func (r *Rule) Match(rawurl string) (string, error) {
 		}
 	}
 
-	return r.rewriteURL(parts)
+	path, err := r.rewritePath(parts)
+	if err != nil {
+		return "", err
+	}
+
+	query, err := r.rewriteQuery(url.Query())
+	if err != nil {
+		return "", err
+	} else if query != "" {
+		return path + "?" + query, nil
+	}
+
+	return path, nil
 }
 
-func (r *Rule) rewriteURL(parts []string) (string, error) {
+func (r *Rule) rewritePath(parts []string) (string, error) {
 	result := make([]string, 1, len(parts)+2)
 	result[0] = ""
 
@@ -100,6 +114,25 @@ func (r *Rule) rewriteURL(parts []string) (string, error) {
 	}
 
 	return strings.Join(result, "/"), nil
+}
+
+func (r *Rule) rewriteQuery(query url.Values) (string, error) {
+	result := url.Values{}
+
+	thread := &starlark.Thread{}
+	for key, values := range query {
+		if p, ok := r.params[key]; ok {
+			values, err := p.normalize(thread, r.dedup, values)
+			if err != nil {
+				return "", err
+			}
+			result[key] = values
+		} else {
+			result[key] = values
+		}
+	}
+
+	return result.Encode(), nil
 }
 
 func (r *Rule) splitPath(path string) ([]string, bool) {
