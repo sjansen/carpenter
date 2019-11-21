@@ -198,15 +198,6 @@ func TestLoadErrors(t *testing.T) {
 		script:  `register_urls({'id': 'path-invalid', 'path': None})`,
 		message: `"path-invalid" expected Dict, got NoneType`,
 	}, {
-		script:  `register_urls({'id': 'parts-missing', 'path': {}})`,
-		message: `"parts-missing" missing required key: "parts"`,
-	}, {
-		script: `register_urls({
-		    'id': 'slash-missing',
-		    'path': {'parts': []},
-		})`,
-		message: `"slash-missing" missing required key: "slash"`,
-	}, {
 		script: `register_urls({
 		    'id': 'query-missing',
 		    'path': {'parts': [], 'slash': 'always'},
@@ -219,6 +210,22 @@ func TestLoadErrors(t *testing.T) {
 		    'query': {},
 		})`,
 		message: `"tests-missing" missing required key: "tests"`,
+	}, {
+		script: `register_urls({
+		    'id': 'parts-missing',
+		    'path': {},
+		    'query': {},
+		    'tests': {},
+		})`,
+		message: `"parts-missing" missing required key: "parts"`,
+	}, {
+		script: `register_urls({
+		    'id': 'slash-missing',
+		    'path': {'parts': []},
+		    'query': {},
+		    'tests': {},
+		})`,
+		message: `"slash-missing" missing required key: "slash"`,
 	}, {
 		script: `register_urls({
 		    'id': 'parts-invalid-1',

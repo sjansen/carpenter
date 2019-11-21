@@ -77,20 +77,6 @@ func (l *rulesLoader) registerURL(arg starlark.Value) error {
 		return fmt.Errorf(`%s: %q missing required key: "path"`, l.Name(), id)
 	}
 
-	parts, err := l.getIterableFromDict(id, "parts", path)
-	if err != nil {
-		return err
-	} else if parts == nil {
-		return fmt.Errorf(`%s: %q missing required key: "parts"`, l.Name(), id)
-	}
-
-	slash, err := l.getStringFromDict(id, "slash", path)
-	if err != nil {
-		return err
-	} else if slash == "" {
-		return fmt.Errorf(`%s: %q missing required key: "slash"`, l.Name(), id)
-	}
-
 	query, err := l.getDictFromDict(id, "query", d)
 	if err != nil {
 		return err
@@ -106,11 +92,10 @@ func (l *rulesLoader) registerURL(arg starlark.Value) error {
 	}
 
 	rule := &Rule{
-		id:    id,
-		slash: slash,
+		id: id,
 	}
 
-	rule.parts, err = l.transformParts(id, parts)
+	err = l.transformPath(rule, path)
 	if err != nil {
 		return err
 	}
@@ -147,6 +132,29 @@ func (l *rulesLoader) registerURLs(
 	}
 
 	return starlark.None, nil
+}
+
+func (l *rulesLoader) transformPath(r *Rule, path *starlark.Dict) error {
+	parts, err := l.getIterableFromDict(r.id, "parts", path)
+	if err != nil {
+		return err
+	} else if parts == nil {
+		return fmt.Errorf(`%s: %q missing required key: "parts"`, l.Name(), r.id)
+	}
+
+	r.slash, err = l.getStringFromDict(r.id, "slash", path)
+	if err != nil {
+		return err
+	} else if r.slash == "" {
+		return fmt.Errorf(`%s: %q missing required key: "slash"`, l.Name(), r.id)
+	}
+
+	r.parts, err = l.transformParts(r.id, parts)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (l *rulesLoader) transformParams(r *Rule, query *starlark.Dict) error {
