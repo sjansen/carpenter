@@ -70,6 +70,10 @@ func (l *rulesLoader) registerURL(arg starlark.Value) error {
 		return fmt.Errorf(`%s: missing required key: "id"`, l.Name())
 	}
 
+	rule := &Rule{
+		id: id,
+	}
+
 	path, err := l.getDictFromDict(id, "path", d)
 	if err != nil {
 		return err
@@ -91,10 +95,6 @@ func (l *rulesLoader) registerURL(arg starlark.Value) error {
 		return fmt.Errorf(`%s: %q missing required key: "tests"`, l.Name(), id)
 	}
 
-	rule := &Rule{
-		id: id,
-	}
-
 	err = l.transformPath(rule, path)
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func (l *rulesLoader) registerURL(arg starlark.Value) error {
 		return err
 	}
 
-	rule.tests, err = l.transformTests(id, tests)
+	err = l.transformTests(rule, tests)
 	if err != nil {
 		return err
 	}
@@ -311,16 +311,16 @@ func (l *rulesLoader) transformQuery(r *Rule, query *starlark.Dict) error {
 	return nil
 }
 
-func (l *rulesLoader) transformTests(id string, tests *starlark.Dict) (map[string]string, error) {
+func (l *rulesLoader) transformTests(r *Rule, tests *starlark.Dict) error {
 	result := make(map[string]string)
 
 	for _, item := range tests.Items() {
 		key := item.Index(0)
 		k, ok := key.(starlark.String)
 		if !ok {
-			return nil, fmt.Errorf(
+			return fmt.Errorf(
 				"%s: %q expected String key, got %s",
-				l.Name(), id, key.Type(),
+				l.Name(), r.id, key.Type(),
 			)
 		}
 
@@ -331,12 +331,13 @@ func (l *rulesLoader) transformTests(id string, tests *starlark.Dict) (map[strin
 		case starlark.String:
 			result[k.GoString()] = v.GoString()
 		default:
-			return nil, fmt.Errorf(
+			return fmt.Errorf(
 				"%s: %q expected None or String value, got %s",
-				l.Name(), id, value.Type(),
+				l.Name(), r.id, value.Type(),
 			)
 		}
 	}
 
-	return result, nil
+	r.tests = result
+	return nil
 }
