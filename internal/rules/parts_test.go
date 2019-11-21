@@ -31,11 +31,11 @@ func TestRegexpPart(t *testing.T) {
 	require := require.New(t)
 
 	for _, tc := range []struct {
-		id          string
-		match       string
-		replacement string
-		error       string
-		part        *regexPart
+		id       string
+		match    string
+		expected string
+		error    string
+		part     *regexPart
 	}{{
 		"id1", "foo", "bar", "",
 		&regexPart{
@@ -100,11 +100,10 @@ func TestRegexpPart(t *testing.T) {
 
 		actual, err := p.normalize(&starlark.Thread{}, tc.match)
 		if tc.error != "" {
-			require.Equal("", actual, tc.id)
 			require.Contains(err.Error(), tc.error, tc.id)
 		} else {
-			require.Equal(tc.replacement, actual, tc.id)
 			require.NoError(err, tc.id)
 		}
+		require.Equal(tc.expected, actual, tc.id)
 	}
 }
