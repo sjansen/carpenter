@@ -1,9 +1,10 @@
 package rules
 
 import (
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -172,181 +173,22 @@ func TestLoad(t *testing.T) {
 }
 
 func TestLoadErrors(t *testing.T) {
-	ws := regexp.MustCompile(`\s+`)
-
-	for _, tc := range []struct {
-		script  string
-		message string
-	}{{
-		script: "Spoon!",
-	}, {
-		script:  `register_urls(foo=42)`,
-		message: "unexpected keyword argument",
-	}, {
-		script:  `register_urls(42)`,
-		message: "expected Dict, got int",
-	}, {
-		script:  `register_urls({})`,
-		message: `missing required key: "id"`,
-	}, {
-		script:  `register_urls({'id': []})`,
-		message: "expected String, got list",
-	}, {
-		script:  `register_urls({'id': 'path-missing'})`,
-		message: `"path-missing" missing required key: "path"`,
-	}, {
-		script:  `register_urls({'id': 'path-invalid', 'path': None})`,
-		message: `"path-invalid" expected Dict, got NoneType`,
-	}, {
-		script: `register_urls({
-		    'id': 'query-missing',
-		    'path': {'parts': [], 'slash': 'always'},
-		})`,
-		message: `"query-missing" missing required key: "query"`,
-	}, {
-		script: `register_urls({
-		    'id': 'tests-missing',
-		    'path': {'parts': [], 'slash': 'always'},
-		    'query': {},
-		})`,
-		message: `"tests-missing" missing required key: "tests"`,
-	}, {
-		script: `register_urls({
-		    'id': 'parts-missing',
-		    'path': {},
-		    'query': {},
-		    'tests': {},
-		})`,
-		message: `"parts-missing" missing required key: "parts"`,
-	}, {
-		script: `register_urls({
-		    'id': 'slash-missing',
-		    'path': {'parts': []},
-		    'query': {},
-		    'tests': {},
-		})`,
-		message: `"slash-missing" missing required key: "slash"`,
-	}, {
-		script: `register_urls({
-		    'id': 'parts-invalid-1',
-		    'path': {'parts': None, 'slash': 'always'},
-		    'query': {},
-		    'tests': {},
-		})`,
-		message: `"parts-invalid-1" expected Iterable, got NoneType`,
-	}, {
-		script: `register_urls({
-		    'id': 'parts-invalid-2',
-		    'path': {'parts': [42], 'slash': 'always'},
-		    'query': {},
-		    'tests': {},
-		})`,
-		message: `"parts-invalid-2" expected String or Tuple, got int`,
-	}, {
-		script: `register_urls({
-		    'id': 'parts-invalid-3',
-		    'path': {'parts': [(1, 2, 3)], 'slash': 'always'},
-		    'query': {},
-		    'tests': {},
-		})`,
-		message: `"parts-invalid-3" expected 2 item Tuple, got 3`,
-	}, {
-		script: `register_urls({
-		    'id': 'parts-invalid-4',
-		    'path': {'parts': [(1, 2)], 'slash': 'always'},
-		    'query': {},
-		    'tests': {},
-		})`,
-		message: `"parts-invalid-4" expected String, got int`,
-	}, {
-		script: `register_urls({
-		    'id': 'parts-invalid-5',
-		    'path': {'parts': [('answer', 42)], 'slash': 'always'},
-		    'query': {},
-		    'tests': {},
-		})`,
-		message: `"parts-invalid-5" expected Callable or String, got int`,
-	}, {
-		script: `register_urls({
-		    'id': 'parts-invalid-6',
-		    'path': {'parts': [('[a-z', 'X')], 'slash': 'always'},
-		    'query': {},
-		    'tests': {},
-		})`,
-		message: `error parsing regexp`,
-	}, {
-		script: `register_urls({
-		    'id': 'slash-invalid-1',
-		    'path': {'parts': [], 'slash': None},
-		    'query': {},
-		    'tests': {},
-		})`,
-		message: `"slash-invalid-1" expected String, got NoneType`,
-	}, {
-		script: `register_urls({
-		    'id': 'query-invalid-1',
-		    'path': {'parts': [], 'slash': 'always'},
-		    'query': None,
-		    'tests': {},
-		})`,
-		message: `"query-invalid-1" expected Dict, got NoneType`,
-	}, {
-		script: `register_urls({
-		    'id': 'query-invalid-2',
-		    'path': {'parts': [], 'slash': 'always'},
-		    'query': {42: 'answer'},
-		    'tests': {},
-		})`,
-		message: `"query-invalid-2" expected String key, got int`,
-	}, {
-		script: `register_urls({
-		    'id': 'query-invalid-3',
-		    'path': {'parts': [], 'slash': 'always'},
-		    'query': {"dedup": 0},
-		    'tests': {},
-		})`,
-		message: `"query-invalid-3" expected String, got int`,
-	}, {
-		script: `register_urls({
-		    'id': 'query-invalid-4',
-		    'path': {'parts': [], 'slash': 'always'},
-		    'query': {"keys": None},
-		    'tests': {},
-		})`,
-		message: `"query-invalid-4" expected "dedup" or "params", got "keys"`,
-	}, {
-		script: `register_urls({
-		    'id': 'tests-invalid-1',
-		    'path': {'parts': [], 'slash': 'always'},
-		    'query': {},
-		    'tests': None,
-		})`,
-		message: `"tests-invalid-1" expected Dict, got NoneType`,
-	}, {
-		script: `register_urls({
-		    'id': 'tests-invalid-2',
-		    'path': {'parts': [], 'slash': 'always'},
-		    'query': {},
-		    'tests': {6: 9},
-		})`,
-		message: `"tests-invalid-2" expected String key, got int`,
-	}, {
-		script: `register_urls({
-		    'id': 'tests-invalid-3',
-		    'path': {'parts': [], 'slash': 'always'},
-		    'query': {},
-		    'tests': {'answer': 42},
-		})`,
-		message: `"tests-invalid-3" expected None or String value, got int`,
-	}} {
+	files, _ := filepath.Glob("testdata/err-*.star")
+	for _, tc := range files {
 		tc := tc
-		t.Run(ws.ReplaceAllString(tc.script, " "), func(t *testing.T) {
+		prefix := tc[:len(tc)-5]
+		t.Run(filepath.Base(prefix), func(t *testing.T) {
 			require := require.New(t)
 
-			r := strings.NewReader(tc.script)
-			_, err := Load("<test script>", r)
+			msg, err := ioutil.ReadFile(prefix + ".txt")
+			require.NoError(err)
+
+			r, err := os.Open(tc)
+			require.NoError(err)
+
+			_, err = Load("<test script>", r)
 			require.Error(err)
-			require.Contains(err.Error(), tc.message)
+			require.Contains(err.Error(), string(msg))
 		})
 	}
 }
