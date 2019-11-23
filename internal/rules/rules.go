@@ -82,7 +82,7 @@ func (r *Rule) Match(rawurl string) (string, error) {
 		}
 	}
 
-	path, err := r.rewritePath(parts)
+	path, err := r.rewriteURL(parts)
 	if err != nil {
 		return "", err
 	}
@@ -97,7 +97,7 @@ func (r *Rule) Match(rawurl string) (string, error) {
 	return path, nil
 }
 
-func (r *Rule) rewritePath(parts []string) (string, error) {
+func (r *Rule) rewriteURL(parts []string) (string, error) {
 	result := make([]string, 1, len(parts)+2)
 	result[0] = ""
 
@@ -109,7 +109,7 @@ func (r *Rule) rewritePath(parts []string) (string, error) {
 		}
 		result = append(result, part)
 	}
-	if r.slash == "always" {
+	if r.slash == "always" || len(parts) == 0 {
 		result = append(result, "")
 	}
 

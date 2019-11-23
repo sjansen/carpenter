@@ -1,0 +1,1 @@
+register_urls: "query-invalid-7" expected Dict, got string

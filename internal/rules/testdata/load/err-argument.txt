@@ -1,0 +1,1 @@
+register_urls: expected Dict, got int

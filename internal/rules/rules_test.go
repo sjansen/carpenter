@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,9 +13,9 @@ import (
 
 var expected = Rules{
 	{
-		id:     "views.root",
+		id:     "root",
 		dedup:  "never",
-		slash:  "always",
+		slash:  "strip",
 		parts:  []part{},
 		params: map[string]*param{},
 		tests: map[string]string{
@@ -22,7 +23,7 @@ var expected = Rules{
 			"/Spoon!": "",
 		},
 	}, {
-		id:    "views.always",
+		id:    "always",
 		dedup: "never",
 		slash: "always",
 		parts: []part{
@@ -36,7 +37,7 @@ var expected = Rules{
 			"/foo/": "/foo/",
 		},
 	}, {
-		id:    "views.never",
+		id:    "never",
 		dedup: "never",
 		slash: "never",
 		parts: []part{
@@ -50,7 +51,7 @@ var expected = Rules{
 			"/bar/": "",
 		},
 	}, {
-		id:    "views.strip",
+		id:    "strip",
 		dedup: "never",
 		slash: "strip",
 		parts: []part{
@@ -64,7 +65,7 @@ var expected = Rules{
 			"/baz/": "/baz",
 		},
 	}, {
-		id:    "views.regex",
+		id:    "regex",
 		dedup: "never",
 		slash: "always",
 		parts: []part{
@@ -105,7 +106,7 @@ var expected = Rules{
 			"/search?q=dogs&utf8=✔": "/search?q=X",
 		},
 	}, {
-		id:    "views.multi",
+		id:    "multi",
 		dedup: "never",
 		slash: "strip",
 		parts: []part{
@@ -147,7 +148,7 @@ var expected = Rules{
 func TestLoad(t *testing.T) {
 	require := require.New(t)
 
-	r, err := os.Open("testdata/valid.star")
+	r, err := os.Open("testdata/raw.star")
 	require.NoError(err)
 
 	actual, err := Load("<test script>", r)
@@ -157,7 +158,7 @@ func TestLoad(t *testing.T) {
 	// that reflect.DeepEqual considers equal to actual.
 	last := 6
 	require.Len(actual, last+1)
-	require.Equal("views.multi", actual[last].id)
+	require.Equal("multi", actual[last].id)
 
 	actualPart := actual[last].parts[3].(*regexPart)
 	require.IsType(&rewriteFunction{}, actualPart.rewriter)
@@ -173,7 +174,7 @@ func TestLoad(t *testing.T) {
 }
 
 func TestLoadErrors(t *testing.T) {
-	files, _ := filepath.Glob("testdata/err-*.star")
+	files, _ := filepath.Glob("testdata/load/err-*.star")
 	for _, tc := range files {
 		tc := tc
 		prefix := tc[:len(tc)-5]
@@ -182,13 +183,14 @@ func TestLoadErrors(t *testing.T) {
 
 			msg, err := ioutil.ReadFile(prefix + ".txt")
 			require.NoError(err)
+			expected := strings.TrimSpace(string(msg))
 
 			r, err := os.Open(tc)
 			require.NoError(err)
 
 			_, err = Load("<test script>", r)
 			require.Error(err)
-			require.Contains(err.Error(), string(msg))
+			require.Equal(expected, err.Error())
 		})
 	}
 }
@@ -196,7 +198,7 @@ func TestLoadErrors(t *testing.T) {
 func TestSelfTest(t *testing.T) {
 	require := require.New(t)
 
-	r, err := os.Open("testdata/valid.star")
+	r, err := os.Open("testdata/raw.star")
 	require.NoError(err)
 
 	rules, err := Load("<test script>", r)
@@ -204,4 +206,30 @@ func TestSelfTest(t *testing.T) {
 
 	err = rules.SelfTest()
 	require.NoError(err)
+}
+
+func TestSelfTestErrors(t *testing.T) {
+	files, _ := filepath.Glob("testdata/selftest/err-*.star")
+	for _, tc := range files {
+		tc := tc
+		prefix := tc[:len(tc)-5]
+		t.Run(filepath.Base(prefix), func(t *testing.T) {
+			require := require.New(t)
+
+			msg, err := ioutil.ReadFile(prefix + ".txt")
+			require.NoError(err)
+			expected := strings.TrimSpace(string(msg))
+
+			r, err := os.Open(tc)
+			require.NoError(err)
+
+			rules, err := Load("<test script>", r)
+			require.NoError(err)
+
+			err = rules.SelfTest()
+			require.Error(err)
+			require.Equal(expected, err.Error())
+			require.NotEmpty(expected)
+		})
+	}
 }

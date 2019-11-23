@@ -1,0 +1,1 @@
+register_urls: "path-missing" missing required key: "path"
