@@ -1,7 +1,9 @@
 register_urls({
-    "id": "invalid-test-case",
+    "id": "bad-lambda",
     "path": {
-        "parts": [],
+        "parts": [
+            (".*", lambda x: 42),
+        ],
         "slash": "strip",
     },
     "query": {
@@ -9,6 +11,6 @@ register_urls({
         "params": {},
     },
     "tests": {
-        "": "",
+        "/foo": "/bar",
     },
 })

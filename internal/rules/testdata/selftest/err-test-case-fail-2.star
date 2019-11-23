@@ -1,5 +1,5 @@
 register_urls({
-    "id": "first",
+    "id": "rfc3092",
     "path": {
         "parts": [
             ("foo|bar|baz", "rfc3092"),
@@ -16,17 +16,17 @@ register_urls({
         "/baz": "/rfc3092",
     },
 }, {
-    "id": "conflict",
+    "id": "shadowed-rule",
     "path": {
         "parts": ["foo"],
-        "slash": "never",
+        "slash": "always",
     },
     "query": {
         "dedup": "never",
         "params": {},
     },
     "tests": {
-        "/foo": "/foo",
-        "/foo/": "",
+        "/foo/": "/foo/",
     },
 })
+

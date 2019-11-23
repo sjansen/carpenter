@@ -39,27 +39,50 @@ func Load(filename string, src io.Reader) (Rules, error) {
 	return loader.rules, nil
 }
 
+func (rules Rules) Match(rawurl string) (id, url string, err error) {
+	for _, r := range rules {
+		match, err := r.Match(rawurl)
+		if err != nil {
+			return "", "", err
+		} else if match != "" {
+			return r.id, match, nil
+		}
+	}
+	return "", "", nil
+}
+
 func (rules Rules) SelfTest() error {
-	seen := map[string]string{}
+	matches := map[string]string{}
 	for _, r := range rules {
 		for rawurl, expected := range r.tests {
 			if expected != "" {
-				if prev, ok := seen[rawurl]; ok {
+				if prev, ok := matches[rawurl]; ok {
 					return fmt.Errorf(
-						`invalid test case: %q (already matched by %q)`,
-						rawurl, prev,
+						`duplicate test case: %q (rule=%q test=%q)`,
+						prev, r.id, rawurl,
 					)
 				}
-				seen[rawurl] = r.id
+				matches[rawurl] = r.id
 			}
 			if actual, err := r.Match(rawurl); err != nil {
 				return err
 			} else if expected != actual {
 				return fmt.Errorf(
-					"self-test failed: given=%q expected=%q actual=%q",
-					rawurl, expected, actual,
+					"unexpected result: expected=%q actual=%q (rule=%q test=%q)",
+					expected, actual, r.id, rawurl,
 				)
 			}
+		}
+	}
+	for rawurl, expected := range matches {
+		actual, _, err := rules.Match(rawurl)
+		if err != nil {
+			return err // should be unreachable
+		} else if expected != actual {
+			return fmt.Errorf(
+				"unexpected rule match: expected=%q actual=%q (test=%q)",
+				expected, actual, rawurl,
+			)
 		}
 	}
 	return nil

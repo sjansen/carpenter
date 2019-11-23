@@ -1,5 +1,5 @@
 register_urls({
-    "id": "first",
+    "id": "unexpected-result",
     "path": {
         "parts": [],
         "slash": "strip",

@@ -1,0 +1,1 @@
+unexpected rule match: expected="shadowed-rule" actual="rfc3092" (test="/foo/")
