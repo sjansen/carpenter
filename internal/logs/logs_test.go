@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseALB(t *testing.T) {
+func TestALB(t *testing.T) {
 	files, _ := filepath.Glob("testdata/alb-*.txt")
 	for _, tc := range files {
 		tc := tc
@@ -23,16 +23,15 @@ func TestParseALB(t *testing.T) {
 			data, err := ioutil.ReadFile(prefix + ".expected")
 			require.NoError(err)
 
-			expected := &ALB{}
-			err = json.Unmarshal(data, expected)
+			expected := map[string]string{}
+			err = json.Unmarshal(data, &expected)
 			require.NoError(err)
 
 			data, err = ioutil.ReadFile(tc)
 			require.NoError(err)
 			line := string(bytes.TrimSpace(data))
 
-			actual := &ALB{}
-			actual.Parse(line)
+			actual := ALB.Parse(line)
 			if !assert.Equal(expected, actual) {
 				data, err := json.MarshalIndent(actual, "", "  ")
 				require.NoError(err)

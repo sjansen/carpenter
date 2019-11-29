@@ -4,110 +4,49 @@ import (
 	"regexp"
 )
 
-var albRE = regexp.MustCompile(`^` +
-	`([^ ]*) ` + // type
-	`([^ ]*) ` + // timestamp
-	`([^ ]*) ` + // elb
-	`([^ ]*):([0-9]*) ` + // client:port
-	`([^ ]*)[:-]([0-9]*) ` + // target:port
-	`([-.0-9]*) ` + // request_processing_time
-	`([-.0-9]*) ` + // target_processing_time
-	`([-.0-9]*) ` + // response_processing_time
-	`([-0-9]*) ` + // elb_status_code
-	`(-|[-0-9]*) ` + // target_status_code
-	`([-0-9]*) ` + // received_bytes
-	`([-0-9]*) ` + // sent_bytes
-	`"([^ ]*) ([^ ]*) (- |[^ ]*)" ` + // "request"
-	`"([^"]*)" ` + // "user_agent"
-	`([A-Z0-9-]+) ` + // ssl_cipher
-	`([A-Za-z0-9.-]*) ` + // ssl_protocol
-	`([^ ]*) ` + // target_group_arn
-	`"([^"]*)" ` + // "trace_id"
-	`"([^"]*)" ` + // "domain_name"
-	`"([^"]*)" ` + // "chosen_cert_arn"
-	`([-.0-9]*) ` + // matched_rule_priority
-	`([^ ]*) ` + // request_creation_time
-	`"([^"]*)" ` + // "actions_executed"
-	`"([^"]*)"` + // "redirect_url"
-	`(?: "([^ ]*)")?` + // "error_reason"
-	`(?: "([^"]*)")?` + // "target:port_list"
-	`(?: "([^"]*)")?` + // "target_status_code_list"
-	`(.*?)$`,
-)
-
-var zeroALB = &ALB{}
-
-type ALB struct {
-	Proto                  string
-	Timestamp              string
-	ELB                    string
-	ClientIP               string
-	ClientPort             string
-	TargetIP               string
-	TargetPort             string
-	RequestProcessingTime  string
-	TargetProcessingTime   string
-	ResponseProcessingTime string
-	ELBStatusCode          string
-	TargetStatusCode       string
-	ReceivedBytes          string
-	SentBytes              string
-	RequestVerb            string
-	RequestURL             string
-	RequestProto           string
-	UserAgent              string
-	SSLCipher              string
-	SSLProtocol            string
-	TargetGroupARN         string
-	TraceID                string
-	DomainName             string
-	ChosenCertARN          string
-	MatchedRulePriority    string
-	RequestCreationTime    string
-	ActionsExecuted        string
-	RedirectURL            string
-	LambdaErrorReason      string
-	TargetPortList         string
-	TargetStatusCodeList   string
-	Extra                  string
+type Parser struct {
+	*regexp.Regexp
 }
 
-func (l *ALB) Parse(line string) {
-	m := albRE.FindStringSubmatch(line)
-	if m == nil {
-		*l = *zeroALB
-		return
+func (p *Parser) Parse(line string) map[string]string {
+	names := p.SubexpNames()[1:]
+	result := make(map[string]string, len(names))
+
+	values := p.FindStringSubmatch(line)
+	for i, key := range names {
+		result[key] = values[i+1]
 	}
-	l.Proto = m[1]
-	l.Timestamp = m[2]
-	l.ELB = m[3]
-	l.ClientIP = m[4]
-	l.ClientPort = m[5]
-	l.TargetIP = m[6]
-	l.TargetPort = m[7]
-	l.RequestProcessingTime = m[8]
-	l.TargetProcessingTime = m[9]
-	l.ResponseProcessingTime = m[10]
-	l.ELBStatusCode = m[11]
-	l.TargetStatusCode = m[12]
-	l.ReceivedBytes = m[13]
-	l.SentBytes = m[14]
-	l.RequestVerb = m[15]
-	l.RequestURL = m[16]
-	l.RequestProto = m[17]
-	l.UserAgent = m[18]
-	l.SSLCipher = m[19]
-	l.SSLProtocol = m[20]
-	l.TargetGroupARN = m[21]
-	l.TraceID = m[22]
-	l.DomainName = m[23]
-	l.ChosenCertARN = m[24]
-	l.MatchedRulePriority = m[25]
-	l.RequestCreationTime = m[26]
-	l.ActionsExecuted = m[27]
-	l.RedirectURL = m[28]
-	l.LambdaErrorReason = m[29]
-	l.TargetPortList = m[30]
-	l.TargetStatusCodeList = m[31]
-	l.Extra = m[32]
+
+	return result
 }
+
+var ALB = &Parser{regexp.MustCompile(`^` +
+	`(?P<type>[^ ]*) ` +
+	`(?P<timestamp>[^ ]*) ` +
+	`(?P<lb>[^ ]*) ` +
+	`(?P<client_ip>[^ ]*):(?P<client_port>[0-9]*) ` +
+	`(?P<target_ip>[^ ]*)[:-](?P<target_port>[0-9]*) ` +
+	`(?P<request_processing_time>[-.0-9]*) ` +
+	`(?P<target_processing_time>[-.0-9]*) ` +
+	`(?P<response_processing_time>[-.0-9]*) ` +
+	`(?P<lb_status_code>[-0-9]*) ` +
+	`(?P<target_status_code>-|[-0-9]*) ` +
+	`(?P<received_bytes>[-0-9]*) ` +
+	`(?P<sent_bytes>[-0-9]*) ` +
+	`"(?P<request_verb>[^ ]*) (?P<request_url>[^ ]*) (?P<request_proto>- |[^ ]*)" ` +
+	`"(?P<user_agent>[^"]*)" ` +
+	`(?P<tls_cipher>[A-Z0-9-]+) ` +
+	`(?P<tls_protocol>[A-Za-z0-9.-]*) ` +
+	`(?P<target_group_arn>[^ ]*) ` +
+	`"(?P<trace_id>[^"]*)" ` +
+	`"(?P<domain_name>[^"]*)" ` +
+	`"(?P<chosen_cert_arn>[^"]*)" ` +
+	`(?P<matched_rule_priority>[-.0-9]*) ` +
+	`(?P<request_creation_time>[^ ]*) ` +
+	`"(?P<actions_executed>[^"]*)" ` +
+	`"(?P<redirect_url>[^"]*)"` +
+	`(?: "(?P<error_reason>[^ ]*)")?` +
+	`(?: "(?P<target_list>[^"]*)")?` +
+	`(?: "(?P<target_status_code_list>[^"]*)")?` +
+	`(?:.*?)$`,
+)}
