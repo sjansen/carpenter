@@ -1,11 +1,37 @@
 package parser
 
 import (
+	"io/ioutil"
 	"regexp"
+
+	"github.com/sjansen/carpenter/internal/data"
+	"github.com/ua-parser/uap-go/uaparser"
 )
 
 type Parser struct {
 	*regexp.Regexp
+
+	uaparser *uaparser.Parser
+}
+
+func (p *Parser) EnableUserAgentParsing() error {
+	r, err := data.Assets.Open("regexes.yaml")
+	if err != nil {
+		return err
+	}
+
+	bytes, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+
+	uap, err := uaparser.NewFromBytes(bytes)
+	if err != nil {
+		return err
+	}
+
+	p.uaparser = uap
+	return nil
 }
 
 func (p *Parser) Parse(line string) map[string]string {
@@ -15,6 +41,20 @@ func (p *Parser) Parse(line string) map[string]string {
 	values := p.FindStringSubmatch(line)
 	for i, key := range names {
 		result[key] = values[i+1]
+	}
+
+	uagent, ok := result["user_agent"]
+	if ok && p.uaparser != nil {
+		client := p.uaparser.Parse(uagent)
+		result["client_device_family"] = client.Device.Family
+		result["client_os_family"] = client.Os.Family
+		result["client_os_major"] = client.Os.Major
+		result["client_os_minor"] = client.Os.Minor
+		result["client_os_patch"] = client.Os.Patch
+		result["client_ua_family"] = client.UserAgent.Family
+		result["client_ua_major"] = client.UserAgent.Major
+		result["client_ua_minor"] = client.UserAgent.Minor
+		result["client_ua_patch"] = client.UserAgent.Patch
 	}
 
 	return result
@@ -49,4 +89,4 @@ var ALB = &Parser{regexp.MustCompile(`^` +
 	`(?: "(?P<target_list>[^"]*)")?` +
 	`(?: "(?P<target_status_code_list>[^"]*)")?` +
 	`(?:.*?)$`, // debug with (?P<>...)
-)}
+), nil}

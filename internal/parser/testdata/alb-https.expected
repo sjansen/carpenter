@@ -1,8 +1,17 @@
 {
   "actions_executed": "authenticate,forward",
   "chosen_cert_arn": "arn:aws:acm:us-east-2:123456789012:certificate/12345678-1234-1234-1234-123456789012",
+  "client_device_family": "Other",
   "client_ip": "192.168.131.39",
+  "client_os_family": "Windows",
+  "client_os_major": "7",
+  "client_os_minor": "",
+  "client_os_patch": "",
   "client_port": "2817",
+  "client_ua_family": "Firefox",
+  "client_ua_major": "47",
+  "client_ua_minor": "0",
+  "client_ua_patch": "",
   "domain_name": "www.example.com",
   "error_reason": "-",
   "lb": "app/my-loadbalancer/50dc6c495c0c9188",
@@ -29,5 +38,5 @@
   "tls_protocol": "TLSv1.2",
   "trace_id": "Root=1-58337281-1d84f3d73c47ec4e58577259",
   "type": "https",
-  "user_agent": "curl/7.46.0"
+  "user_agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0"
 }

@@ -14,6 +14,9 @@ import (
 )
 
 func TestALB(t *testing.T) {
+	err := parser.ALB.EnableUserAgentParsing()
+	require.NoError(t, err)
+
 	files, _ := filepath.Glob("testdata/alb-*.txt")
 	for _, tc := range files {
 		tc := tc
