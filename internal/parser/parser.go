@@ -1,4 +1,4 @@
-package logs
+package parser
 
 import (
 	"regexp"
@@ -48,5 +48,5 @@ var ALB = &Parser{regexp.MustCompile(`^` +
 	`(?: "(?P<error_reason>[^ ]*)")?` +
 	`(?: "(?P<target_list>[^"]*)")?` +
 	`(?: "(?P<target_status_code_list>[^"]*)")?` +
-	`(?:.*?)$`,
+	`(?:.*?)$`, // debug with (?P<>...)
 )}

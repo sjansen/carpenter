@@ -1,4 +1,4 @@
-package logs
+package parser_test
 
 import (
 	"bytes"
@@ -9,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sjansen/carpenter/internal/parser"
 )
 
 func TestALB(t *testing.T) {
@@ -31,7 +33,7 @@ func TestALB(t *testing.T) {
 			require.NoError(err)
 			line := string(bytes.TrimSpace(data))
 
-			actual := ALB.Parse(line)
+			actual := parser.ALB.Parse(line)
 			if !assert.Equal(expected, actual) {
 				data, err := json.MarshalIndent(actual, "", "  ")
 				require.NoError(err)
