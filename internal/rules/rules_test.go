@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -8,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sjansen/carpenter/internal/logger"
+	"github.com/sjansen/carpenter/internal/sys"
 	"github.com/stretchr/testify/require"
 )
 
@@ -204,7 +207,14 @@ func TestSelfTest(t *testing.T) {
 	rules, err := Load("<test script>", r)
 	require.NoError(err)
 
-	err = rules.SelfTest()
+	var stdout, stderr bytes.Buffer
+	sys := &sys.IO{
+		Log:    logger.Discard(),
+		Stdout: &stdout,
+		Stderr: &stderr,
+	}
+
+	err = rules.SelfTest(sys)
 	require.NoError(err)
 }
 
@@ -226,7 +236,14 @@ func TestSelfTestErrors(t *testing.T) {
 			rules, err := Load("<test script>", r)
 			require.NoError(err)
 
-			err = rules.SelfTest()
+			var stdout, stderr bytes.Buffer
+			sys := &sys.IO{
+				Log:    logger.Discard(),
+				Stdout: &stdout,
+				Stderr: &stderr,
+			}
+
+			err = rules.SelfTest(sys)
 			require.Error(err)
 			require.Equal(expected, err.Error())
 			require.NotEmpty(expected)

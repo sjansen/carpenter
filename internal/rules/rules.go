@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"sort"
 	"strings"
 
+	"github.com/sjansen/carpenter/internal/sys"
 	"go.starlark.net/starlark"
 )
 
@@ -51,10 +53,13 @@ func (rules Rules) Match(rawurl string) (id, url string, err error) {
 	return "", "", nil
 }
 
-func (rules Rules) SelfTest() error {
+func (rules Rules) SelfTest(sys *sys.IO) error {
 	matches := map[string]string{}
+	rawurls := make([]string, 0, len(rules))
+	sys.Log.Debug("starting rule-specific tests...")
 	for _, r := range rules {
 		for rawurl, expected := range r.tests {
+			sys.Log.Debugf("testing rule=%q url=%q", r.id, rawurl)
 			if expected != "" {
 				if prev, ok := matches[rawurl]; ok {
 					return fmt.Errorf(
@@ -63,6 +68,7 @@ func (rules Rules) SelfTest() error {
 					)
 				}
 				matches[rawurl] = r.id
+				rawurls = append(rawurls, rawurl)
 			}
 			if actual, err := r.Match(rawurl); err != nil {
 				return err
@@ -74,7 +80,11 @@ func (rules Rules) SelfTest() error {
 			}
 		}
 	}
-	for rawurl, expected := range matches {
+	sys.Log.Debug("testing against all rules...")
+	sort.Strings(rawurls)
+	for _, rawurl := range rawurls {
+		sys.Log.Debugf("testing url=%q", rawurl)
+		expected := matches[rawurl]
 		actual, _, err := rules.Match(rawurl)
 		if err != nil {
 			return err // should be unreachable
