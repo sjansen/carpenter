@@ -35,10 +35,13 @@ func (p *Parser) EnableUserAgentParsing() error {
 }
 
 func (p *Parser) Parse(line string) map[string]string {
+	values := p.FindStringSubmatch(line)
+	if values == nil {
+		return nil
+	}
+
 	names := p.SubexpNames()[1:]
 	result := make(map[string]string, len(names))
-
-	values := p.FindStringSubmatch(line)
 	for i, key := range names {
 		result[key] = values[i+1]
 	}

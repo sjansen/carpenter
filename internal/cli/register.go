@@ -30,5 +30,6 @@ func RegisterCommands(version string) *ArgParser {
 	registerVersion(parser, version)
 	registerTest(parser)
 	registerTestCases(parser)
+	registerTransform(parser)
 	return parser
 }
