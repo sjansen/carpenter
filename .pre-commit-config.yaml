@@ -20,3 +20,10 @@ repos:
       entry: revive -exclude ./vendor/... ./...
       pass_filenames: false
       types: [go]
+   -  id: starlark
+      name: starlark
+      language: system
+      entry: buildifier -mode check
+      pass_filenames: true
+      files: '.*\.star$'
+      exclude: '/err-'
