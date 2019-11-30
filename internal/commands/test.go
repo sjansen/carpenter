@@ -22,5 +22,6 @@ func (c *TestCmd) Run(base *Base) error {
 		return err
 	}
 
-	return rules.SelfTest(&base.IO)
+	_, err = rules.SelfTest(&base.IO)
+	return err
 }

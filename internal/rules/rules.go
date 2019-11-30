@@ -53,7 +53,7 @@ func (rules Rules) Match(rawurl string) (id, url string, err error) {
 	return "", "", nil
 }
 
-func (rules Rules) SelfTest(sys *sys.IO) error {
+func (rules Rules) SelfTest(sys *sys.IO) (map[string]string, error) {
 	matches := map[string]string{}
 	rawurls := make([]string, 0, len(rules))
 	sys.Log.Debug("starting rule-specific tests...")
@@ -62,7 +62,7 @@ func (rules Rules) SelfTest(sys *sys.IO) error {
 			sys.Log.Debugf("testing rule=%q url=%q", r.id, rawurl)
 			if expected != "" {
 				if prev, ok := matches[rawurl]; ok {
-					return fmt.Errorf(
+					return nil, fmt.Errorf(
 						`duplicate test case: %q (rule=%q test=%q)`,
 						prev, r.id, rawurl,
 					)
@@ -71,9 +71,9 @@ func (rules Rules) SelfTest(sys *sys.IO) error {
 				rawurls = append(rawurls, rawurl)
 			}
 			if actual, err := r.Match(rawurl); err != nil {
-				return err
+				return nil, err
 			} else if expected != actual {
-				return fmt.Errorf(
+				return nil, fmt.Errorf(
 					"unexpected result: expected=%q actual=%q (rule=%q test=%q)",
 					expected, actual, r.id, rawurl,
 				)
@@ -87,15 +87,15 @@ func (rules Rules) SelfTest(sys *sys.IO) error {
 		expected := matches[rawurl]
 		actual, _, err := rules.Match(rawurl)
 		if err != nil {
-			return err // should be unreachable
+			return nil, err // should be unreachable
 		} else if expected != actual {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"unexpected rule match: expected=%q actual=%q (test=%q)",
 				expected, actual, rawurl,
 			)
 		}
 	}
-	return nil
+	return matches, nil
 }
 
 func (r *Rule) Match(rawurl string) (string, error) {

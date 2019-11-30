@@ -214,8 +214,9 @@ func TestSelfTest(t *testing.T) {
 		Stderr: &stderr,
 	}
 
-	err = rules.SelfTest(sys)
+	testcases, err := rules.SelfTest(sys)
 	require.NoError(err)
+	require.NotNil(testcases)
 }
 
 func TestSelfTestErrors(t *testing.T) {
@@ -243,7 +244,8 @@ func TestSelfTestErrors(t *testing.T) {
 				Stderr: &stderr,
 			}
 
-			err = rules.SelfTest(sys)
+			testcases, err := rules.SelfTest(sys)
+			require.Nil(testcases)
 			require.Error(err)
 			require.Equal(expected, err.Error())
 			require.NotEmpty(expected)

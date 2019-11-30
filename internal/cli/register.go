@@ -29,5 +29,6 @@ func RegisterCommands(version string) *ArgParser {
 
 	registerVersion(parser, version)
 	registerTest(parser)
+	registerTestCases(parser)
 	return parser
 }
