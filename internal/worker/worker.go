@@ -19,15 +19,19 @@ type Task struct {
 	Suffix string
 }
 
-func Transform(t *Task) error {
-	f, err := os.Open(t.Src)
+type Transformer struct {
+	Parser *parser.Parser
+}
+
+func (t *Transformer) Transform(task *Task) error {
+	f, err := os.Open(task.Src)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
 	var r io.ReadCloser = f
-	if strings.HasSuffix(t.Src, ".gz") {
+	if strings.HasSuffix(task.Src, ".gz") {
 		r, err = gzip.NewReader(r)
 		if err != nil {
 			return err
@@ -35,7 +39,7 @@ func Transform(t *Task) error {
 		defer r.Close()
 	}
 
-	w, err := os.OpenFile(t.Dst, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	w, err := os.OpenFile(task.Dst, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		return err
 	}
@@ -43,15 +47,20 @@ func Transform(t *Task) error {
 
 	src := bufio.NewReader(r)
 	dst := csv.NewWriter(w)
+	return t.transform(src, dst)
+}
+
+func (t *Transformer) transform(src *bufio.Reader, dst *csv.Writer) error {
 	defer dst.Flush()
 
 	var cols []string
-	var vals []string
+	var row []string
 	for {
-		var line string
-		line, err = src.ReadString('\n')
-		if err != nil {
+		line, err := src.ReadString('\n')
+		if err == io.EOF {
 			break
+		} else if err != nil {
+			return err
 		}
 
 		line = strings.TrimSpace(line)
@@ -59,12 +68,12 @@ func Transform(t *Task) error {
 			continue
 		}
 
-		parsed := parser.ALB.Parse(line)
+		parsed := t.Parser.Parse(line)
 		if parsed == nil {
 			continue
 		} else if cols == nil {
 			cols = make([]string, 0, len(parsed))
-			vals = make([]string, len(parsed))
+			row = make([]string, len(parsed))
 			for k := range parsed {
 				cols = append(cols, k)
 			}
@@ -74,15 +83,12 @@ func Transform(t *Task) error {
 
 		for i, k := range cols {
 			if v, ok := parsed[k]; ok {
-				vals[i] = v
+				row[i] = v
 			} else {
-				vals[i] = ""
+				row[i] = ""
 			}
 		}
-		dst.Write(vals)
-	}
-	if err != io.EOF {
-		return err
+		dst.Write(row)
 	}
 
 	return dst.Error()

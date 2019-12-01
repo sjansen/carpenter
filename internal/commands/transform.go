@@ -25,6 +25,10 @@ func (c *TransformCmd) Run(base *Base) error {
 		return err
 	}
 
+	transformer := &worker.Transformer{
+		Parser: parser.ALB,
+	}
+
 	return filepath.Walk(c.SrcDir, func(src string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -33,7 +37,7 @@ func (c *TransformCmd) Run(base *Base) error {
 		}
 
 		task := c.newTask(src)
-		return worker.Transform(task)
+		return transformer.Transform(task)
 	})
 }
 
