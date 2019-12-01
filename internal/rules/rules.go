@@ -70,7 +70,7 @@ func (rules Rules) SelfTest(sys *sys.IO) (map[string]string, error) {
 				matches[rawurl] = r.id
 				rawurls = append(rawurls, rawurl)
 			}
-			if actual, err := r.Match(rawurl); err != nil {
+			if actual, err := r.Test(rawurl); err != nil {
 				return nil, err
 			} else if expected != actual {
 				return nil, fmt.Errorf(
@@ -99,9 +99,9 @@ func (rules Rules) SelfTest(sys *sys.IO) (map[string]string, error) {
 }
 
 func (r *Rule) Match(rawurl string) (string, error) {
-	url, err := r.validateTestCase(rawurl)
+	url, err := url.Parse(rawurl)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf(`unable to parse url: %q (%s)`, rawurl, err.Error())
 	}
 
 	parts, ok := r.splitPath(url.Path)
@@ -128,6 +128,14 @@ func (r *Rule) Match(rawurl string) (string, error) {
 	}
 
 	return path, nil
+}
+
+func (r *Rule) Test(rawurl string) (string, error) {
+	if len(rawurl) < 1 || rawurl[0] != '/' {
+		return "", fmt.Errorf(`invalid test case: %q (should start with "/")`, rawurl)
+	}
+
+	return r.Match(rawurl)
 }
 
 func (r *Rule) rewriteURL(parts []string) (string, error) {
@@ -191,17 +199,4 @@ func (r *Rule) splitPath(path string) ([]string, bool) {
 
 	parts := strings.Split(path, "/")
 	return parts[1:], true
-}
-
-func (r *Rule) validateTestCase(rawurl string) (*url.URL, error) {
-	if len(rawurl) < 1 || rawurl[0] != '/' {
-		return nil, fmt.Errorf(`invalid test case: %q (should start with "/")`, rawurl)
-	}
-
-	url, err := url.Parse(rawurl)
-	if err != nil {
-		return nil, fmt.Errorf(`invalid test case: %q (%s)`, rawurl, err.Error())
-	}
-
-	return url, nil
 }

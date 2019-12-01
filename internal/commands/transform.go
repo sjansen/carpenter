@@ -7,10 +7,12 @@ import (
 	"strings"
 
 	"github.com/sjansen/carpenter/internal/parser"
+	"github.com/sjansen/carpenter/internal/rules"
 	"github.com/sjansen/carpenter/internal/worker"
 )
 
 type TransformCmd struct {
+	Rules  string
 	SrcDir string
 	DstDir string
 	ErrDir string
@@ -21,12 +23,21 @@ func (c *TransformCmd) Run(base *Base) error {
 		return err
 	}
 
-	if err := parser.ALB.EnableUserAgentParsing(); err != nil {
+	r, err := os.Open(c.Rules)
+	if err != nil {
+		return err
+	}
+	rules, err := rules.Load(c.Rules, r)
+	if err != nil {
 		return err
 	}
 
 	transformer := &worker.Transformer{
 		Parser: parser.ALB,
+		Rules:  rules,
+	}
+	if err := parser.ALB.EnableUserAgentParsing(); err != nil {
+		return err
 	}
 
 	return filepath.Walk(c.SrcDir, func(src string, info os.FileInfo, err error) error {

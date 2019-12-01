@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/sjansen/carpenter/internal/parser"
+	"github.com/sjansen/carpenter/internal/rules"
 )
 
 type Task struct {
@@ -21,6 +22,7 @@ type Task struct {
 
 type Transformer struct {
 	Parser *parser.Parser
+	Rules  rules.Rules
 }
 
 func (t *Transformer) Transform(task *Task) error {
@@ -72,13 +74,25 @@ func (t *Transformer) transform(src *bufio.Reader, dst *csv.Writer) error {
 		if parsed == nil {
 			continue
 		} else if cols == nil {
-			cols = make([]string, 0, len(parsed))
-			row = make([]string, len(parsed))
+			cols = make([]string, 0, len(parsed)+2)
+			row = make([]string, cap(cols))
 			for k := range parsed {
 				cols = append(cols, k)
 			}
+			cols = append(cols, "url_pattern")
+			cols = append(cols, "url_normalized")
 			sort.Strings(cols)
 			dst.Write(cols)
+		}
+
+		rawurl, ok := parsed["request_url"]
+		if ok {
+			rule, normalized, err := t.Rules.Match(rawurl)
+			if err != nil {
+				return err
+			}
+			parsed["url_pattern"] = rule
+			parsed["url_normalized"] = normalized
 		}
 
 		for i, k := range cols {

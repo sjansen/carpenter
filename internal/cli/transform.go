@@ -5,6 +5,8 @@ import "github.com/sjansen/carpenter/internal/commands"
 func registerTransform(p *ArgParser) {
 	c := &commands.TransformCmd{}
 	cmd := p.addCommand(c, "transform", "TODO")
+	cmd.Arg("RULES", "Rules file").Required().
+		ExistingFileVar(&c.Rules)
 	cmd.Arg("SRC", "Source directory").Required().
 		ExistingDirVar(&c.SrcDir)
 	cmd.Arg("DST", "Target directory").Required().
