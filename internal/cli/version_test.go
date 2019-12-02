@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sjansen/carpenter/internal/cli"
-	"github.com/sjansen/carpenter/internal/commands"
+	"github.com/sjansen/carpenter/internal/cmd"
 )
 
 func TestVersion(t *testing.T) {
@@ -24,7 +24,7 @@ func TestVersion(t *testing.T) {
 		args: []string{
 			"version",
 		},
-		expected: &commands.VersionCmd{
+		expected: &cmd.VersionCmd{
 			App:       "carpenter",
 			Build:     "test",
 			BuildInfo: info,
@@ -34,21 +34,21 @@ func TestVersion(t *testing.T) {
 		args: []string{
 			"version", "--long",
 		},
-		expected: &commands.VersionCmd{
+		expected: &cmd.VersionCmd{
 			App:       "carpenter",
 			Build:     "test",
 			BuildInfo: info,
 			Verbose:   true,
 		},
 	}} {
-		cmd, err := parser.Parse(tc.args)
+		c, err := parser.Parse(tc.args)
 		if tc.expectError {
 			require.Error(err)
 		} else {
 			require.NoError(err)
 
 			var stdout, stderr bytes.Buffer
-			err = cmd(&stdout, &stderr)
+			err = c(&stdout, &stderr)
 			require.NoError(err)
 
 			require.Contains(stdout.String(), "test-version")

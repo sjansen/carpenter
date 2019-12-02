@@ -1,1 +1,0 @@
-duplicate test case: "original-test-case" (rule="duplicate-test-case" test="/foo")

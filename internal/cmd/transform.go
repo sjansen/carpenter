@@ -1,4 +1,4 @@
-package commands
+package cmd
 
 import (
 	"fmt"
@@ -6,16 +6,16 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sjansen/carpenter/internal/parser"
-	"github.com/sjansen/carpenter/internal/rules"
-	"github.com/sjansen/carpenter/internal/worker"
+	"github.com/sjansen/carpenter/internal/patterns"
+	"github.com/sjansen/carpenter/internal/tokenizer"
+	"github.com/sjansen/carpenter/internal/transformer"
 )
 
 type TransformCmd struct {
-	Rules  string
-	SrcDir string
-	DstDir string
-	ErrDir string
+	Patterns string
+	SrcDir   string
+	DstDir   string
+	ErrDir   string
 }
 
 func (c *TransformCmd) Run(base *Base) error {
@@ -23,20 +23,20 @@ func (c *TransformCmd) Run(base *Base) error {
 		return err
 	}
 
-	r, err := os.Open(c.Rules)
+	r, err := os.Open(c.Patterns)
 	if err != nil {
 		return err
 	}
-	rules, err := rules.Load(c.Rules, r)
+	patterns, err := patterns.Load(c.Patterns, r)
 	if err != nil {
 		return err
 	}
 
-	transformer := &worker.Transformer{
-		Parser: parser.ALB,
-		Rules:  rules,
+	transformer := &transformer.Transformer{
+		Patterns:  patterns,
+		Tokenizer: tokenizer.ALB,
 	}
-	if err := parser.ALB.EnableUserAgentParsing(); err != nil {
+	if err := tokenizer.ALB.EnableUserAgentParsing(); err != nil {
 		return err
 	}
 
@@ -52,7 +52,7 @@ func (c *TransformCmd) Run(base *Base) error {
 	})
 }
 
-func (c *TransformCmd) newTask(src string) *worker.Task {
+func (c *TransformCmd) newTask(src string) *transformer.Task {
 	suffix := src[len(c.SrcDir):]
 	if strings.HasSuffix(suffix, ".gz") {
 		suffix = suffix[:len(suffix)-3]
@@ -63,7 +63,7 @@ func (c *TransformCmd) newTask(src string) *worker.Task {
 	}
 
 	dst := filepath.Join(c.DstDir, suffix+".csv")
-	return &worker.Task{
+	return &transformer.Task{
 		Src:    src,
 		Dst:    dst,
 		ErrDir: c.ErrDir,

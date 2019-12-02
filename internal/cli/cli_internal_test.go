@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/sjansen/carpenter/internal/commands"
+	"github.com/sjansen/carpenter/internal/cmd"
 )
 
 func TestArgParser(t *testing.T) {
@@ -20,7 +20,7 @@ func TestArgParser(t *testing.T) {
 		args: []string{
 			"version",
 		},
-		expected: &commands.VersionCmd{
+		expected: &cmd.VersionCmd{
 			App:   "carpenter",
 			Build: "test",
 		},

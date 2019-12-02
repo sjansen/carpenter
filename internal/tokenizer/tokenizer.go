@@ -1,4 +1,4 @@
-package parser
+package tokenizer
 
 import (
 	"io/ioutil"
@@ -8,13 +8,13 @@ import (
 	"github.com/ua-parser/uap-go/uaparser"
 )
 
-type Parser struct {
+type Tokenizer struct {
 	*regexp.Regexp
 
 	uaparser *uaparser.Parser
 }
 
-func (p *Parser) EnableUserAgentParsing() error {
+func (t *Tokenizer) EnableUserAgentParsing() error {
 	r, err := data.Assets.Open("regexes.yaml")
 	if err != nil {
 		return err
@@ -30,25 +30,25 @@ func (p *Parser) EnableUserAgentParsing() error {
 		return err
 	}
 
-	p.uaparser = uap
+	t.uaparser = uap
 	return nil
 }
 
-func (p *Parser) Parse(line string) map[string]string {
-	values := p.FindStringSubmatch(line)
+func (t *Tokenizer) Tokenize(line string) map[string]string {
+	values := t.FindStringSubmatch(line)
 	if values == nil {
 		return nil
 	}
 
-	names := p.SubexpNames()[1:]
+	names := t.SubexpNames()[1:]
 	result := make(map[string]string, len(names))
 	for i, key := range names {
 		result[key] = values[i+1]
 	}
 
 	uagent, ok := result["user_agent"]
-	if ok && p.uaparser != nil {
-		client := p.uaparser.Parse(uagent)
+	if ok && t.uaparser != nil {
+		client := t.uaparser.Parse(uagent)
 		result["client_device_family"] = client.Device.Family
 		result["client_os_family"] = client.Os.Family
 		result["client_os_major"] = client.Os.Major
@@ -63,7 +63,7 @@ func (p *Parser) Parse(line string) map[string]string {
 	return result
 }
 
-var ALB = &Parser{regexp.MustCompile(`^` +
+var ALB = &Tokenizer{regexp.MustCompile(`^` +
 	`(?P<type>[^ ]*) ` +
 	`(?P<timestamp>[^ ]*) ` +
 	`(?P<lb>[^ ]*) ` +

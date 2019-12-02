@@ -1,10 +1,10 @@
-package commands
+package cmd
 
 import (
 	"encoding/json"
 	"os"
 
-	"github.com/sjansen/carpenter/internal/rules"
+	"github.com/sjansen/carpenter/internal/patterns"
 )
 
 type TestCasesCmd struct {
@@ -18,12 +18,12 @@ func (c *TestCasesCmd) Run(base *Base) error {
 		return err
 	}
 
-	rules, err := rules.Load(c.File, r)
+	patterns, err := patterns.Load(c.File, r)
 	if err != nil {
 		return err
 	}
 
-	testcases, err := rules.SelfTest(&base.IO)
+	testcases, err := patterns.SelfTest(&base.IO)
 	if err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-package parser_test
+package tokenizer_test
 
 import (
 	"bytes"
@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sjansen/carpenter/internal/parser"
+	"github.com/sjansen/carpenter/internal/tokenizer"
 )
 
 func TestALB(t *testing.T) {
-	err := parser.ALB.EnableUserAgentParsing()
+	err := tokenizer.ALB.EnableUserAgentParsing()
 	require.NoError(t, err)
 
 	files, _ := filepath.Glob("testdata/alb-*.txt")
@@ -36,7 +36,7 @@ func TestALB(t *testing.T) {
 			require.NoError(err)
 			line := string(bytes.TrimSpace(data))
 
-			actual := parser.ALB.Parse(line)
+			actual := tokenizer.ALB.Tokenize(line)
 			if !assert.Equal(expected, actual) {
 				data, err := json.MarshalIndent(actual, "", "  ")
 				require.NoError(err)

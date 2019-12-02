@@ -5,14 +5,14 @@ import (
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/sjansen/carpenter/internal/commands"
+	"github.com/sjansen/carpenter/internal/cmd"
 	"github.com/sjansen/carpenter/internal/logger"
 )
 
 // An ArgParser contains the definitions of flags, arguments and commands for an application
 type ArgParser struct {
 	app     *kingpin.Application
-	base    *commands.Base
+	base    *cmd.Base
 	cmd     command
 	version string
 
@@ -24,7 +24,7 @@ type ArgParser struct {
 type Command func(stdout, stderr io.Writer) error
 
 type command interface {
-	Run(base *commands.Base) error
+	Run(base *cmd.Base) error
 }
 
 // Parse converts command line arguments into a Command

@@ -1,4 +1,4 @@
-package worker
+package transformer
 
 import (
 	"bufio"
@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sjansen/carpenter/internal/parser"
-	"github.com/sjansen/carpenter/internal/rules"
+	"github.com/sjansen/carpenter/internal/patterns"
+	"github.com/sjansen/carpenter/internal/tokenizer"
 )
 
 type Task struct {
@@ -21,8 +21,8 @@ type Task struct {
 }
 
 type Transformer struct {
-	Parser *parser.Parser
-	Rules  rules.Rules
+	Patterns  patterns.Patterns
+	Tokenizer *tokenizer.Tokenizer
 }
 
 func (t *Transformer) Transform(task *Task) error {
@@ -70,13 +70,13 @@ func (t *Transformer) transform(src *bufio.Reader, dst *csv.Writer) error {
 			continue
 		}
 
-		parsed := t.Parser.Parse(line)
-		if parsed == nil {
+		tokens := t.Tokenizer.Tokenize(line)
+		if tokens == nil {
 			continue
 		} else if cols == nil {
-			cols = make([]string, 0, len(parsed)+2)
+			cols = make([]string, 0, len(tokens)+2)
 			row = make([]string, cap(cols))
-			for k := range parsed {
+			for k := range tokens {
 				cols = append(cols, k)
 			}
 			cols = append(cols, "url_pattern")
@@ -85,18 +85,18 @@ func (t *Transformer) transform(src *bufio.Reader, dst *csv.Writer) error {
 			dst.Write(cols)
 		}
 
-		rawurl, ok := parsed["request_url"]
+		rawurl, ok := tokens["request_url"]
 		if ok {
-			rule, normalized, err := t.Rules.Match(rawurl)
+			pattern, normalized, err := t.Patterns.Match(rawurl)
 			if err != nil {
 				return err
 			}
-			parsed["url_pattern"] = rule
-			parsed["url_normalized"] = normalized
+			tokens["url_pattern"] = pattern
+			tokens["url_normalized"] = normalized
 		}
 
 		for i, k := range cols {
-			if v, ok := parsed[k]; ok {
+			if v, ok := tokens[k]; ok {
 				row[i] = v
 			} else {
 				row[i] = ""

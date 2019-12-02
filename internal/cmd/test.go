@@ -1,9 +1,9 @@
-package commands
+package cmd
 
 import (
 	"os"
 
-	"github.com/sjansen/carpenter/internal/rules"
+	"github.com/sjansen/carpenter/internal/patterns"
 )
 
 type TestCmd struct {
@@ -17,11 +17,11 @@ func (c *TestCmd) Run(base *Base) error {
 		return err
 	}
 
-	rules, err := rules.Load(c.File, r)
+	patterns, err := patterns.Load(c.File, r)
 	if err != nil {
 		return err
 	}
 
-	_, err = rules.SelfTest(&base.IO)
+	_, err = patterns.SelfTest(&base.IO)
 	return err
 }

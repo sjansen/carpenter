@@ -1,10 +1,10 @@
 package cli
 
-import "github.com/sjansen/carpenter/internal/commands"
+import "github.com/sjansen/carpenter/internal/cmd"
 
 func registerTest(p *ArgParser) {
-	c := &commands.TestCmd{}
-	cmd := p.addCommand(c, "test", "Evaluate rules file self tests")
-	cmd.Arg("FILE", "A rules file").Required().
+	c := &cmd.TestCmd{}
+	cmd := p.addCommand(c, "test", "Evaluate pattern file self tests")
+	cmd.Arg("FILE", "A pattern file").Required().
 		ExistingFileVar(&c.File)
 }

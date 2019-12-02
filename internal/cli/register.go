@@ -5,7 +5,7 @@ import (
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/sjansen/carpenter/internal/commands"
+	"github.com/sjansen/carpenter/internal/cmd"
 )
 
 // RegisterCommands creates the app's standard ArgParser
@@ -14,7 +14,7 @@ func RegisterCommands(version string) *ArgParser {
 		New("carpenter", "TODO").
 		UsageTemplate(kingpin.CompactUsageTemplate)
 
-	base := &commands.Base{}
+	base := &cmd.Base{}
 	parser := &ArgParser{
 		app:     app,
 		base:    base,

@@ -1,12 +1,12 @@
 package cli
 
-import "github.com/sjansen/carpenter/internal/commands"
+import "github.com/sjansen/carpenter/internal/cmd"
 
 func registerTransform(p *ArgParser) {
-	c := &commands.TransformCmd{}
+	c := &cmd.TransformCmd{}
 	cmd := p.addCommand(c, "transform", "TODO")
-	cmd.Arg("RULES", "Rules file").Required().
-		ExistingFileVar(&c.Rules)
+	cmd.Arg("PATTERNS", "Pattern file").Required().
+		ExistingFileVar(&c.Patterns)
 	cmd.Arg("SRC", "Source directory").Required().
 		ExistingDirVar(&c.SrcDir)
 	cmd.Arg("DST", "Target directory").Required().

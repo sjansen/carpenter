@@ -1,4 +1,4 @@
-package rules
+package patterns
 
 import (
 	"fmt"
@@ -12,14 +12,14 @@ func init() {
 	resolve.AllowLambda = true
 }
 
-type rulesLoader struct {
+type patternLoader struct {
 	*starlark.Builtin
 
-	rules []*Rule
+	patterns []*Pattern
 }
 
-func (l *rulesLoader) getDictFromDict(id, key string, rule *starlark.Dict) (*starlark.Dict, error) {
-	value, found, err := rule.Get(starlark.String(key))
+func (l *patternLoader) getDictFromDict(id, key string, pattern *starlark.Dict) (*starlark.Dict, error) {
+	value, found, err := pattern.Get(starlark.String(key))
 	if err != nil || !found {
 		return nil, err
 	}
@@ -30,8 +30,8 @@ func (l *rulesLoader) getDictFromDict(id, key string, rule *starlark.Dict) (*sta
 	return dict, nil
 }
 
-func (l *rulesLoader) getIterableFromDict(id, key string, rule *starlark.Dict) (starlark.Iterable, error) {
-	value, found, err := rule.Get(starlark.String(key))
+func (l *patternLoader) getIterableFromDict(id, key string, pattern *starlark.Dict) (starlark.Iterable, error) {
+	value, found, err := pattern.Get(starlark.String(key))
 	if err != nil || !found {
 		return nil, err
 	}
@@ -42,8 +42,8 @@ func (l *rulesLoader) getIterableFromDict(id, key string, rule *starlark.Dict) (
 	return iter, nil
 }
 
-func (l *rulesLoader) getStringFromDict(id, key string, rule *starlark.Dict) (string, error) {
-	value, found, err := rule.Get(starlark.String(key))
+func (l *patternLoader) getStringFromDict(id, key string, pattern *starlark.Dict) (string, error) {
+	value, found, err := pattern.Get(starlark.String(key))
 	if err != nil || !found {
 		return "", err
 	}
@@ -57,7 +57,7 @@ func (l *rulesLoader) getStringFromDict(id, key string, rule *starlark.Dict) (st
 	return s.GoString(), nil
 }
 
-func (l *rulesLoader) registerURL(arg starlark.Value) error {
+func (l *patternLoader) registerURL(arg starlark.Value) error {
 	d, ok := arg.(*starlark.Dict)
 	if !ok {
 		return fmt.Errorf("%s: expected Dict, got %s", l.Name(), arg.Type())
@@ -70,7 +70,7 @@ func (l *rulesLoader) registerURL(arg starlark.Value) error {
 		return fmt.Errorf(`%s: missing required key: "id"`, l.Name())
 	}
 
-	rule := &Rule{
+	pattern := &Pattern{
 		id: id,
 	}
 
@@ -95,26 +95,26 @@ func (l *rulesLoader) registerURL(arg starlark.Value) error {
 		return fmt.Errorf(`%s: %q missing required key: "tests"`, l.Name(), id)
 	}
 
-	err = l.transformPath(rule, path)
+	err = l.transformPath(pattern, path)
 	if err != nil {
 		return err
 	}
 
-	err = l.transformQuery(rule, query)
+	err = l.transformQuery(pattern, query)
 	if err != nil {
 		return err
 	}
 
-	err = l.transformTests(rule, tests)
+	err = l.transformTests(pattern, tests)
 	if err != nil {
 		return err
 	}
 
-	l.rules = append(l.rules, rule)
+	l.patterns = append(l.patterns, pattern)
 	return nil
 }
 
-func (l *rulesLoader) registerURLs(
+func (l *patternLoader) registerURLs(
 	thread *starlark.Thread,
 	fn *starlark.Builtin,
 	args starlark.Tuple,
@@ -134,22 +134,22 @@ func (l *rulesLoader) registerURLs(
 	return starlark.None, nil
 }
 
-func (l *rulesLoader) transformPath(r *Rule, path *starlark.Dict) error {
-	parts, err := l.getIterableFromDict(r.id, "parts", path)
+func (l *patternLoader) transformPath(p *Pattern, path *starlark.Dict) error {
+	parts, err := l.getIterableFromDict(p.id, "parts", path)
 	if err != nil {
 		return err
 	} else if parts == nil {
-		return fmt.Errorf(`%s: %q missing required key: "parts"`, l.Name(), r.id)
+		return fmt.Errorf(`%s: %q missing required key: "parts"`, l.Name(), p.id)
 	}
 
-	r.slash, err = l.getStringFromDict(r.id, "slash", path)
+	p.slash, err = l.getStringFromDict(p.id, "slash", path)
 	if err != nil {
 		return err
-	} else if r.slash == "" {
-		return fmt.Errorf(`%s: %q missing required key: "slash"`, l.Name(), r.id)
+	} else if p.slash == "" {
+		return fmt.Errorf(`%s: %q missing required key: "slash"`, l.Name(), p.id)
 	}
 
-	r.parts, err = l.transformParts(r.id, parts)
+	p.parts, err = l.transformParts(p.id, parts)
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ func (l *rulesLoader) transformPath(r *Rule, path *starlark.Dict) error {
 	return nil
 }
 
-func (l *rulesLoader) transformParams(r *Rule, query *starlark.Dict) error {
+func (l *patternLoader) transformParams(p *Pattern, query *starlark.Dict) error {
 	result := make(map[string]*param)
 
 	for _, item := range query.Items() {
@@ -166,7 +166,7 @@ func (l *rulesLoader) transformParams(r *Rule, query *starlark.Dict) error {
 		if !ok {
 			return fmt.Errorf(
 				"%s: %q expected String key, got %s",
-				l.Name(), r.id, key.Type(),
+				l.Name(), p.id, key.Type(),
 			)
 		}
 
@@ -191,16 +191,16 @@ func (l *rulesLoader) transformParams(r *Rule, query *starlark.Dict) error {
 		default:
 			return fmt.Errorf(
 				"%s: %q expected None or String value, got %s",
-				l.Name(), r.id, value.Type(),
+				l.Name(), p.id, value.Type(),
 			)
 		}
 	}
 
-	r.params = result
+	p.params = result
 	return nil
 }
 
-func (l *rulesLoader) transformParts(id string, parts starlark.Iterable) ([]part, error) {
+func (l *patternLoader) transformParts(id string, parts starlark.Iterable) ([]part, error) {
 	result := make([]part, 0)
 
 	iter := parts.Iterate()
@@ -218,7 +218,7 @@ func (l *rulesLoader) transformParts(id string, parts starlark.Iterable) ([]part
 	return result, nil
 }
 
-func (l *rulesLoader) transformPart(id string, value starlark.Value) (part, error) {
+func (l *patternLoader) transformPart(id string, value starlark.Value) (part, error) {
 	switch v := value.(type) {
 	case starlark.String:
 		m := &plainPart{
@@ -266,14 +266,14 @@ func (l *rulesLoader) transformPart(id string, value starlark.Value) (part, erro
 	return nil, fmt.Errorf("%s: %q expected String or Tuple, got %s", l.Name(), id, value.Type())
 }
 
-func (l *rulesLoader) transformQuery(r *Rule, query *starlark.Dict) error {
+func (l *patternLoader) transformQuery(p *Pattern, query *starlark.Dict) error {
 	for _, item := range query.Items() {
 		key := item.Index(0)
 		k, ok := key.(starlark.String)
 		if !ok {
 			return fmt.Errorf(
 				"%s: %q expected String key, got %s",
-				l.Name(), r.id, key.Type(),
+				l.Name(), p.id, key.Type(),
 			)
 		}
 
@@ -284,26 +284,26 @@ func (l *rulesLoader) transformQuery(r *Rule, query *starlark.Dict) error {
 			if !ok {
 				return fmt.Errorf(
 					"%s: %q expected String, got %s",
-					l.Name(), r.id, value.Type(),
+					l.Name(), p.id, value.Type(),
 				)
 			}
-			r.dedup = v.GoString()
+			p.dedup = v.GoString()
 		case "params":
 			value := item.Index(1)
 			v, ok := value.(*starlark.Dict)
 			if !ok {
 				return fmt.Errorf(
 					"%s: %q expected Dict, got %s",
-					l.Name(), r.id, value.Type(),
+					l.Name(), p.id, value.Type(),
 				)
 			}
-			if err := l.transformParams(r, v); err != nil {
+			if err := l.transformParams(p, v); err != nil {
 				return err
 			}
 		default:
 			return fmt.Errorf(
 				`%s: %q expected "dedup" or "params", got %s`,
-				l.Name(), r.id, k,
+				l.Name(), p.id, k,
 			)
 		}
 	}
@@ -311,7 +311,7 @@ func (l *rulesLoader) transformQuery(r *Rule, query *starlark.Dict) error {
 	return nil
 }
 
-func (l *rulesLoader) transformTests(r *Rule, tests *starlark.Dict) error {
+func (l *patternLoader) transformTests(p *Pattern, tests *starlark.Dict) error {
 	result := make(map[string]string)
 
 	for _, item := range tests.Items() {
@@ -320,7 +320,7 @@ func (l *rulesLoader) transformTests(r *Rule, tests *starlark.Dict) error {
 		if !ok {
 			return fmt.Errorf(
 				"%s: %q expected String key, got %s",
-				l.Name(), r.id, key.Type(),
+				l.Name(), p.id, key.Type(),
 			)
 		}
 
@@ -333,11 +333,11 @@ func (l *rulesLoader) transformTests(r *Rule, tests *starlark.Dict) error {
 		default:
 			return fmt.Errorf(
 				"%s: %q expected None or String value, got %s",
-				l.Name(), r.id, value.Type(),
+				l.Name(), p.id, value.Type(),
 			)
 		}
 	}
 
-	r.tests = result
+	p.tests = result
 	return nil
 }

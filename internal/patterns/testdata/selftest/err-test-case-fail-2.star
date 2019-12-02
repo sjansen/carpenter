@@ -16,7 +16,7 @@ register_urls({
         "/baz": "/rfc3092",
     },
 }, {
-    "id": "shadowed-rule",
+    "id": "shadowed-pattern",
     "path": {
         "parts": ["foo"],
         "slash": "always",

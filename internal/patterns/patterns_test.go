@@ -1,4 +1,4 @@
-package rules
+package patterns
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var expected = Rules{
+var expected = Patterns{
 	{
 		id:     "root",
 		dedup:  "never",
@@ -204,7 +204,7 @@ func TestSelfTest(t *testing.T) {
 	r, err := os.Open("testdata/raw.star")
 	require.NoError(err)
 
-	rules, err := Load("<test script>", r)
+	patterns, err := Load("<test script>", r)
 	require.NoError(err)
 
 	var stdout, stderr bytes.Buffer
@@ -214,7 +214,7 @@ func TestSelfTest(t *testing.T) {
 		Stderr: &stderr,
 	}
 
-	testcases, err := rules.SelfTest(sys)
+	testcases, err := patterns.SelfTest(sys)
 	require.NoError(err)
 	require.NotNil(testcases)
 }
@@ -234,7 +234,7 @@ func TestSelfTestErrors(t *testing.T) {
 			r, err := os.Open(tc)
 			require.NoError(err)
 
-			rules, err := Load("<test script>", r)
+			patterns, err := Load("<test script>", r)
 			require.NoError(err)
 
 			var stdout, stderr bytes.Buffer
@@ -244,7 +244,7 @@ func TestSelfTestErrors(t *testing.T) {
 				Stderr: &stderr,
 			}
 
-			testcases, err := rules.SelfTest(sys)
+			testcases, err := patterns.SelfTest(sys)
 			require.Nil(testcases)
 			require.Error(err)
 			require.Equal(expected, err.Error())

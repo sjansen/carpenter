@@ -1,4 +1,4 @@
-package rules
+package patterns
 
 import (
 	"fmt"
@@ -11,9 +11,9 @@ import (
 	"go.starlark.net/starlark"
 )
 
-type Rules []*Rule
+type Patterns []*Pattern
 
-type Rule struct {
+type Pattern struct {
 	id     string
 	dedup  string
 	slash  string
@@ -22,9 +22,9 @@ type Rule struct {
 	tests  map[string]string
 }
 
-func Load(filename string, src io.Reader) (Rules, error) {
-	loader := &rulesLoader{
-		rules: make([]*Rule, 0),
+func Load(filename string, src io.Reader) (Patterns, error) {
+	loader := &patternLoader{
+		patterns: make([]*Pattern, 0),
 	}
 
 	loader.Builtin = starlark.NewBuiltin("register_urls", loader.registerURLs)
@@ -38,59 +38,59 @@ func Load(filename string, src io.Reader) (Rules, error) {
 		return nil, err
 	}
 
-	return loader.rules, nil
+	return loader.patterns, nil
 }
 
-func (rules Rules) Match(rawurl string) (id, url string, err error) {
-	for _, r := range rules {
-		match, err := r.Match(rawurl)
+func (patterns Patterns) Match(rawurl string) (id, url string, err error) {
+	for _, p := range patterns {
+		match, err := p.Match(rawurl)
 		if err != nil {
 			return "", "", err
 		} else if match != "" {
-			return r.id, match, nil
+			return p.id, match, nil
 		}
 	}
 	return "", "", nil
 }
 
-func (rules Rules) SelfTest(sys *sys.IO) (map[string]string, error) {
+func (patterns Patterns) SelfTest(sys *sys.IO) (map[string]string, error) {
 	matches := map[string]string{}
-	rawurls := make([]string, 0, len(rules))
-	sys.Log.Debug("starting rule-specific tests...")
-	for _, r := range rules {
-		for rawurl, expected := range r.tests {
-			sys.Log.Debugf("testing rule=%q url=%q", r.id, rawurl)
+	rawurls := make([]string, 0, len(patterns))
+	sys.Log.Debug("starting pattern-specific tests...")
+	for _, p := range patterns {
+		for rawurl, expected := range p.tests {
+			sys.Log.Debugf("testing pattern=%q url=%q", p.id, rawurl)
 			if expected != "" {
 				if prev, ok := matches[rawurl]; ok {
 					return nil, fmt.Errorf(
-						`duplicate test case: %q (rule=%q test=%q)`,
-						prev, r.id, rawurl,
+						`duplicate test case: %q (pattern=%q test=%q)`,
+						prev, p.id, rawurl,
 					)
 				}
-				matches[rawurl] = r.id
+				matches[rawurl] = p.id
 				rawurls = append(rawurls, rawurl)
 			}
-			if actual, err := r.Test(rawurl); err != nil {
+			if actual, err := p.Test(rawurl); err != nil {
 				return nil, err
 			} else if expected != actual {
 				return nil, fmt.Errorf(
-					"unexpected result: expected=%q actual=%q (rule=%q test=%q)",
-					expected, actual, r.id, rawurl,
+					"unexpected result: expected=%q actual=%q (pattern=%q test=%q)",
+					expected, actual, p.id, rawurl,
 				)
 			}
 		}
 	}
-	sys.Log.Debug("testing against all rules...")
+	sys.Log.Debug("testing against all patterns...")
 	sort.Strings(rawurls)
 	for _, rawurl := range rawurls {
 		sys.Log.Debugf("testing url=%q", rawurl)
 		expected := matches[rawurl]
-		actual, _, err := rules.Match(rawurl)
+		actual, _, err := patterns.Match(rawurl)
 		if err != nil {
 			return nil, err // should be unreachable
 		} else if expected != actual {
 			return nil, fmt.Errorf(
-				"unexpected rule match: expected=%q actual=%q (test=%q)",
+				"unexpected pattern match: expected=%q actual=%q (test=%q)",
 				expected, actual, rawurl,
 			)
 		}
@@ -98,29 +98,29 @@ func (rules Rules) SelfTest(sys *sys.IO) (map[string]string, error) {
 	return matches, nil
 }
 
-func (r *Rule) Match(rawurl string) (string, error) {
+func (p *Pattern) Match(rawurl string) (string, error) {
 	url, err := url.Parse(rawurl)
 	if err != nil {
 		return "", fmt.Errorf(`unable to parse url: %q (%s)`, rawurl, err.Error())
 	}
 
-	parts, ok := r.splitPath(url.Path)
-	if !ok || len(parts) != len(r.parts) {
+	parts, ok := p.splitPath(url.Path)
+	if !ok || len(parts) != len(p.parts) {
 		return "", nil
 	}
 
 	for i, part := range parts {
-		if !r.parts[i].match(part) {
+		if !p.parts[i].match(part) {
 			return "", nil
 		}
 	}
 
-	path, err := r.rewriteURL(parts)
+	path, err := p.rewriteURL(parts)
 	if err != nil {
 		return "", err
 	}
 
-	query, err := r.rewriteQuery(url.Query())
+	query, err := p.rewriteQuery(url.Query())
 	if err != nil {
 		return "", err
 	} else if query != "" {
@@ -130,40 +130,40 @@ func (r *Rule) Match(rawurl string) (string, error) {
 	return path, nil
 }
 
-func (r *Rule) Test(rawurl string) (string, error) {
+func (p *Pattern) Test(rawurl string) (string, error) {
 	if len(rawurl) < 1 || rawurl[0] != '/' {
 		return "", fmt.Errorf(`invalid test case: %q (should start with "/")`, rawurl)
 	}
 
-	return r.Match(rawurl)
+	return p.Match(rawurl)
 }
 
-func (r *Rule) rewriteURL(parts []string) (string, error) {
+func (p *Pattern) rewriteURL(parts []string) (string, error) {
 	result := make([]string, 1, len(parts)+2)
 	result[0] = ""
 
 	thread := &starlark.Thread{}
 	for i, part := range parts {
-		part, err := r.parts[i].normalize(thread, part)
+		part, err := p.parts[i].normalize(thread, part)
 		if err != nil {
 			return "", err
 		}
 		result = append(result, part)
 	}
-	if r.slash == "always" || len(parts) == 0 {
+	if p.slash == "always" || len(parts) == 0 {
 		result = append(result, "")
 	}
 
 	return strings.Join(result, "/"), nil
 }
 
-func (r *Rule) rewriteQuery(query url.Values) (string, error) {
+func (p *Pattern) rewriteQuery(query url.Values) (string, error) {
 	result := url.Values{}
 
 	thread := &starlark.Thread{}
 	for key, values := range query {
-		if p, ok := r.params[key]; ok {
-			values, err := p.normalize(thread, r.dedup, values)
+		if param, ok := p.params[key]; ok {
+			values, err := param.normalize(thread, p.dedup, values)
 			if err != nil {
 				return "", err
 			}
@@ -176,10 +176,10 @@ func (r *Rule) rewriteQuery(query url.Values) (string, error) {
 	return result.Encode(), nil
 }
 
-func (r *Rule) splitPath(path string) ([]string, bool) {
+func (p *Pattern) splitPath(path string) ([]string, bool) {
 	plen := len(path)
 	if plen > 0 {
-		switch r.slash {
+		switch p.slash {
 		case "always":
 			if path[plen-1] == '/' {
 				path = path[:plen-1]

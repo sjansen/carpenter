@@ -1,4 +1,4 @@
-package rules
+package patterns
 
 import "go.starlark.net/starlark"
 
