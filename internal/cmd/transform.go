@@ -32,12 +32,15 @@ func (c *TransformCmd) Run(base *Base) error {
 		return err
 	}
 
+	uaparser, err := transformer.UserAgentParser()
+	if err != nil {
+		return err
+	}
+
 	transformer := &transformer.Transformer{
 		Patterns:  patterns,
 		Tokenizer: tokenizer.ALB,
-	}
-	if err := transformer.EnableUserAgentParsing(); err != nil {
-		return err
+		UAParser:  uaparser,
 	}
 
 	return filepath.Walk(c.SrcDir, func(src string, info os.FileInfo, err error) error {

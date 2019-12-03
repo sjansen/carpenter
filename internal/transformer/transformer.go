@@ -6,7 +6,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"sort"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/ua-parser/uap-go/uaparser"
 
-	"github.com/sjansen/carpenter/internal/data"
 	"github.com/sjansen/carpenter/internal/patterns"
 	"github.com/sjansen/carpenter/internal/tokenizer"
 )
@@ -29,28 +27,7 @@ type Task struct {
 type Transformer struct {
 	Patterns  patterns.Patterns
 	Tokenizer *tokenizer.Tokenizer
-
-	uaparser *uaparser.Parser
-}
-
-func (t *Transformer) EnableUserAgentParsing() error {
-	r, err := data.Assets.Open("regexes.yaml")
-	if err != nil {
-		return err
-	}
-
-	bytes, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
-	}
-
-	uap, err := uaparser.NewFromBytes(bytes)
-	if err != nil {
-		return err
-	}
-
-	t.uaparser = uap
-	return nil
+	UAParser  *uaparser.Parser
 }
 
 func (t *Transformer) Transform(task *Task) error {
@@ -86,7 +63,7 @@ func (t *Transformer) cols(tokens map[string]string) []string {
 		"normalized_url",
 		"url_pattern",
 	)
-	if t.uaparser != nil {
+	if t.UAParser != nil {
 		cols = append(cols,
 			"client_device_family",
 			"client_os_family",
@@ -108,8 +85,8 @@ func (t *Transformer) cols(tokens map[string]string) []string {
 
 func (t *Transformer) parseUserAgent(tokens map[string]string) {
 	uagent, ok := tokens["user_agent"]
-	if ok && t.uaparser != nil {
-		client := t.uaparser.Parse(uagent)
+	if ok && t.UAParser != nil {
+		client := t.UAParser.Parse(uagent)
 		tokens["client_device_family"] = client.Device.Family
 		tokens["client_os_family"] = client.Os.Family
 		tokens["client_os_major"] = client.Os.Major
