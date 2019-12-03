@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"compress/gzip"
 	"encoding/csv"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"sort"
 	"strings"
@@ -149,7 +151,12 @@ func (t *Transformer) transform(src *bufio.Reader, dst *csv.Writer) error {
 
 		rawurl, ok := tokens["request_url"]
 		if ok {
-			pattern, normalized, err := t.Patterns.Match(rawurl)
+			url, err := url.Parse(rawurl)
+			if err != nil {
+				return fmt.Errorf(`unable to parse url: %q (%s)`, rawurl, err.Error())
+			}
+
+			pattern, normalized, err := t.Patterns.Match(url)
 			if err != nil {
 				return err
 			}

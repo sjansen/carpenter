@@ -41,9 +41,9 @@ func Load(filename string, src io.Reader) (Patterns, error) {
 	return loader.patterns, nil
 }
 
-func (patterns Patterns) Match(rawurl string) (id, url string, err error) {
+func (patterns Patterns) Match(url *url.URL) (id, normalized string, err error) {
 	for _, p := range patterns {
-		match, err := p.Match(rawurl)
+		match, err := p.Match(url)
 		if err != nil {
 			return "", "", err
 		} else if match != "" {
@@ -85,7 +85,7 @@ func (patterns Patterns) SelfTest(sys *sys.IO) (map[string]string, error) {
 	for _, rawurl := range rawurls {
 		sys.Log.Debugf("testing url=%q", rawurl)
 		expected := matches[rawurl]
-		actual, _, err := patterns.Match(rawurl)
+		actual, _, err := patterns.Test(rawurl)
 		if err != nil {
 			return nil, err // should be unreachable
 		} else if expected != actual {
@@ -98,12 +98,16 @@ func (patterns Patterns) SelfTest(sys *sys.IO) (map[string]string, error) {
 	return matches, nil
 }
 
-func (p *Pattern) Match(rawurl string) (string, error) {
+func (patterns Patterns) Test(rawurl string) (id, normalized string, err error) {
 	url, err := url.Parse(rawurl)
 	if err != nil {
-		return "", fmt.Errorf(`unable to parse url: %q (%s)`, rawurl, err.Error())
+		return "", "", fmt.Errorf(`unable to parse url: %q (%s)`, rawurl, err.Error())
 	}
 
+	return patterns.Match(url)
+}
+
+func (p *Pattern) Match(url *url.URL) (string, error) {
 	parts, ok := p.splitPath(url.Path)
 	if !ok || len(parts) != len(p.parts) {
 		return "", nil
@@ -135,7 +139,12 @@ func (p *Pattern) Test(rawurl string) (string, error) {
 		return "", fmt.Errorf(`invalid test case: %q (should start with "/")`, rawurl)
 	}
 
-	return p.Match(rawurl)
+	url, err := url.Parse(rawurl)
+	if err != nil {
+		return "", fmt.Errorf(`unable to parse url: %q (%s)`, rawurl, err.Error())
+	}
+
+	return p.Match(url)
 }
 
 func (p *Pattern) rewriteURL(parts []string) (string, error) {
