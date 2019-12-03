@@ -36,7 +36,7 @@ func (c *TransformCmd) Run(base *Base) error {
 		Patterns:  patterns,
 		Tokenizer: tokenizer.ALB,
 	}
-	if err := tokenizer.ALB.EnableUserAgentParsing(); err != nil {
+	if err := transformer.EnableUserAgentParsing(); err != nil {
 		return err
 	}
 

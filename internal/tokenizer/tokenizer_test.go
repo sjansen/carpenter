@@ -14,9 +14,6 @@ import (
 )
 
 func TestALB(t *testing.T) {
-	err := tokenizer.ALB.EnableUserAgentParsing()
-	require.NoError(t, err)
-
 	files, _ := filepath.Glob("testdata/alb-*.txt")
 	for _, tc := range files {
 		tc := tc
