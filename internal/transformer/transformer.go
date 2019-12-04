@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"compress/gzip"
 	"encoding/csv"
-	"fmt"
 	"io"
 	"net/url"
 	"os"
@@ -52,9 +51,12 @@ func (t *Transformer) Transform(task *Task) error {
 	}
 	defer w.Close()
 
+	debug := newDebugFiles(task.ErrDir, task.Suffix)
+	defer debug.Close()
+
 	src := bufio.NewReader(r)
 	dst := csv.NewWriter(w)
-	return t.transform(src, dst)
+	return t.transform(src, dst, debug)
 }
 
 func (t *Transformer) cols(tokens map[string]string) []string {
@@ -83,6 +85,31 @@ func (t *Transformer) cols(tokens map[string]string) []string {
 	return cols
 }
 
+func (t *Transformer) parseURL(tokens map[string]string, debug *debugFiles) {
+	rawurl, ok := tokens["request_url"]
+	if ok {
+		url, err := url.Parse(rawurl)
+		if err != nil {
+			if debug != nil {
+				debug.parse.Write(rawurl, err.Error())
+			}
+		} else {
+			pattern, normalized, err := t.Patterns.Match(url)
+			if err != nil {
+				if debug != nil {
+					debug.parse.Write(rawurl, err.Error())
+				}
+			} else {
+				if debug != nil && normalized == "" {
+					debug.unrecognized.Write(url.Path, rawurl)
+				}
+				tokens["normalized_url"] = normalized
+				tokens["url_pattern"] = pattern
+			}
+		}
+	}
+}
+
 func (t *Transformer) parseUserAgent(tokens map[string]string) {
 	uagent, ok := tokens["user_agent"]
 	if ok && t.UAParser != nil {
@@ -99,7 +126,7 @@ func (t *Transformer) parseUserAgent(tokens map[string]string) {
 	}
 }
 
-func (t *Transformer) transform(src *bufio.Reader, dst *csv.Writer) error {
+func (t *Transformer) transform(src *bufio.Reader, dst *csv.Writer, debug *debugFiles) error {
 	defer dst.Flush()
 
 	var cols []string
@@ -126,20 +153,7 @@ func (t *Transformer) transform(src *bufio.Reader, dst *csv.Writer) error {
 			row = make([]string, len(cols))
 		}
 
-		rawurl, ok := tokens["request_url"]
-		if ok {
-			url, err := url.Parse(rawurl)
-			if err != nil {
-				return fmt.Errorf(`unable to parse url: %q (%s)`, rawurl, err.Error())
-			}
-
-			pattern, normalized, err := t.Patterns.Match(url)
-			if err != nil {
-				return err
-			}
-			tokens["normalized_url"] = normalized
-			tokens["url_pattern"] = pattern
-		}
+		t.parseURL(tokens, debug)
 
 		t.parseUserAgent(tokens)
 
