@@ -20,30 +20,34 @@ func newDebugFiles(prefix, suffix string) *debugFiles {
 	}
 	return &debugFiles{
 		normalize: &debugFile{
+			CSV: true,
 			Open: func() (io.WriteCloser, error) {
-				os.MkdirAll(filepath.Join(prefix, "normalize"), 0777)
 				filename := filepath.Join(prefix, "normalize", suffix+".csv")
+				os.MkdirAll(filepath.Dir(filename), 0777)
 				return os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0666)
 			},
 		},
 		parse: &debugFile{
+			CSV: true,
 			Open: func() (io.WriteCloser, error) {
-				os.MkdirAll(filepath.Join(prefix, "parse"), 0777)
 				filename := filepath.Join(prefix, "parse", suffix+".csv")
+				os.MkdirAll(filepath.Dir(filename), 0777)
 				return os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0666)
 			},
 		},
 		tokenize: &debugFile{
+			CSV: false,
 			Open: func() (io.WriteCloser, error) {
-				os.MkdirAll(filepath.Join(prefix, "tokenize"), 0777)
-				filename := filepath.Join(prefix, "tokenize", suffix+".csv")
+				filename := filepath.Join(prefix, "tokenize", suffix+".log")
+				os.MkdirAll(filepath.Dir(filename), 0777)
 				return os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0666)
 			},
 		},
 		unrecognized: &debugFile{
+			CSV: true,
 			Open: func() (io.WriteCloser, error) {
-				os.MkdirAll(filepath.Join(prefix, "unrecognized"), 0777)
 				filename := filepath.Join(prefix, "unrecognized", suffix+".csv")
+				os.MkdirAll(filepath.Dir(filename), 0777)
 				return os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0666)
 			},
 		},
@@ -67,6 +71,7 @@ func (d *debugFiles) Close() {
 }
 
 type debugFile struct {
+	CSV  bool
 	Open func() (io.WriteCloser, error)
 
 	w   io.WriteCloser
@@ -75,27 +80,43 @@ type debugFile struct {
 }
 
 func (f *debugFile) Close() {
-	if f != nil && f.csv != nil {
-		f.csv.Flush()
-		f.w.Close()
+	if f == nil || f.w == nil {
+		return
 	}
+	if f.csv != nil {
+		f.csv.Flush()
+	}
+	f.w.Close()
 }
 
 func (f *debugFile) Write(row ...string) error {
 	switch {
-	case f.err != nil:
-		return f.err
 	case f == nil:
 		return nil
-	case f.csv == nil:
-		if w, err := f.Open(); err == nil {
-			f.w = w
-			f.csv = csv.NewWriter(w)
-		} else {
+	case f.err != nil:
+		return f.err
+	case f.w == nil:
+		w, err := f.Open()
+		if err != nil {
 			f.err = err
+			return err
+		}
+		f.w = w
+		if f.CSV {
+			f.csv = csv.NewWriter(w)
+		}
+	}
+
+	if f.CSV {
+		return f.csv.Write(row)
+	}
+
+	for _, s := range row {
+		_, err := f.w.Write([]byte(s))
+		if err != nil {
 			return err
 		}
 	}
 
-	return f.csv.Write(row)
+	return nil
 }

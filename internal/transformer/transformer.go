@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -45,6 +46,11 @@ func (t *Transformer) Transform(task *Task) error {
 		defer r.Close()
 	}
 
+	err = os.MkdirAll(filepath.Dir(task.Dst), 0777)
+	if err != nil {
+		return err
+	}
+
 	w, err := os.OpenFile(task.Dst, os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		return err
@@ -59,7 +65,7 @@ func (t *Transformer) Transform(task *Task) error {
 	return t.transform(src, dst, debug)
 }
 
-func (t *Transformer) cols(tokens map[string]string) []string {
+func (t *Transformer) newCols(tokens map[string]string) []string {
 	cols := make([]string, 0, len(tokens)+11)
 	cols = append(cols,
 		"normalized_url",
@@ -146,9 +152,12 @@ func (t *Transformer) transform(src *bufio.Reader, dst *csv.Writer, debug *debug
 
 		tokens := t.Tokenizer.Tokenize(line)
 		if tokens == nil {
+			if debug != nil {
+				debug.tokenize.Write(line, "\n")
+			}
 			continue
 		} else if cols == nil {
-			cols = t.cols(tokens)
+			cols = t.newCols(tokens)
 			dst.Write(cols)
 			row = make([]string, len(cols))
 		}
