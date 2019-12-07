@@ -11,8 +11,8 @@ def generate_urls():
     urls = [{
         "id": "root",
         "path": {
-            "parts": ["api"],
-            "slash": "always",
+            "prefix": ["api"],
+            "suffix": "always",
         },
         "query": {
             "dedup": "never",
@@ -31,8 +31,8 @@ def generate_urls():
         urls.append({
             "id": "/%s/" % x,
             "path": {
-                "parts": ["api", x],
-                "slash": "always",
+                "prefix": ["api", x],
+                "suffix": "always",
             },
             "query": {
                 "dedup": "never",
@@ -51,8 +51,8 @@ def generate_urls():
         urls.append({
             "id": "/%s/:id/" % x,
             "path": {
-                "parts": ["api", x, ("[1-9][0-9]*", "ID")],
-                "slash": "always",
+                "prefix": ["api", x, ("[1-9][0-9]*", "ID")],
+                "suffix": "always",
             },
             "query": {
                 "dedup": "never",

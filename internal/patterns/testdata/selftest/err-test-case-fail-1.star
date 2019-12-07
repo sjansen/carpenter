@@ -1,8 +1,8 @@
 register_urls({
     "id": "unexpected-result",
     "path": {
-        "parts": [],
-        "slash": "strip",
+        "prefix": [],
+        "suffix": "strip",
     },
     "query": {
         "dedup": "never",

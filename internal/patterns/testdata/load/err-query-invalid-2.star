@@ -1,6 +1,6 @@
 register_urls({
     "id": "query-invalid-2",
-    "path": {"parts": [], "slash": "always"},
+    "path": {"prefix": [], "suffix": "always"},
     "query": {42: "answer"},
     "tests": {},
 })

@@ -1,10 +1,10 @@
 register_urls({
     "id": "original-test-case",
     "path": {
-        "parts": [
+        "prefix": [
             ("foo|bar|baz", "rfc3092"),
         ],
-        "slash": "strip",
+        "suffix": "strip",
     },
     "query": {
         "dedup": "never",
@@ -18,8 +18,8 @@ register_urls({
 }, {
     "id": "duplicate-test-case",
     "path": {
-        "parts": ["foo"],
-        "slash": "never",
+        "prefix": ["foo"],
+        "suffix": "never",
     },
     "query": {
         "dedup": "never",

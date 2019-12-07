@@ -1,8 +1,8 @@
 register_urls({
     "id": "invalid-test-case",
     "path": {
-        "parts": [],
-        "slash": "strip",
+        "prefix": [],
+        "suffix": "strip",
     },
     "query": {
         "dedup": "never",

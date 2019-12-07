@@ -8,8 +8,8 @@ def fn(x):
 register_urls({
     "id": "root",
     "path": {
-        "parts": [],
-        "slash": "strip",
+        "prefix": [],
+        "suffix": "strip",
     },
     "query": {
         "dedup": "never",
@@ -22,8 +22,8 @@ register_urls({
 }, {
     "id": "always",
     "path": {
-        "parts": ["foo"],
-        "slash": "always",
+        "prefix": ["foo"],
+        "suffix": "always",
     },
     "query": {
         "dedup": "never",
@@ -36,8 +36,8 @@ register_urls({
 }, {
     "id": "never",
     "path": {
-        "parts": ["bar"],
-        "slash": "never",
+        "prefix": ["bar"],
+        "suffix": "never",
     },
     "query": {
         "dedup": "never",
@@ -50,8 +50,8 @@ register_urls({
 }, {
     "id": "strip",
     "path": {
-        "parts": ["baz"],
-        "slash": "strip",
+        "prefix": ["baz"],
+        "suffix": "strip",
     },
     "query": {
         "dedup": "never",
@@ -64,8 +64,8 @@ register_urls({
 }, {
     "id": "regex",
     "path": {
-        "parts": [("qux", "quux")],
-        "slash": "always",
+        "prefix": [("qux", "quux")],
+        "suffix": "always",
     },
     "query": {
         "dedup": "never",
@@ -77,8 +77,8 @@ register_urls({
 }, {
     "id": "query.never",
     "path": {
-        "parts": ["search"],
-        "slash": "never",
+        "prefix": ["search"],
+        "suffix": "never",
     },
     "query": {
         "dedup": "never",
@@ -95,13 +95,13 @@ register_urls({
 }, {
     "id": "multi",
     "path": {
-        "parts": [
+        "prefix": [
             "corge",
             ("grault", "garply"),
             names,
             (".+", fn),
         ],
-        "slash": "strip",
+        "suffix": "strip",
     },
     "query": {
         "dedup": "never",

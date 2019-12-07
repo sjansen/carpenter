@@ -1,1 +1,1 @@
-register_urls: "slash-invalid-1" expected String, got NoneType
+register_urls: "suffix-invalid-1" expected String, got NoneType

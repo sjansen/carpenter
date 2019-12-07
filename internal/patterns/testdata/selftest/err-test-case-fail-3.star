@@ -1,10 +1,10 @@
 register_urls({
     "id": "bad-lambda",
     "path": {
-        "parts": [
+        "prefix": [
             (".*", lambda x: 42),
         ],
-        "slash": "strip",
+        "suffix": "strip",
     },
     "query": {
         "dedup": "never",

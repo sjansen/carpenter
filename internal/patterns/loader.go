@@ -135,21 +135,21 @@ func (l *patternLoader) registerURLs(
 }
 
 func (l *patternLoader) transformPath(p *Pattern, path *starlark.Dict) error {
-	parts, err := l.getIterableFromDict(p.id, "parts", path)
+	prefix, err := l.getIterableFromDict(p.id, "prefix", path)
 	if err != nil {
 		return err
-	} else if parts == nil {
-		return fmt.Errorf(`%s: %q missing required key: "parts"`, l.Name(), p.id)
+	} else if prefix == nil {
+		return fmt.Errorf(`%s: %q missing required key: "prefix"`, l.Name(), p.id)
 	}
 
-	p.slash, err = l.getStringFromDict(p.id, "slash", path)
+	p.suffix, err = l.getStringFromDict(p.id, "suffix", path)
 	if err != nil {
 		return err
-	} else if p.slash == "" {
-		return fmt.Errorf(`%s: %q missing required key: "slash"`, l.Name(), p.id)
+	} else if p.suffix == "" {
+		return fmt.Errorf(`%s: %q missing required key: "suffix"`, l.Name(), p.id)
 	}
 
-	p.parts, err = l.transformParts(p.id, parts)
+	p.prefix, err = l.transformPrefix(p.id, prefix)
 	if err != nil {
 		return err
 	}
@@ -200,10 +200,10 @@ func (l *patternLoader) transformParams(p *Pattern, query *starlark.Dict) error 
 	return nil
 }
 
-func (l *patternLoader) transformParts(id string, parts starlark.Iterable) ([]part, error) {
+func (l *patternLoader) transformPrefix(id string, prefix starlark.Iterable) ([]part, error) {
 	result := make([]part, 0)
 
-	iter := parts.Iterate()
+	iter := prefix.Iterate()
 	defer iter.Done()
 
 	var value starlark.Value

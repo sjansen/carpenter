@@ -18,18 +18,18 @@ var expected = Patterns{
 	{
 		id:     "root",
 		dedup:  "never",
-		slash:  "strip",
-		parts:  []part{},
+		suffix: "strip",
+		prefix: []part{},
 		params: map[string]*param{},
 		tests: map[string]string{
 			"/":       "/",
 			"/Spoon!": "",
 		},
 	}, {
-		id:    "always",
-		dedup: "never",
-		slash: "always",
-		parts: []part{
+		id:     "always",
+		dedup:  "never",
+		suffix: "always",
+		prefix: []part{
 			&plainPart{
 				value: "foo",
 			},
@@ -40,10 +40,10 @@ var expected = Patterns{
 			"/foo/": "/foo/",
 		},
 	}, {
-		id:    "never",
-		dedup: "never",
-		slash: "never",
-		parts: []part{
+		id:     "never",
+		dedup:  "never",
+		suffix: "never",
+		prefix: []part{
 			&plainPart{
 				value: "bar",
 			},
@@ -54,10 +54,10 @@ var expected = Patterns{
 			"/bar/": "",
 		},
 	}, {
-		id:    "strip",
-		dedup: "never",
-		slash: "strip",
-		parts: []part{
+		id:     "strip",
+		dedup:  "never",
+		suffix: "strip",
+		prefix: []part{
 			&plainPart{
 				value: "baz",
 			},
@@ -68,10 +68,10 @@ var expected = Patterns{
 			"/baz/": "/baz",
 		},
 	}, {
-		id:    "regex",
-		dedup: "never",
-		slash: "always",
-		parts: []part{
+		id:     "regex",
+		dedup:  "never",
+		suffix: "always",
+		prefix: []part{
 			&regexPart{
 				regex: regexp.MustCompile("qux"),
 				rewriter: &rewriteStatic{
@@ -84,10 +84,10 @@ var expected = Patterns{
 			"/qux/": "/quux/",
 		},
 	}, {
-		id:    "query.never",
-		dedup: "never",
-		slash: "never",
-		parts: []part{
+		id:     "query.never",
+		dedup:  "never",
+		suffix: "never",
+		prefix: []part{
 			&plainPart{
 				value: "search",
 			},
@@ -109,10 +109,10 @@ var expected = Patterns{
 			"/search?q=dogs&utf8=✔": "/search?q=X",
 		},
 	}, {
-		id:    "multi",
-		dedup: "never",
-		slash: "strip",
-		parts: []part{
+		id:     "multi",
+		dedup:  "never",
+		suffix: "strip",
+		prefix: []part{
 			&plainPart{
 				value: "corge",
 			},
@@ -163,9 +163,9 @@ func TestLoad(t *testing.T) {
 	require.Len(actual, last+1)
 	require.Equal("multi", actual[last].id)
 
-	actualPart := actual[last].parts[3].(*regexPart)
+	actualPart := actual[last].prefix[3].(*regexPart)
 	require.IsType(&rewriteFunction{}, actualPart.rewriter)
-	expectedPart := expected[last].parts[3].(*regexPart)
+	expectedPart := expected[last].prefix[3].(*regexPart)
 	expectedPart.rewriter = actualPart.rewriter
 
 	actualParam := actual[last].params["n"]

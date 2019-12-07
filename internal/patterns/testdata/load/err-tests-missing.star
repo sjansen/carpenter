@@ -1,5 +1,5 @@
 register_urls({
     "id": "tests-missing",
-    "path": {"parts": [], "slash": "always"},
+    "path": {"prefix": [], "suffix": "always"},
     "query": {},
 })

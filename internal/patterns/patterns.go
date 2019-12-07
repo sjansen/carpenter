@@ -16,8 +16,8 @@ type Patterns []*Pattern
 type Pattern struct {
 	id     string
 	dedup  string
-	slash  string
-	parts  []part
+	suffix string
+	prefix []part
 	params map[string]*param
 	tests  map[string]string
 }
@@ -109,12 +109,12 @@ func (patterns Patterns) Test(rawurl string) (id, normalized string, err error) 
 
 func (p *Pattern) Match(url *url.URL) (string, error) {
 	parts, ok := p.splitPath(url.Path)
-	if !ok || len(parts) != len(p.parts) {
+	if !ok || len(parts) != len(p.prefix) {
 		return "", nil
 	}
 
 	for i, part := range parts {
-		if !p.parts[i].match(part) {
+		if !p.prefix[i].match(part) {
 			return "", nil
 		}
 	}
@@ -153,13 +153,13 @@ func (p *Pattern) rewriteURL(parts []string) (string, error) {
 
 	thread := &starlark.Thread{}
 	for i, part := range parts {
-		part, err := p.parts[i].normalize(thread, part)
+		part, err := p.prefix[i].normalize(thread, part)
 		if err != nil {
 			return "", err
 		}
 		result = append(result, part)
 	}
-	if p.slash == "always" || len(parts) == 0 {
+	if p.suffix == "always" || len(parts) == 0 {
 		result = append(result, "")
 	}
 
@@ -188,7 +188,7 @@ func (p *Pattern) rewriteQuery(query url.Values) (string, error) {
 func (p *Pattern) splitPath(path string) ([]string, bool) {
 	plen := len(path)
 	if plen > 0 {
-		switch p.slash {
+		switch p.suffix {
 		case "always":
 			if path[plen-1] == '/' {
 				path = path[:plen-1]

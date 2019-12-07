@@ -1,1 +1,1 @@
-register_urls: "path-missing-parts" missing required key: "parts"
+register_urls: "path-missing-prefix" missing required key: "prefix"

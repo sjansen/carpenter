@@ -1,10 +1,10 @@
 register_urls({
     "id": "rfc3092",
     "path": {
-        "parts": [
+        "prefix": [
             ("foo|bar|baz", "rfc3092"),
         ],
-        "slash": "strip",
+        "suffix": "strip",
     },
     "query": {
         "dedup": "never",
@@ -18,8 +18,8 @@ register_urls({
 }, {
     "id": "shadowed-pattern",
     "path": {
-        "parts": ["foo"],
-        "slash": "always",
+        "prefix": ["foo"],
+        "suffix": "always",
     },
     "query": {
         "dedup": "never",
