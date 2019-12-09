@@ -1,4 +1,4 @@
 register_urls({
     "id": "query-missing",
-    "path": {"prefix": [], "suffix": "always"},
+    "path": {"prefix": [], "suffix": "/"},
 })

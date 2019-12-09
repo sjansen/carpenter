@@ -16,7 +16,7 @@ type Patterns []*Pattern
 type Pattern struct {
 	id     string
 	dedup  string
-	suffix string
+	slash  string
 	prefix []part
 	params map[string]*param
 	tests  map[string]string
@@ -159,7 +159,7 @@ func (p *Pattern) rewriteURL(parts []string) (string, error) {
 		}
 		result = append(result, part)
 	}
-	if p.suffix == "always" || len(parts) == 0 {
+	if p.slash == "/" || len(parts) == 0 {
 		result = append(result, "")
 	}
 
@@ -188,20 +188,20 @@ func (p *Pattern) rewriteQuery(query url.Values) (string, error) {
 func (p *Pattern) splitPath(path string) ([]string, bool) {
 	plen := len(path)
 	if plen > 0 {
-		switch p.suffix {
-		case "always":
+		switch p.slash {
+		case "/":
 			if path[plen-1] == '/' {
 				path = path[:plen-1]
 			} else {
 				return nil, false
 			}
-		case "never":
-			if path[plen-1] == '/' {
-				return nil, false
-			}
-		case "strip":
+		case "/?":
 			if path[plen-1] == '/' {
 				path = path[:plen-1]
+			}
+		case "":
+			if path[plen-1] == '/' {
+				return nil, false
 			}
 		}
 	}

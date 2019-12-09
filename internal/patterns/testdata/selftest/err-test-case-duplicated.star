@@ -4,7 +4,7 @@ register_urls({
         "prefix": [
             ("foo|bar|baz", "rfc3092"),
         ],
-        "suffix": "strip",
+        "suffix": "/?",
     },
     "query": {
         "dedup": "never",
@@ -19,7 +19,7 @@ register_urls({
     "id": "duplicate-test-case",
     "path": {
         "prefix": ["foo"],
-        "suffix": "never",
+        "suffix": "",
     },
     "query": {
         "dedup": "never",

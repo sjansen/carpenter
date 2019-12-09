@@ -4,7 +4,7 @@ register_urls({
         "prefix": [
             ("foo|bar|baz", "rfc3092"),
         ],
-        "suffix": "strip",
+        "suffix": "/?",
     },
     "query": {
         "dedup": "never",
@@ -19,7 +19,7 @@ register_urls({
     "id": "shadowed-pattern",
     "path": {
         "prefix": ["foo"],
-        "suffix": "always",
+        "suffix": "/",
     },
     "query": {
         "dedup": "never",

@@ -18,7 +18,7 @@ var expected = Patterns{
 	{
 		id:     "root",
 		dedup:  "never",
-		suffix: "strip",
+		slash:  "/?",
 		prefix: []part{},
 		params: map[string]*param{},
 		tests: map[string]string{
@@ -26,9 +26,9 @@ var expected = Patterns{
 			"/Spoon!": "",
 		},
 	}, {
-		id:     "always",
-		dedup:  "never",
-		suffix: "always",
+		id:    "slash-required",
+		dedup: "never",
+		slash: "/",
 		prefix: []part{
 			&plainPart{
 				value: "foo",
@@ -40,9 +40,9 @@ var expected = Patterns{
 			"/foo/": "/foo/",
 		},
 	}, {
-		id:     "never",
-		dedup:  "never",
-		suffix: "never",
+		id:    "no-final-slash",
+		dedup: "never",
+		slash: "",
 		prefix: []part{
 			&plainPart{
 				value: "bar",
@@ -54,9 +54,9 @@ var expected = Patterns{
 			"/bar/": "",
 		},
 	}, {
-		id:     "strip",
-		dedup:  "never",
-		suffix: "strip",
+		id:    "optional-slash",
+		dedup: "never",
+		slash: "/?",
 		prefix: []part{
 			&plainPart{
 				value: "baz",
@@ -68,9 +68,9 @@ var expected = Patterns{
 			"/baz/": "/baz",
 		},
 	}, {
-		id:     "regex",
-		dedup:  "never",
-		suffix: "always",
+		id:    "regex",
+		dedup: "never",
+		slash: "/",
 		prefix: []part{
 			&regexPart{
 				regex: regexp.MustCompile("qux"),
@@ -84,9 +84,9 @@ var expected = Patterns{
 			"/qux/": "/quux/",
 		},
 	}, {
-		id:     "query.never",
-		dedup:  "never",
-		suffix: "never",
+		id:    "query-no-final-slash",
+		dedup: "never",
+		slash: "",
 		prefix: []part{
 			&plainPart{
 				value: "search",
@@ -109,9 +109,9 @@ var expected = Patterns{
 			"/search?q=dogs&utf8=✔": "/search?q=X",
 		},
 	}, {
-		id:     "multi",
-		dedup:  "never",
-		suffix: "strip",
+		id:    "complex",
+		dedup: "never",
+		slash: "/?",
 		prefix: []part{
 			&plainPart{
 				value: "corge",
@@ -161,7 +161,7 @@ func TestLoad(t *testing.T) {
 	// that reflect.DeepEqual considers equal to actual.
 	last := 6
 	require.Len(actual, last+1)
-	require.Equal("multi", actual[last].id)
+	require.Equal("complex", actual[last].id)
 
 	actualPart := actual[last].prefix[3].(*regexPart)
 	require.IsType(&rewriteFunction{}, actualPart.rewriter)

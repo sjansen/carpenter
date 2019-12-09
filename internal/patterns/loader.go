@@ -30,31 +30,31 @@ func (l *patternLoader) getDictFromDict(id, key string, pattern *starlark.Dict) 
 	return dict, nil
 }
 
-func (l *patternLoader) getIterableFromDict(id, key string, pattern *starlark.Dict) (starlark.Iterable, error) {
+func (l *patternLoader) getIterableFromDict(parent, key string, pattern *starlark.Dict) (starlark.Iterable, error) {
 	value, found, err := pattern.Get(starlark.String(key))
 	if err != nil || !found {
 		return nil, err
 	}
 	iter, ok := value.(starlark.Iterable)
 	if !ok {
-		return nil, fmt.Errorf("%s: %q expected Iterable, got %s", l.Name(), id, value.Type())
+		return nil, fmt.Errorf("%s: %q expected Iterable, got %s", l.Name(), parent, value.Type())
 	}
 	return iter, nil
 }
 
-func (l *patternLoader) getStringFromDict(id, key string, pattern *starlark.Dict) (string, error) {
+func (l *patternLoader) getStringFromDict(parent, key string, pattern *starlark.Dict) (string, bool, error) {
 	value, found, err := pattern.Get(starlark.String(key))
 	if err != nil || !found {
-		return "", err
+		return "", found, err
 	}
 	s, ok := value.(starlark.String)
 	if !ok {
-		if id == "" {
-			return "", fmt.Errorf("%s: expected String, got %s", l.Name(), value.Type())
+		if parent == "" {
+			return "", found, fmt.Errorf("%s: expected String, got %s", l.Name(), value.Type())
 		}
-		return "", fmt.Errorf("%s: %q expected String, got %s", l.Name(), id, value.Type())
+		return "", found, fmt.Errorf("%s: %q expected String, got %s", l.Name(), parent, value.Type())
 	}
-	return s.GoString(), nil
+	return s.GoString(), found, nil
 }
 
 func (l *patternLoader) registerURL(arg starlark.Value) error {
@@ -63,7 +63,7 @@ func (l *patternLoader) registerURL(arg starlark.Value) error {
 		return fmt.Errorf("%s: expected Dict, got %s", l.Name(), arg.Type())
 	}
 
-	id, err := l.getStringFromDict("", "id", d)
+	id, _, err := l.getStringFromDict("", "id", d)
 	if err != nil {
 		return err
 	} else if id == "" {
@@ -142,12 +142,13 @@ func (l *patternLoader) transformPath(p *Pattern, path *starlark.Dict) error {
 		return fmt.Errorf(`%s: %q missing required key: "prefix"`, l.Name(), p.id)
 	}
 
-	p.suffix, err = l.getStringFromDict(p.id, "suffix", path)
+	suffix, found, err := l.getStringFromDict(p.id, "suffix", path)
 	if err != nil {
 		return err
-	} else if p.suffix == "" {
+	} else if !found {
 		return fmt.Errorf(`%s: %q missing required key: "suffix"`, l.Name(), p.id)
 	}
+	p.slash = suffix
 
 	p.prefix, err = l.transformPrefix(p.id, prefix)
 	if err != nil {

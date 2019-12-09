@@ -2,7 +2,7 @@ register_urls({
     "id": "invalid-test-case",
     "path": {
         "prefix": [],
-        "suffix": "strip",
+        "suffix": "/?",
     },
     "query": {
         "dedup": "never",

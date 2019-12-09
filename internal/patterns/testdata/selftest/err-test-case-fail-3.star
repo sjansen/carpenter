@@ -4,7 +4,7 @@ register_urls({
         "prefix": [
             (".*", lambda x: 42),
         ],
-        "suffix": "strip",
+        "suffix": "/?",
     },
     "query": {
         "dedup": "never",

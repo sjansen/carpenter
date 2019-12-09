@@ -2,7 +2,7 @@ register_urls({
     "id": "unexpected-result",
     "path": {
         "prefix": [],
-        "suffix": "strip",
+        "suffix": "/?",
     },
     "query": {
         "dedup": "never",

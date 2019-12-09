@@ -9,7 +9,7 @@ register_urls({
     "id": "root",
     "path": {
         "prefix": [],
-        "suffix": "strip",
+        "suffix": "/?",
     },
     "query": {
         "dedup": "never",
@@ -20,10 +20,10 @@ register_urls({
         "/Spoon!": None,
     },
 }, {
-    "id": "always",
+    "id": "slash-required",
     "path": {
         "prefix": ["foo"],
-        "suffix": "always",
+        "suffix": "/",
     },
     "query": {
         "dedup": "never",
@@ -34,10 +34,10 @@ register_urls({
         "/foo/": "/foo/",
     },
 }, {
-    "id": "never",
+    "id": "no-final-slash",
     "path": {
         "prefix": ["bar"],
-        "suffix": "never",
+        "suffix": "",
     },
     "query": {
         "dedup": "never",
@@ -48,10 +48,10 @@ register_urls({
         "/bar/": None,
     },
 }, {
-    "id": "strip",
+    "id": "optional-slash",
     "path": {
         "prefix": ["baz"],
-        "suffix": "strip",
+        "suffix": "/?",
     },
     "query": {
         "dedup": "never",
@@ -65,7 +65,7 @@ register_urls({
     "id": "regex",
     "path": {
         "prefix": [("qux", "quux")],
-        "suffix": "always",
+        "suffix": "/",
     },
     "query": {
         "dedup": "never",
@@ -75,10 +75,10 @@ register_urls({
         "/qux/": "/quux/",
     },
 }, {
-    "id": "query.never",
+    "id": "query-no-final-slash",
     "path": {
         "prefix": ["search"],
-        "suffix": "never",
+        "suffix": "",
     },
     "query": {
         "dedup": "never",
@@ -93,7 +93,7 @@ register_urls({
         "/search?q=dogs&utf8=\342\234\224": "/search?q=X",
     },
 }, {
-    "id": "multi",
+    "id": "complex",
     "path": {
         "prefix": [
             "corge",
@@ -101,7 +101,7 @@ register_urls({
             names,
             (".+", fn),
         ],
-        "suffix": "strip",
+        "suffix": "/?",
     },
     "query": {
         "dedup": "never",
