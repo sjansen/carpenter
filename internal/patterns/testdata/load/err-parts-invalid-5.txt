@@ -1,1 +1,0 @@
-register_urls: "prefix-invalid-5" expected Callable or String, got int

@@ -37,22 +37,19 @@ func (l *patternLoader) getIterableFromDict(parent, key string, pattern *starlar
 	}
 	iter, ok := value.(starlark.Iterable)
 	if !ok {
-		return nil, fmt.Errorf("%s: %q expected Iterable, got %s", l.Name(), parent, value.Type())
+		return nil, fmt.Errorf("%s: %q/%q expected Iterable, got %s", l.Name(), parent, key, value.Type())
 	}
 	return iter, nil
 }
 
-func (l *patternLoader) getStringFromDict(parent, key string, pattern *starlark.Dict) (string, bool, error) {
+func (l *patternLoader) getStringFromDict(key string, pattern *starlark.Dict) (string, bool, error) {
 	value, found, err := pattern.Get(starlark.String(key))
 	if err != nil || !found {
 		return "", found, err
 	}
 	s, ok := value.(starlark.String)
 	if !ok {
-		if parent == "" {
-			return "", found, fmt.Errorf("%s: expected String, got %s", l.Name(), value.Type())
-		}
-		return "", found, fmt.Errorf("%s: %q expected String, got %s", l.Name(), parent, value.Type())
+		return "", found, fmt.Errorf("%s: expected String, got %s", l.Name(), value.Type())
 	}
 	return s.GoString(), found, nil
 }
@@ -63,7 +60,7 @@ func (l *patternLoader) registerURL(arg starlark.Value) error {
 		return fmt.Errorf("%s: expected Dict, got %s", l.Name(), arg.Type())
 	}
 
-	id, _, err := l.getStringFromDict("", "id", d)
+	id, _, err := l.getStringFromDict("id", d)
 	if err != nil {
 		return err
 	} else if id == "" {
@@ -142,13 +139,21 @@ func (l *patternLoader) transformPath(p *Pattern, path *starlark.Dict) error {
 		return fmt.Errorf(`%s: %q missing required key: "prefix"`, l.Name(), p.id)
 	}
 
-	suffix, found, err := l.getStringFromDict(p.id, "suffix", path)
+	value, found, err := path.Get(starlark.String("suffix"))
 	if err != nil {
 		return err
 	} else if !found {
 		return fmt.Errorf(`%s: %q missing required key: "suffix"`, l.Name(), p.id)
 	}
-	p.slash = suffix
+
+	if s, ok := value.(starlark.String); ok {
+		p.slash = s.GoString()
+	} else if part, err := l.transformPart(p.id, "suffix", value); err != nil {
+		return err
+	} else {
+		p.slash = "/?"
+		p.suffix = part.(*regexPart)
+	}
 
 	p.prefix, err = l.transformPrefix(p.id, prefix)
 	if err != nil {
@@ -209,7 +214,7 @@ func (l *patternLoader) transformPrefix(id string, prefix starlark.Iterable) ([]
 
 	var value starlark.Value
 	for iter.Next(&value) {
-		part, err := l.transformPart(id, value)
+		part, err := l.transformPart(id, "prefix", value)
 		if err != nil {
 			return nil, err
 		}
@@ -219,7 +224,7 @@ func (l *patternLoader) transformPrefix(id string, prefix starlark.Iterable) ([]
 	return result, nil
 }
 
-func (l *patternLoader) transformPart(id string, value starlark.Value) (part, error) {
+func (l *patternLoader) transformPart(parent, child string, value starlark.Value) (part, error) {
 	switch v := value.(type) {
 	case starlark.String:
 		m := &plainPart{
@@ -228,7 +233,7 @@ func (l *patternLoader) transformPart(id string, value starlark.Value) (part, er
 		return m, nil
 	case starlark.Tuple:
 		if n := v.Len(); n != 2 {
-			return nil, fmt.Errorf("%s: %q expected 2 item Tuple, got %d", l.Name(), id, n)
+			return nil, fmt.Errorf("%s: %q/%q expected 2 item Tuple, got %d", l.Name(), parent, child, n)
 		}
 
 		m := &regexPart{}
@@ -240,7 +245,9 @@ func (l *patternLoader) transformPart(id string, value starlark.Value) (part, er
 		iter.Next(&value)
 		expr, ok := value.(starlark.String)
 		if !ok {
-			return nil, fmt.Errorf("%s: %q expected String, got %s", l.Name(), id, value.Type())
+			return nil, fmt.Errorf(
+				"%s: %q/%q expected String, got %s", l.Name(), parent, child, value.Type(),
+			)
 		}
 
 		regex, err := regexp.Compile(expr.GoString())
@@ -262,9 +269,11 @@ func (l *patternLoader) transformPart(id string, value starlark.Value) (part, er
 			}
 			return m, nil
 		}
-		return nil, fmt.Errorf("%s: %q expected Callable or String, got %s", l.Name(), id, value.Type())
+		return nil, fmt.Errorf(
+			"%s: %q/%q expected Callable or String, got %s", l.Name(), parent, child, value.Type(),
+		)
 	}
-	return nil, fmt.Errorf("%s: %q expected String or Tuple, got %s", l.Name(), id, value.Type())
+	return nil, fmt.Errorf("%s: %q/%q expected String or Tuple, got %s", l.Name(), parent, child, value.Type())
 }
 
 func (l *patternLoader) transformQuery(p *Pattern, query *starlark.Dict) error {

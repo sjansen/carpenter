@@ -1,0 +1,1 @@
+register_urls: "prefix-invalid-1"/"prefix" expected Iterable, got NoneType

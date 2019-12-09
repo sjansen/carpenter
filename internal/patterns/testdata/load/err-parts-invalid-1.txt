@@ -1,1 +1,0 @@
-register_urls: "prefix-invalid-1" expected Iterable, got NoneType

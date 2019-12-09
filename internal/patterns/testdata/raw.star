@@ -1,9 +1,12 @@
 names = ("waldo|fred", "plugh")
 
-def fn(x):
+def xyzzy(x):
     if x == "xyzzy":
-        return "thud"
+        return "Z"
     return "X"
+
+def thud(x):
+    return ""
 
 register_urls({
     "id": "root",
@@ -99,9 +102,9 @@ register_urls({
             "corge",
             ("grault", "garply"),
             names,
-            (".+", fn),
+            (".+", xyzzy),
         ],
-        "suffix": "/?",
+        "suffix": (".*", thud),
     },
     "query": {
         "dedup": "never",
@@ -110,8 +113,8 @@ register_urls({
         },
     },
     "tests": {
-        "/corge/grault/waldo/xyzzy": "/corge/garply/plugh/thud",
         "/corge/grault/fred/42/": "/corge/garply/plugh/X",
+        "/corge/grault/waldo/xyzzy": "/corge/garply/plugh/Z",
         "/corge/grault/fred/random/?n=left": "/corge/garply/plugh/X?n=even",
         "/corge/grault/fred/random?n=right": "/corge/garply/plugh/X?n=odd",
     },

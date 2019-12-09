@@ -133,6 +133,10 @@ var expected = Patterns{
 				rewriter: nil,
 			},
 		},
+		suffix: &regexPart{
+			regex:    regexp.MustCompile(".*"),
+			rewriter: nil,
+		},
 		params: map[string]*param{
 			"n": {
 				remove:   false,
@@ -140,8 +144,8 @@ var expected = Patterns{
 			},
 		},
 		tests: map[string]string{
-			"/corge/grault/waldo/xyzzy":         "/corge/garply/plugh/thud",
 			"/corge/grault/fred/42/":            "/corge/garply/plugh/X",
+			"/corge/grault/waldo/xyzzy":         "/corge/garply/plugh/Z",
 			"/corge/grault/fred/random/?n=left": "/corge/garply/plugh/X?n=even",
 			"/corge/grault/fred/random?n=right": "/corge/garply/plugh/X?n=odd",
 		},
@@ -166,6 +170,11 @@ func TestLoad(t *testing.T) {
 	actualPart := actual[last].prefix[3].(*regexPart)
 	require.IsType(&rewriteFunction{}, actualPart.rewriter)
 	expectedPart := expected[last].prefix[3].(*regexPart)
+	expectedPart.rewriter = actualPart.rewriter
+
+	actualPart = actual[last].suffix
+	require.IsType(&rewriteFunction{}, actualPart.rewriter)
+	expectedPart = expected[last].suffix
 	expectedPart.rewriter = actualPart.rewriter
 
 	actualParam := actual[last].params["n"]

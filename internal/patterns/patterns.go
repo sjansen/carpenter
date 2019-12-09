@@ -18,6 +18,7 @@ type Pattern struct {
 	dedup  string
 	slash  string
 	prefix []part
+	suffix *regexPart
 	params map[string]*param
 	tests  map[string]string
 }
@@ -206,6 +207,11 @@ func (p *Pattern) splitPath(path string) ([]string, bool) {
 		}
 	}
 
-	parts := strings.Split(path, "/")
+	var parts []string
+	if p.suffix != nil {
+		parts = strings.SplitN(path, "/", len(p.prefix)+1)
+	} else {
+		parts = strings.Split(path, "/")
+	}
 	return parts[1:], true
 }

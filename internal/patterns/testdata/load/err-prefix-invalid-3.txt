@@ -1,0 +1,1 @@
+register_urls: "prefix-invalid-3"/"prefix" expected 2 item Tuple, got 3

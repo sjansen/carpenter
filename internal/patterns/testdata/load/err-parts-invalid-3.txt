@@ -1,1 +1,0 @@
-register_urls: "prefix-invalid-3" expected 2 item Tuple, got 3
