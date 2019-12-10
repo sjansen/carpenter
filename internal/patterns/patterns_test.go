@@ -208,24 +208,31 @@ func TestLoadErrors(t *testing.T) {
 }
 
 func TestSelfTest(t *testing.T) {
-	require := require.New(t)
+	files, _ := filepath.Glob("testdata/*.star")
+	for _, tc := range files {
+		tc := tc
+		prefix := tc[:len(tc)-5]
+		t.Run(filepath.Base(prefix), func(t *testing.T) {
+			require := require.New(t)
 
-	r, err := os.Open("testdata/raw.star")
-	require.NoError(err)
+			r, err := os.Open(tc)
+			require.NoError(err)
 
-	patterns, err := Load("<test script>", r)
-	require.NoError(err)
+			patterns, err := Load("<test script>", r)
+			require.NoError(err)
 
-	var stdout, stderr bytes.Buffer
-	sys := &sys.IO{
-		Log:    logger.Discard(),
-		Stdout: &stdout,
-		Stderr: &stderr,
+			var stdout, stderr bytes.Buffer
+			sys := &sys.IO{
+				Log:    logger.Discard(),
+				Stdout: &stdout,
+				Stderr: &stderr,
+			}
+
+			testcases, err := patterns.SelfTest(sys)
+			require.NoError(err)
+			require.NotNil(testcases)
+		})
 	}
-
-	testcases, err := patterns.SelfTest(sys)
-	require.NoError(err)
-	require.NotNil(testcases)
 }
 
 func TestSelfTestErrors(t *testing.T) {

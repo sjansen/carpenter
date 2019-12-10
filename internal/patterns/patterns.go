@@ -110,12 +110,18 @@ func (patterns Patterns) Test(rawurl string) (id, normalized string, err error) 
 
 func (p *Pattern) Match(url *url.URL) (string, error) {
 	parts, ok := p.splitPath(url.Path)
-	if !ok || len(parts) != len(p.prefix) {
+	nparts, nprefix := len(parts), len(p.prefix)
+	switch {
+	case !ok:
+		fallthrough
+	case p.suffix == nil && nparts != nprefix:
+		fallthrough
+	case p.suffix != nil && nparts != nprefix && nparts != nprefix+1:
 		return "", nil
 	}
 
-	for i, part := range parts {
-		if !p.prefix[i].match(part) {
+	for i, matcher := range p.prefix {
+		if !matcher.match(parts[i]) {
 			return "", nil
 		}
 	}
@@ -153,14 +159,23 @@ func (p *Pattern) rewriteURL(parts []string) (string, error) {
 	result[0] = ""
 
 	thread := &starlark.Thread{}
-	for i, part := range parts {
-		part, err := p.prefix[i].normalize(thread, part)
+	for i, normalizer := range p.prefix {
+		part, err := normalizer.normalize(thread, parts[i])
 		if err != nil {
 			return "", err
 		}
 		result = append(result, part)
 	}
-	if p.slash == "/" || len(parts) == 0 {
+
+	nparts, nprefix := len(parts), len(p.prefix)
+	switch {
+	case p.suffix != nil && nparts == nprefix+1:
+		part, err := p.suffix.normalize(thread, parts[nparts-1])
+		if err != nil {
+			return "", err
+		}
+		result = append(result, part)
+	case p.slash == "/" || nparts == 0:
 		result = append(result, "")
 	}
 
@@ -209,7 +224,7 @@ func (p *Pattern) splitPath(path string) ([]string, bool) {
 
 	var parts []string
 	if p.suffix != nil {
-		parts = strings.SplitN(path, "/", len(p.prefix)+1)
+		parts = strings.SplitN(path, "/", len(p.prefix)+2)
 	} else {
 		parts = strings.Split(path, "/")
 	}
