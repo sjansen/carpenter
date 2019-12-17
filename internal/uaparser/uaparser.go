@@ -1,4 +1,4 @@
-package transformer
+package uaparser
 
 import (
 	"io/ioutil"
@@ -7,7 +7,10 @@ import (
 	"github.com/ua-parser/uap-go/uaparser"
 )
 
-func UserAgentParser() (*uaparser.Parser, error) {
+type Parser uaparser.Parser
+type Client uaparser.Client
+
+func UserAgentParser() (*Parser, error) {
 	r, err := data.Assets.Open("regexes.yaml")
 	if err != nil {
 		return nil, err
@@ -23,5 +26,11 @@ func UserAgentParser() (*uaparser.Parser, error) {
 		return nil, err
 	}
 
-	return uap, nil
+	return (*Parser)(uap), nil
+}
+
+func (parser *Parser) Parse(line string) *Client {
+	p := (*uaparser.Parser)(parser)
+	c := p.Parse(line)
+	return (*Client)(c)
 }

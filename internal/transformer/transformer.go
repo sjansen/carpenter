@@ -11,10 +11,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ua-parser/uap-go/uaparser"
-
 	"github.com/sjansen/carpenter/internal/patterns"
 	"github.com/sjansen/carpenter/internal/tokenizer"
+	"github.com/sjansen/carpenter/internal/uaparser"
 )
 
 type Task struct {

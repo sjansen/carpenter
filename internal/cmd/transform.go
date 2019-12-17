@@ -9,6 +9,7 @@ import (
 	"github.com/sjansen/carpenter/internal/patterns"
 	"github.com/sjansen/carpenter/internal/tokenizer"
 	"github.com/sjansen/carpenter/internal/transformer"
+	"github.com/sjansen/carpenter/internal/uaparser"
 )
 
 type TransformCmd struct {
@@ -32,7 +33,7 @@ func (c *TransformCmd) Run(base *Base) error {
 		return err
 	}
 
-	uaparser, err := transformer.UserAgentParser()
+	uaparser, err := uaparser.UserAgentParser()
 	if err != nil {
 		return err
 	}
