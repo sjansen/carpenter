@@ -24,6 +24,22 @@ func (f *CSV) Close() error {
 	return f.w.Close()
 }
 
+func (f *CSV) Error() error {
+	if f == nil || f.w == nil {
+		return nil
+	}
+	if f.csv != nil {
+		return f.csv.Error()
+	}
+	return nil
+}
+
+func (f *CSV) Flush() {
+	if f != nil && f.csv != nil {
+		f.csv.Flush()
+	}
+}
+
 func (f *CSV) Write(row ...string) error {
 	switch {
 	case f == nil:

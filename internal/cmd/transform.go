@@ -1,14 +1,17 @@
 package cmd
 
 import (
+	"compress/gzip"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/sjansen/carpenter/internal/lazyio"
 	"github.com/sjansen/carpenter/internal/patterns"
+	"github.com/sjansen/carpenter/internal/pipeline"
 	"github.com/sjansen/carpenter/internal/tokenizer"
-	"github.com/sjansen/carpenter/internal/transformer"
 	"github.com/sjansen/carpenter/internal/uaparser"
 )
 
@@ -24,24 +27,9 @@ func (c *TransformCmd) Run(base *Base) error {
 		return err
 	}
 
-	r, err := os.Open(c.Patterns)
+	pipeline, err := c.newPipeline()
 	if err != nil {
 		return err
-	}
-	patterns, err := patterns.Load(c.Patterns, r)
-	if err != nil {
-		return err
-	}
-
-	uaparser, err := uaparser.UserAgentParser()
-	if err != nil {
-		return err
-	}
-
-	transformer := &transformer.Transformer{
-		Patterns:  patterns,
-		Tokenizer: tokenizer.ALB,
-		UAParser:  uaparser,
 	}
 
 	return filepath.Walk(c.SrcDir, func(src string, info os.FileInfo, err error) error {
@@ -51,28 +39,55 @@ func (c *TransformCmd) Run(base *Base) error {
 			return nil
 		}
 
-		task := c.newTask(src)
-		return transformer.Transform(task)
+		f, err := os.Open(src)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		var r io.ReadCloser = f
+		suffix := src[len(c.SrcDir):]
+		if strings.HasSuffix(src, ".gz") {
+			suffix = suffix[:len(suffix)-3]
+			r, err = gzip.NewReader(r)
+			if err != nil {
+				return err
+			}
+			defer r.Close()
+		}
+
+		task := pipeline.NewTask(r, suffix)
+		return task.Run()
 	})
 }
 
-func (c *TransformCmd) newTask(src string) *transformer.Task {
-	suffix := src[len(c.SrcDir):]
-	if strings.HasSuffix(suffix, ".gz") {
-		suffix = suffix[:len(suffix)-3]
-	}
-	ext := filepath.Ext(suffix)
-	if ext != "" {
-		suffix = suffix[:len(suffix)-len(ext)]
+func (c *TransformCmd) newPipeline() (*pipeline.Pipeline, error) {
+	r, err := os.Open(c.Patterns)
+	if err != nil {
+		return nil, err
 	}
 
-	dst := filepath.Join(c.DstDir, suffix+".csv")
-	return &transformer.Task{
-		Src:    src,
-		Dst:    dst,
-		ErrDir: c.ErrDir,
-		Suffix: suffix,
+	patterns, err := patterns.Load(c.Patterns, r)
+	if err != nil {
+		return nil, err
 	}
+
+	uaparser, err := uaparser.UserAgentParser()
+	if err != nil {
+		return nil, err
+	}
+
+	pipeline := &pipeline.Pipeline{
+		Result:    &lazyio.File{Dir: c.DstDir},
+		Patterns:  patterns,
+		Tokenizer: tokenizer.ALB,
+		UAParser:  uaparser,
+	}
+	if c.ErrDir != "" {
+		pipeline.Debug = &lazyio.File{Dir: c.ErrDir}
+	}
+
+	return pipeline, nil
 }
 
 func (c *TransformCmd) verifyArgs() error {
