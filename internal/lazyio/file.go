@@ -6,13 +6,13 @@ import (
 	"path/filepath"
 )
 
-var _ Opener = &File{}
+var _ Opener = &FileOpener{}
 
-type File struct {
+type FileOpener struct {
 	Dir string
 }
 
-func (f *File) Open(path string) (io.WriteCloser, error) {
+func (f *FileOpener) Open(path string) (io.WriteCloser, error) {
 	path = filepath.Join(f.Dir, filepath.FromSlash(path))
 	err := os.MkdirAll(filepath.Dir(path), 0777)
 	if err != nil {

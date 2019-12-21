@@ -78,13 +78,13 @@ func (c *TransformCmd) newPipeline() (*pipeline.Pipeline, error) {
 	}
 
 	pipeline := &pipeline.Pipeline{
-		Result:    &lazyio.File{Dir: c.DstDir},
+		Result:    &lazyio.FileOpener{Dir: c.DstDir},
 		Patterns:  patterns,
 		Tokenizer: tokenizer.ALB,
 		UAParser:  uaparser,
 	}
 	if c.ErrDir != "" {
-		pipeline.Debug = &lazyio.File{Dir: c.ErrDir}
+		pipeline.Debug = &lazyio.FileOpener{Dir: c.ErrDir}
 	}
 
 	return pipeline, nil
