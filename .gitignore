@@ -1,5 +1,7 @@
 # Directories
 /dist/
+.idea/
+.vscode/
 
 # Files
 /carpenter
