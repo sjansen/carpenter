@@ -147,7 +147,12 @@ func (l *patternLoader) transformPath(p *Pattern, path *starlark.Dict) error {
 	}
 
 	if s, ok := value.(starlark.String); ok {
-		p.slash = s.GoString()
+		suffix := s.GoString()
+		if suffix == "" || suffix == "/" || suffix == "/?" {
+			p.slash = suffix
+		} else {
+			return fmt.Errorf(`%s: %q/"suffix" invalid value: %q`, l.Name(), p.id, suffix)
+		}
 	} else if part, err := l.transformPart(p.id, "suffix", value); err != nil {
 		return err
 	} else {
