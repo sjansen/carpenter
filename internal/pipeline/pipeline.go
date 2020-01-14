@@ -6,7 +6,7 @@ import (
 	pathlib "path"
 
 	"github.com/sjansen/carpenter/internal/lazyio"
-	"github.com/sjansen/carpenter/internal/patterns"
+	"github.com/sjansen/carpenter/internal/oldpatterns"
 	"github.com/sjansen/carpenter/internal/tokenizer"
 	"github.com/sjansen/carpenter/internal/uaparser"
 )
@@ -14,7 +14,7 @@ import (
 type Pipeline struct {
 	Debug     lazyio.Opener
 	Result    lazyio.Opener
-	Patterns  patterns.Patterns
+	Patterns  oldpatterns.Patterns
 	Tokenizer *tokenizer.Tokenizer
 	UAParser  *uaparser.Parser
 }

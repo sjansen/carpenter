@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/sjansen/carpenter/internal/patterns"
+	"github.com/sjansen/carpenter/internal/oldpatterns"
 )
 
 type TestCmd struct {
@@ -17,7 +17,7 @@ func (c *TestCmd) Run(base *Base) error {
 		return err
 	}
 
-	patterns, err := patterns.Load(c.File, r)
+	patterns, err := oldpatterns.Load(c.File, r)
 	if err != nil {
 		return err
 	}

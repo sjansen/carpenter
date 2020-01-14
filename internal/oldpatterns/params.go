@@ -1,4 +1,4 @@
-package patterns
+package oldpatterns
 
 import "go.starlark.net/starlark"
 

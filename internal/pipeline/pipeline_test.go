@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/sjansen/carpenter/internal/lazyio"
-	"github.com/sjansen/carpenter/internal/patterns"
+	"github.com/sjansen/carpenter/internal/oldpatterns"
 	"github.com/sjansen/carpenter/internal/pipeline"
 	"github.com/sjansen/carpenter/internal/tokenizer"
 	"github.com/sjansen/carpenter/internal/uaparser"
@@ -23,7 +23,7 @@ func TestPipeline(t *testing.T) {
 	r, err := os.Open("testdata/alb.star")
 	require.NoError(err)
 
-	patterns, err := patterns.Load("alb.star", r)
+	patterns, err := oldpatterns.Load("alb.star", r)
 	require.NoError(err)
 
 	uaparser, err := uaparser.UserAgentParser()

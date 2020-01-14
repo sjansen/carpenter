@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/sjansen/carpenter/internal/patterns"
+	"github.com/sjansen/carpenter/internal/oldpatterns"
 )
 
 type TestCasesCmd struct {
@@ -18,7 +18,7 @@ func (c *TestCasesCmd) Run(base *Base) error {
 		return err
 	}
 
-	patterns, err := patterns.Load(c.File, r)
+	patterns, err := oldpatterns.Load(c.File, r)
 	if err != nil {
 		return err
 	}

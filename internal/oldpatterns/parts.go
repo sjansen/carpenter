@@ -1,4 +1,4 @@
-package patterns
+package oldpatterns
 
 import (
 	"regexp"
