@@ -17,59 +17,66 @@ import (
 var expected = Patterns{
 	{
 		id:     "root",
-		dedup:  "never",
 		slash:  "/?",
 		prefix: []part{},
-		params: map[string]*param{},
+		params: params{
+			dedup:  "never",
+			params: map[string]*param{},
+		},
 		tests: map[string]string{
 			"/":       "/",
 			"/Spoon!": "",
 		},
 	}, {
 		id:    "slash-required",
-		dedup: "never",
 		slash: "/",
 		prefix: []part{
 			&plainPart{
 				value: "foo",
 			},
 		},
-		params: map[string]*param{},
+		params: params{
+			dedup:  "never",
+			params: map[string]*param{},
+		},
 		tests: map[string]string{
 			"/foo":  "",
 			"/foo/": "/foo/",
 		},
 	}, {
 		id:    "no-final-slash",
-		dedup: "never",
 		slash: "",
 		prefix: []part{
 			&plainPart{
 				value: "bar",
 			},
 		},
-		params: map[string]*param{},
+		params: params{
+			dedup:  "never",
+			params: map[string]*param{},
+		},
 		tests: map[string]string{
 			"/bar":  "/bar",
 			"/bar/": "",
 		},
 	}, {
 		id:    "optional-slash",
-		dedup: "never",
 		slash: "/?",
 		prefix: []part{
 			&plainPart{
 				value: "baz",
 			},
 		},
-		params: map[string]*param{},
+		params: params{
+			dedup:  "never",
+			params: map[string]*param{},
+		},
 		tests: map[string]string{
 			"/baz":  "/baz",
 			"/baz/": "/baz",
 		},
 	}, {
 		id:    "regex",
-		dedup: "never",
 		slash: "/",
 		prefix: []part{
 			&regexPart{
@@ -79,28 +86,33 @@ var expected = Patterns{
 				},
 			},
 		},
-		params: map[string]*param{},
+		params: params{
+			dedup:  "never",
+			params: map[string]*param{},
+		},
 		tests: map[string]string{
 			"/qux/": "/quux/",
 		},
 	}, {
 		id:    "query-no-final-slash",
-		dedup: "never",
 		slash: "",
 		prefix: []part{
 			&plainPart{
 				value: "search",
 			},
 		},
-		params: map[string]*param{
-			"q": {
-				remove: false,
-				rewriter: &rewriteStatic{
-					value: "X",
+		params: params{
+			dedup: "never",
+			params: map[string]*param{
+				"q": {
+					remove: false,
+					rewriter: &rewriteStatic{
+						value: "X",
+					},
 				},
-			},
-			"utf8": {
-				remove: true,
+				"utf8": {
+					remove: true,
+				},
 			},
 		},
 		tests: map[string]string{
@@ -110,7 +122,6 @@ var expected = Patterns{
 		},
 	}, {
 		id:    "complex",
-		dedup: "never",
 		slash: "/?",
 		prefix: []part{
 			&plainPart{
@@ -137,10 +148,13 @@ var expected = Patterns{
 			regex:    regexp.MustCompile(".*"),
 			rewriter: nil,
 		},
-		params: map[string]*param{
-			"n": {
-				remove:   false,
-				rewriter: nil,
+		params: params{
+			dedup: "never",
+			params: map[string]*param{
+				"n": {
+					remove:   false,
+					rewriter: nil,
+				},
 			},
 		},
 		tests: map[string]string{
@@ -177,9 +191,9 @@ func TestLoad(t *testing.T) {
 	expectedPart = expected[last].suffix
 	expectedPart.rewriter = actualPart.rewriter
 
-	actualParam := actual[last].params["n"]
+	actualParam := actual[last].params.params["n"]
 	require.IsType(&rewriteFunction{}, actualParam.rewriter)
-	expectedParam := expected[last].params["n"]
+	expectedParam := expected[last].params.params["n"]
 	expectedParam.rewriter = actualParam.rewriter
 
 	require.Equal(expected, actual)

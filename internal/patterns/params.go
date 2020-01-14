@@ -2,6 +2,11 @@ package patterns
 
 import "go.starlark.net/starlark"
 
+type params struct {
+	dedup  string
+	params map[string]*param
+}
+
 type param struct {
 	remove   bool
 	rewriter rewriter

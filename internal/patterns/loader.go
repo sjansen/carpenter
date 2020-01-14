@@ -207,7 +207,7 @@ func (l *patternLoader) transformParams(p *Pattern, query *starlark.Dict) error 
 		}
 	}
 
-	p.params = result
+	p.params.params = result
 	return nil
 }
 
@@ -302,7 +302,7 @@ func (l *patternLoader) transformQuery(p *Pattern, query *starlark.Dict) error {
 					l.Name(), p.id, value.Type(),
 				)
 			}
-			p.dedup = v.GoString()
+			p.params.dedup = v.GoString()
 		case "params":
 			value := item.Index(1)
 			v, ok := value.(*starlark.Dict)

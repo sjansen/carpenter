@@ -15,11 +15,10 @@ type Patterns []*Pattern
 
 type Pattern struct {
 	id     string
-	dedup  string
 	slash  string
 	prefix []part
 	suffix *regexPart
-	params map[string]*param
+	params params
 	tests  map[string]string
 }
 
@@ -187,8 +186,8 @@ func (p *Pattern) rewriteQuery(query url.Values) (string, error) {
 
 	thread := &starlark.Thread{}
 	for key, values := range query {
-		if param, ok := p.params[key]; ok {
-			values, err := param.normalize(thread, p.dedup, values)
+		if param, ok := p.params.params[key]; ok {
+			values, err := param.normalize(thread, p.params.dedup, values)
 			if err != nil {
 				return "", err
 			}
