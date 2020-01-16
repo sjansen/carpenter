@@ -220,6 +220,7 @@ func (l *patternLoader) transformPath(p *pattern, path *starlark.Dict) error {
 	} else {
 		p.slash = maySlash
 		p.suffix = part.(*regexPart)
+		p.suffix.suffix = true
 	}
 
 	p.prefix, err = l.transformPrefix(p.id, prefix)

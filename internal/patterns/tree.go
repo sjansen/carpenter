@@ -21,32 +21,30 @@ type child struct {
 }
 
 func (t *tree) addPattern(p *pattern, depth int) {
-	if len(p.prefix) > depth {
-		for _, part := range p.prefix {
-			c := &child{
-				part: part,
-				tree: &tree{},
-			}
-			c.tree.addPattern(p, depth+1)
-			t.children = append(t.children, c)
+	if depth < len(p.prefix) {
+		c := &child{
+			part: p.prefix[depth],
+			tree: &tree{},
 		}
+		c.tree.addPattern(p, depth+1)
+		t.children = append(t.children, c)
 		return
 	}
 
-	if p.suffix == nil {
-		t.id = p.id
-		t.slash = p.slash
-		t.params = p.params
+	if p.suffix != nil {
+		c := &child{
+			part: p.suffix,
+			tree: &tree{
+				id:     p.id,
+				slash:  p.slash,
+				params: p.params,
+			},
+		}
+		t.children = append(t.children, c)
 		return
 	}
 
-	c := &child{
-		part: p.suffix,
-		tree: &tree{
-			id:     p.id,
-			slash:  p.slash,
-			params: p.params,
-		},
-	}
-	t.children = append(t.children, c)
+	t.id = p.id
+	t.slash = p.slash
+	t.params = p.params
 }

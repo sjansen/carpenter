@@ -13,9 +13,16 @@ func TestLoad(t *testing.T) {
 
 	for filename, tc := range map[string]struct {
 		expected *Patterns
+		// It's not possible to declare rewriters that reflect.DeepEqual
+		// recognizes, so fixers copy rewriters from actual to expected.
+		fixer func(t *testing.T, expected, actual *tree)
 	}{
 		"testdata/basic.star": {
 			expected: basicTree,
+		},
+		"testdata/regex.star": {
+			expected: regexTree,
+			fixer:    regexTreeFixer,
 		},
 	} {
 		r, err := os.Open(filename)
@@ -23,6 +30,10 @@ func TestLoad(t *testing.T) {
 
 		actual, err := Load(filename, r)
 		require.NoError(err)
+
+		if tc.fixer != nil {
+			tc.fixer(t, &tc.expected.tree, &actual.tree)
+		}
 		require.Equal(tc.expected, actual)
 	}
 }
@@ -32,7 +43,9 @@ func TestLoadPatterns(t *testing.T) {
 
 	for filename, tc := range map[string]struct {
 		expected []*pattern
-		fixer    func(t *testing.T, expected, actual []*pattern)
+		// It's not possible to declare rewriters that reflect.DeepEqual
+		// recognizes, so fixers copy rewriters from actual to expected.
+		fixer func(t *testing.T, expected, actual []*pattern)
 	}{
 		"testdata/basic.star": {
 			expected: basicPatterns,
@@ -308,6 +321,7 @@ var regexPatterns = []*pattern{{
 		},
 	},
 	suffix: &regexPart{
+		suffix:   true,
 		regex:    regexp.MustCompile(".+"),
 		rewriter: nil,
 	},
@@ -328,4 +342,89 @@ var regexPatterns = []*pattern{{
 		"/corge/fred?utf8=✔": "/corge/FRED?utf8=True",
 		"/corge/fred?utf8=!": "/corge/FRED?utf8=False",
 	},
+}}
+
+func regexTreeFixer(t *testing.T, expected, actual *tree) {
+	require := require.New(t)
+
+	require.Equal(len(expected.children), len(actual.children))
+	for i, expectedChild := range expected.children {
+		actualChild := actual.children[i]
+		require.IsType(expectedChild.part, actualChild.part)
+		if expectedPart, ok := expectedChild.part.(*regexPart); ok {
+			actualPart := actualChild.part.(*regexPart)
+			expectedPart.rewriter = actualPart.rewriter
+		}
+		if expectedChild.tree != nil {
+			require.NotNil(actualChild.tree)
+			regexTreeFixer(t, expectedChild.tree, actualChild.tree)
+		}
+	}
+
+	expectedParams := expected.params.params
+	actualParams := actual.params.params
+	require.Equal(len(expectedParams), len(actualParams))
+	for k, expectedParam := range expectedParams {
+		actualParam, ok := actualParams[k]
+		require.True(ok, k)
+		expectedParam.rewriter = actualParam.rewriter
+	}
+}
+
+var regexTree = &Patterns{tree{
+	children: []*child{{
+		part: &regexPart{
+			regex: regexp.MustCompile("foo|bar"),
+			rewriter: &staticRewriter{
+				value: "baz",
+			},
+		},
+		tree: &tree{
+			children: []*child{{
+				part: &regexPart{
+					regex:    regexp.MustCompile("qux|quux"),
+					rewriter: nil,
+				},
+				tree: &tree{
+					id:    "prefix-regex",
+					slash: mustSlash,
+					params: params{
+						dedup: keepFirst,
+						params: map[string]*param{
+							"utf8": {
+								remove:   false,
+								rewriter: nil,
+							},
+						},
+					},
+				},
+			}},
+		},
+	}, {
+		part: &plainPart{
+			value: "corge",
+		},
+		tree: &tree{
+			children: []*child{{
+				part: &regexPart{
+					suffix:   true,
+					regex:    regexp.MustCompile(".+"),
+					rewriter: nil,
+				},
+				tree: &tree{
+					id:    "suffix-regex",
+					slash: maySlash,
+					params: params{
+						dedup: keepLast,
+						params: map[string]*param{
+							"utf8": {
+								remove:   false,
+								rewriter: nil,
+							},
+						},
+					},
+				},
+			}},
+		},
+	}},
 }}
