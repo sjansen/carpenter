@@ -1,8 +1,11 @@
 package patterns
 
 import (
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -35,6 +38,40 @@ func TestLoad(t *testing.T) {
 			tc.fixer(t, &tc.expected.tree, &actual.tree)
 		}
 		require.Equal(tc.expected, actual)
+	}
+}
+
+func TestLoadErrors(t *testing.T) {
+	files, _ := filepath.Glob("testdata/load-errors/*.star")
+	for _, tc := range files {
+		tc := tc
+		prefix := tc[:len(tc)-5]
+		t.Run(filepath.Base(prefix), func(t *testing.T) {
+			require := require.New(t)
+
+			r, err := os.Open(tc)
+			require.NoError(err)
+
+			_, err = Load(filepath.Base(tc), r)
+			require.Error(err)
+			actual := err.Error()
+
+			msg, err := ioutil.ReadFile(prefix + ".txt")
+			if os.IsNotExist(err) {
+				msg = []byte(actual)
+				ioutil.WriteFile(prefix+".txt", msg, 0664)
+			} else {
+				require.NoError(err)
+				expected := strings.TrimSpace(string(msg))
+
+				if expected != actual {
+					msg = []byte(actual)
+					ioutil.WriteFile(prefix+".actual", msg, 0664)
+				}
+
+				require.Equal(expected, actual)
+			}
+		})
 	}
 }
 

@@ -1,0 +1,1 @@
+invalid-syntax.star:1:6: unexpected input character '!'
