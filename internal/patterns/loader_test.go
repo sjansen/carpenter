@@ -132,6 +132,8 @@ var basicPatterns = []*pattern{{
 	tests: map[string]string{
 		"/foo":  "",
 		"/foo/": "/foo/",
+		"/bar":  "",
+		"/baz/": "",
 	},
 }, {
 	id:    "no-final-slash",
@@ -146,6 +148,8 @@ var basicPatterns = []*pattern{{
 		params: map[string]*param{},
 	},
 	tests: map[string]string{
+		"/foo":  "",
+		"/foo/": "",
 		"/bar":  "/bar",
 		"/bar/": "",
 	},
@@ -162,6 +166,8 @@ var basicPatterns = []*pattern{{
 		params: map[string]*param{},
 	},
 	tests: map[string]string{
+		"/foo":  "",
+		"/foo/": "",
 		"/baz":  "/baz",
 		"/baz/": "/baz",
 	},
@@ -210,7 +216,7 @@ var basicPatterns = []*pattern{{
 	},
 }}
 
-var basicTree = &Patterns{tree{
+var basicTree = &Patterns{tree: tree{
 	id:    "root",
 	slash: maySlash,
 	params: params{
@@ -289,6 +295,19 @@ var basicTree = &Patterns{tree{
 			},
 		},
 	}},
+}, tests: map[string]match{
+	"/":                      {"root", "/"},
+	"/rfc3092/":              {"root", ""},
+	"/foo":                   {"slash-required", ""},
+	"/foo/":                  {"slash-required", "/foo/"},
+	"/bar":                   {"no-final-slash", "/bar"},
+	"/bar/":                  {"no-final-slash", ""},
+	"/baz":                   {"optional-slash", "/baz"},
+	"/baz/":                  {"optional-slash", "/baz"},
+	"/qux/":                  {"regex", "/quux"},
+	"/search?utf8=✔":         {"query", "/search"},
+	"/search/?q=cats":        {"query", "/search?q=X"},
+	"/search/?q=dogs&utf8=✔": {"query", "/search?q=X"},
 }}
 
 func regexPatternsFixer(t *testing.T, expected, actual []*pattern) {
@@ -408,7 +427,7 @@ func regexTreeFixer(t *testing.T, expected, actual *tree) {
 	}
 }
 
-var regexTree = &Patterns{tree{
+var regexTree = &Patterns{tree: tree{
 	children: []*child{{
 		part: &regexPart{
 			regex: regexp.MustCompile("foo|bar"),
@@ -464,4 +483,16 @@ var regexTree = &Patterns{tree{
 			}},
 		},
 	}},
+}, tests: map[string]match{
+	"/foo/qux":           {"prefix-regex", ""},
+	"/foo/qux/":          {"prefix-regex", "/baz/n=3/"},
+	"/bar/qux/":          {"prefix-regex", "/baz/n=3/"},
+	"/bar/quux/":         {"prefix-regex", "/baz/n=4/"},
+	"/foo/quux/?utf8=✔":  {"prefix-regex", "/baz/n=4/?utf8=True"},
+	"/corge/":            {"suffix-regex", ""},
+	"/corge/grault":      {"suffix-regex", "/corge/GRAULT"},
+	"/corge/garply":      {"suffix-regex", "/corge/GARPLY"},
+	"/corge/waldo/":      {"suffix-regex", "/corge/WALDO"},
+	"/corge/fred?utf8=✔": {"suffix-regex", "/corge/FRED?utf8=True"},
+	"/corge/fred?utf8=!": {"suffix-regex", "/corge/FRED?utf8=False"},
 }}

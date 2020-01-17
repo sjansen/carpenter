@@ -25,6 +25,8 @@ add_url("slash-required",
     tests={
         "/foo": None,
         "/foo/": "/foo/",
+        "/bar": None, # replaced by no-final-slash
+        "/baz/": None, # replaced by optional-slash
     },
 )
 
@@ -38,6 +40,8 @@ add_url("no-final-slash",
         "params": {},
     },
     tests={
+        "/foo": None, # shadowed by slash-required
+        "/foo/": None, # shadowed by slash-required
         "/bar": "/bar",
         "/bar/": None,
     },
@@ -53,6 +57,8 @@ add_url("optional-slash",
         "params": {},
     },
     tests={
+        "/foo": None, # shadowed by slash-required
+        "/foo/": None, # shadowed by slash-required
         "/baz": "/baz",
         "/baz/": "/baz",
     },

@@ -1,7 +1,13 @@
 package patterns
 
 type Patterns struct {
-	tree
+	tests map[string]match
+	tree  tree
+}
+
+type match struct {
+	id  string
+	url string
 }
 
 type pattern struct {
