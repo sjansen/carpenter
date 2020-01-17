@@ -25,7 +25,7 @@ func Load(filename string, src io.Reader) (*Patterns, error) {
 	}
 
 	patterns := &Patterns{
-		tests: map[string]match{},
+		tests: map[string]result{},
 	}
 	for _, p := range loaded {
 		patterns.tree.addPattern(p, 0)
@@ -43,7 +43,7 @@ func Load(filename string, src io.Reader) (*Patterns, error) {
 			case ok && original.url == "":
 				fallthrough
 			default:
-				patterns.tests[raw] = match{
+				patterns.tests[raw] = result{
 					id:  p.id,
 					url: normalized,
 				}

@@ -295,7 +295,7 @@ var basicTree = &Patterns{tree: tree{
 			},
 		},
 	}},
-}, tests: map[string]match{
+}, tests: map[string]result{
 	"/":                      {"root", "/"},
 	"/rfc3092/":              {"root", ""},
 	"/foo":                   {"slash-required", ""},
@@ -394,7 +394,7 @@ var regexPatterns = []*pattern{{
 		"/corge/":            "",
 		"/corge/grault":      "/corge/GRAULT",
 		"/corge/garply":      "/corge/GARPLY",
-		"/corge/waldo/":      "/corge/WALDO",
+		"/corge/waldo/":      "/corge/WALDO/",
 		"/corge/fred?utf8=✔": "/corge/FRED?utf8=True",
 		"/corge/fred?utf8=!": "/corge/FRED?utf8=False",
 	},
@@ -483,7 +483,7 @@ var regexTree = &Patterns{tree: tree{
 			}},
 		},
 	}},
-}, tests: map[string]match{
+}, tests: map[string]result{
 	"/foo/qux":           {"prefix-regex", ""},
 	"/foo/qux/":          {"prefix-regex", "/baz/n=3/"},
 	"/bar/qux/":          {"prefix-regex", "/baz/n=3/"},
@@ -492,7 +492,7 @@ var regexTree = &Patterns{tree: tree{
 	"/corge/":            {"suffix-regex", ""},
 	"/corge/grault":      {"suffix-regex", "/corge/GRAULT"},
 	"/corge/garply":      {"suffix-regex", "/corge/GARPLY"},
-	"/corge/waldo/":      {"suffix-regex", "/corge/WALDO"},
+	"/corge/waldo/":      {"suffix-regex", "/corge/WALDO/"},
 	"/corge/fred?utf8=✔": {"suffix-regex", "/corge/FRED?utf8=True"},
 	"/corge/fred?utf8=!": {"suffix-regex", "/corge/FRED?utf8=False"},
 }}
