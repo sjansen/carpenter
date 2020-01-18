@@ -1,1 +1,0 @@
-register_urls: "path-missing-prefix" missing required key: "prefix"

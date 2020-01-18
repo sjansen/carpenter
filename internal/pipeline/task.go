@@ -8,13 +8,13 @@ import (
 	"strings"
 
 	"github.com/sjansen/carpenter/internal/lazyio"
-	"github.com/sjansen/carpenter/internal/oldpatterns"
+	"github.com/sjansen/carpenter/internal/patterns"
 	"github.com/sjansen/carpenter/internal/tokenizer"
 	"github.com/sjansen/carpenter/internal/uaparser"
 )
 
 type Task struct {
-	patterns  oldpatterns.Patterns
+	patterns  *patterns.Patterns
 	tokenizer *tokenizer.Tokenizer
 	uaparser  *uaparser.Parser
 

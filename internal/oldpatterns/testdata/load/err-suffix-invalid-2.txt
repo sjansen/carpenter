@@ -1,1 +1,0 @@
-register_urls: "suffix-invalid-2"/"suffix" invalid value: "$"

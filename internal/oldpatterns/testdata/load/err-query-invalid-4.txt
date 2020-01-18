@@ -1,1 +1,0 @@
-register_urls: "query-invalid-4" expected "dedup" or "params", got "keys"

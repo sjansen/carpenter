@@ -1,14 +1,10 @@
-register_urls({
-    "id": "root",
-    "path": {
+add_url("root",
+    path={
         "prefix": [],
-        "suffix": "/?",
+        "suffix": "/",
     },
-    "query": {
-        "dedup": "never",
-        "params": {},
-    },
-    "tests": {
+    query={},
+    tests={
         "/": "/",
     },
-})
+)

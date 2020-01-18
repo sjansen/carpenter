@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/sjansen/carpenter/internal/lazyio"
-	"github.com/sjansen/carpenter/internal/oldpatterns"
+	"github.com/sjansen/carpenter/internal/patterns"
 	"github.com/sjansen/carpenter/internal/pipeline"
 	"github.com/sjansen/carpenter/internal/tokenizer"
 	"github.com/sjansen/carpenter/internal/uaparser"
@@ -67,7 +67,7 @@ func (c *TransformCmd) newPipeline() (*pipeline.Pipeline, error) {
 		return nil, err
 	}
 
-	patterns, err := oldpatterns.Load(c.Patterns, r)
+	patterns, err := patterns.Load(c.Patterns, r)
 	if err != nil {
 		return nil, err
 	}

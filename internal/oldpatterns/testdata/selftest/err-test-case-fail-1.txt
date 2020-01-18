@@ -1,1 +1,0 @@
-unexpected result: expected="/?foo" actual="/?foo=" (pattern="unexpected-result" test="/?foo")

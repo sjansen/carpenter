@@ -1,1 +1,0 @@
-register_urls: "query-missing" missing required key: "query"

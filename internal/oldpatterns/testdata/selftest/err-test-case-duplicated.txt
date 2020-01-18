@@ -1,1 +1,0 @@
-duplicate test case: "original-test-case" (pattern="duplicate-test-case" test="/foo")
