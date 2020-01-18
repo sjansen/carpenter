@@ -1,101 +1,101 @@
-add_url("root",
-    path={
+add_url(
+    "root",
+    path = {
         "prefix": [],
         "suffix": "/",
     },
-    query={
+    query = {
         "params": {
             "foo": lambda x: x,
         },
     },
-    tests={
+    tests = {
         "/?foo=bar": "/?foo=bar",
     },
 )
 
-add_url("basic-query",
-    path={
+add_url(
+    "basic-query",
+    path = {
         "prefix": ["search"],
         "suffix": "/?",
     },
-    query={
+    query = {
         "dedup": "never",
         "params": {
-          "q": "X",
-          "utf8": None,
+            "q": "X",
+            "utf8": None,
         },
     },
-    tests={
-        "/search?utf8=✔":         "/search",
-        "/search/?q=cats":        "/search?q=X",
+    tests = {
+        "/search?utf8=✔": "/search",
+        "/search/?q=cats": "/search?q=X",
         "/search/?q=dogs&utf8=✔": "/search?q=X",
     },
 )
 
-add_url("dedup-never",
-    path={
+add_url(
+    "dedup-never",
+    path = {
         "prefix": ["team", "membership"],
         "suffix": "/",
     },
-    query={
+    query = {
         "dedup": "never",
         "params": {
-          "users[]": "X"
+            "users[]": "X",
         },
     },
-    tests={
-        "/team/membership/?users[]=alice":
-            "/team/membership/?users%5B%5D=X",
-        "/team/membership/?users[]=bob&users[]=eve":
-            "/team/membership/?users%5B%5D=X&users%5B%5D=X",
+    tests = {
+        "/team/membership/?users[]=alice": "/team/membership/?users%5B%5D=X",
+        "/team/membership/?users[]=bob&users[]=eve": "/team/membership/?users%5B%5D=X&users%5B%5D=X",
     },
 )
 
-add_url("dedup-first",
-    path={
+add_url(
+    "dedup-first",
+    path = {
         "prefix": ["dedup", "first"],
         "suffix": "/",
     },
-    query={
+    query = {
         "dedup": "first",
         "params": {
-          "users[]": lambda x: x,
+            "users[]": lambda x: x,
         },
     },
-    tests={
-        "/dedup/first/?users[]=alice":
-            "/dedup/first/?users%5B%5D=alice",
-        "/dedup/first/?users[]=bob&users[]=eve":
-            "/dedup/first/?users%5B%5D=bob",
+    tests = {
+        "/dedup/first/?users[]=alice": "/dedup/first/?users%5B%5D=alice",
+        "/dedup/first/?users[]=bob&users[]=eve": "/dedup/first/?users%5B%5D=bob",
     },
 )
 
-add_url("dedup-last",
-    path={
+add_url(
+    "dedup-last",
+    path = {
         "prefix": ["dedup", "last"],
         "suffix": "/",
     },
-    query={
+    query = {
         "dedup": "last",
         "params": {
-          "users[]": lambda x: x,
+            "users[]": lambda x: x,
         },
     },
-    tests={
-        "/dedup/last/?users[]=alice":
-            "/dedup/last/?users%5B%5D=alice",
-        "/dedup/last/?users[]=bob&users[]=eve":
-            "/dedup/last/?users%5B%5D=eve",
+    tests = {
+        "/dedup/last/?users[]=alice": "/dedup/last/?users%5B%5D=alice",
+        "/dedup/last/?users[]=bob&users[]=eve": "/dedup/last/?users%5B%5D=eve",
     },
 )
 
-add_url("extra-params",
-    path={
+add_url(
+    "extra-params",
+    path = {
         "prefix": ["extra", "params"],
         "suffix": "/?",
     },
-    query={},
-    tests={
+    query = {},
+    tests = {
         "/extra/params?foo&bar=baz&qux=quux": "/extra/params?bar=baz&foo=&qux=quux",
     },
 )

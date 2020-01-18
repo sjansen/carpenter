@@ -1,23 +1,25 @@
-add_url("first",
-    path={
+add_url(
+    "first",
+    path = {
         "prefix": ["foo"],
         "suffix": "/",
     },
-    query={},
-    tests={
+    query = {},
+    tests = {
         "/foo": "",
         "/foo/": "/foo/",
         "/bar/": "",
     },
 )
 
-add_url("second",
-    path={
+add_url(
+    "second",
+    path = {
         "prefix": [("b.+", "ANY")],
         "suffix": "/?",
     },
-    query={},
-    tests={
+    query = {},
+    tests = {
         "/foo/": "",
         "/bar/": "/ANY",
         "/baz/": "/ANY",

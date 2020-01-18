@@ -1,8 +1,9 @@
-add_url("example",
-    path={
+add_url(
+    "example",
+    path = {
         "prefix": [],
         "suffix": "/?",
     },
-    query={},
-    tests={},
+    query = {},
+    tests = {},
 )

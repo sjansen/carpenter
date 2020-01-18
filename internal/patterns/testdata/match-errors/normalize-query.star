@@ -1,14 +1,15 @@
-add_url("example",
-    path={
+add_url(
+    "example",
+    path = {
         "prefix": [],
         "suffix": "/",
     },
-    query={
+    query = {
         "params": {
             "x": lambda n: chr(n),
         },
     },
-    tests={
+    tests = {
         "/?x=42": "/?x=*",
     },
 )

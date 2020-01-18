@@ -1,42 +1,44 @@
-add_url("prefix-regex",
-    path={
+add_url(
+    "prefix-regex",
+    path = {
         "prefix": [
-          ("foo|bar", "baz"),
-          ("qux|quux", lambda x: "n=%s" % len(x)),
-         ],
+            ("foo|bar", "baz"),
+            ("qux|quux", lambda x: "n=%s" % len(x)),
+        ],
         "suffix": "/",
     },
-    query={
+    query = {
         "dedup": "first",
         "params": {
-          "utf8": lambda x: str(x == "✔"),
+            "utf8": lambda x: str(x == "✔"),
         },
     },
-    tests={
-        "/foo/qux":          None,
-        "/foo/qux/":         "/baz/n=3/",
-        "/bar/qux/":         "/baz/n=3/",
-        "/bar/quux/":        "/baz/n=4/",
+    tests = {
+        "/foo/qux": None,
+        "/foo/qux/": "/baz/n=3/",
+        "/bar/qux/": "/baz/n=3/",
+        "/bar/quux/": "/baz/n=4/",
         "/foo/quux/?utf8=✔": "/baz/n=4/?utf8=True",
     },
 )
 
-add_url("suffix-regex",
-    path={
+add_url(
+    "suffix-regex",
+    path = {
         "prefix": ["corge"],
         "suffix": (".+", lambda x: x.upper()),
     },
-    query={
+    query = {
         "dedup": "last",
         "params": {
-          "utf8": lambda x: str(x == "✔"),
+            "utf8": lambda x: str(x == "✔"),
         },
     },
-    tests={
+    tests = {
         "/corge/": None,
-        "/corge/grault":      "/corge/GRAULT",
-        "/corge/garply":      "/corge/GARPLY",
-        "/corge/waldo/":      "/corge/WALDO/",
+        "/corge/grault": "/corge/GRAULT",
+        "/corge/garply": "/corge/GARPLY",
+        "/corge/waldo/": "/corge/WALDO/",
         "/corge/fred?utf8=✔": "/corge/FRED?utf8=True",
         "/corge/fred?utf8=!": "/corge/FRED?utf8=False",
     },

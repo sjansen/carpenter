@@ -1,85 +1,91 @@
-add_url("root",
-    path={
+add_url(
+    "root",
+    path = {
         "prefix": [],
         "suffix": "/",
     },
-    query={
+    query = {
         "dedup": "never",
         "params": {},
     },
-    tests={
+    tests = {
         "/": "/",
         "/rfc3092/": None,
     },
 )
 
-add_url("slash-required",
-    path={
+add_url(
+    "slash-required",
+    path = {
         "prefix": ["foo"],
         "suffix": "/",
     },
-    query={
+    query = {
         "dedup": "first",
         "params": {},
     },
-    tests={
+    tests = {
         "/foo": None,
         "/foo/": "/foo/",
-        "/bar": None, # replaced by no-final-slash
-        "/baz/": None, # replaced by optional-slash
+        "/bar": None,  # replaced by no-final-slash
+        "/baz/": None,  # replaced by optional-slash
     },
 )
 
-add_url("no-final-slash",
-    path={
+add_url(
+    "no-final-slash",
+    path = {
         "prefix": ["bar"],
         "suffix": "",
     },
-    query={
+    query = {
         "dedup": "last",
         "params": {},
     },
-    tests={
-        "/foo": None, # shadowed by slash-required
-        "/foo/": None, # shadowed by slash-required
+    tests = {
+        "/foo": None,  # shadowed by slash-required
+        "/foo/": None,  # shadowed by slash-required
         "/bar": "/bar",
         "/bar/": None,
     },
 )
 
-add_url("optional-slash",
-    path={
+add_url(
+    "optional-slash",
+    path = {
         "prefix": ["baz"],
         "suffix": "/?",
     },
-    query={
+    query = {
         "dedup": "never",
         "params": {},
     },
-    tests={
-        "/foo": None, # shadowed by slash-required
-        "/foo/": None, # shadowed by slash-required
+    tests = {
+        "/foo": None,  # shadowed by slash-required
+        "/foo/": None,  # shadowed by slash-required
         "/baz": "/baz",
         "/baz/": "/baz",
     },
 )
 
-add_url("regex",
-    path={
+add_url(
+    "regex",
+    path = {
         "prefix": [("qux", "quux")],
         "suffix": "/?",
     },
-    query={
+    query = {
         "dedup": "never",
         "params": {},
     },
-    tests={
+    tests = {
         "/qux/": "/quux",
     },
 )
 
-add_url("goldilocks",
-    path={
+add_url(
+    "goldilocks",
+    path = {
         "prefix": [
             "corge",
             "grault",
@@ -87,8 +93,8 @@ add_url("goldilocks",
         ],
         "suffix": "",
     },
-    query={},
-    tests={
+    query = {},
+    tests = {
         "/corge": None,
         "/corge/grault": None,
         "/corge/grault/garply": "/corge/grault/garply",
@@ -97,21 +103,22 @@ add_url("goldilocks",
     },
 )
 
-add_url("query",
-    path={
+add_url(
+    "query",
+    path = {
         "prefix": ["search"],
         "suffix": "/?",
     },
-    query={
+    query = {
         "dedup": "never",
         "params": {
-          "q": "X",
-          "utf8": None,
+            "q": "X",
+            "utf8": None,
         },
     },
-    tests={
-        "/search?utf8=✔":         "/search",
-        "/search/?q=cats":        "/search?q=X",
+    tests = {
+        "/search?utf8=✔": "/search",
+        "/search/?q=cats": "/search?q=X",
         "/search/?q=dogs&utf8=✔": "/search?q=X",
     },
 )

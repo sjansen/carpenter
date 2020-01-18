@@ -1,12 +1,13 @@
-add_url("example",
-  path={
-    "prefix": [],
-    "suffix": "/",
-  },
-  query={
-    "params": {
-      "q": 42,
+add_url(
+    "example",
+    path = {
+        "prefix": [],
+        "suffix": "/",
     },
-  },
-  tests={},
+    query = {
+        "params": {
+            "q": 42,
+        },
+    },
+    tests = {},
 )

@@ -1,3 +1,4 @@
-add_url("example",
-  path={},
+add_url(
+    "example",
+    path = {},
 )
