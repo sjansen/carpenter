@@ -1,6 +1,7 @@
 package patterns
 
 import (
+	"bytes"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -40,6 +41,30 @@ func TestMatch(t *testing.T) {
 			require.Equal(expected.url, normalized, raw)
 		}
 	}
+}
+
+func TestMatchAll(t *testing.T) {
+	require := require.New(t)
+
+	r := bytes.NewBufferString(`
+add_url("first", path={"prefix": ["foo"], "suffix": "/"}, query={}, tests={})
+add_url("second", path={"prefix": [(".+", "ANY")], "suffix": "/"}, query={}, tests={})
+	`)
+
+	patterns, err := Load("<buffer>", r)
+	require.NoError(err)
+
+	url, err := url.Parse("/foo/")
+	require.NoError(err)
+
+	actual, err := patterns.MatchAll(url)
+	require.NoError(err)
+
+	expected := map[string]string{
+		"first":  "/foo/",
+		"second": "/ANY/",
+	}
+	require.Equal(expected, actual)
 }
 
 func TestMatchErrors(t *testing.T) {
