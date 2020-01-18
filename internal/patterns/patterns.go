@@ -44,7 +44,11 @@ func (p *Patterns) Match(url *url.URL) (id, normalized string, err error) {
 		match := matches[0]
 		parts := append(match.parts, "")
 		reverseParts(parts)
-		return match.id, strings.Join(parts, "/"), nil
+		normalized := strings.Join(parts, "/")
+		if match.query != "" {
+			normalized = normalized + "?" + match.query
+		}
+		return match.id, normalized, nil
 	}
 
 	return "", "", nil

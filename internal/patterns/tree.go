@@ -30,6 +30,7 @@ type child struct {
 type match struct {
 	id    string
 	parts []string
+	query string
 }
 
 func (t *tree) addPattern(p *pattern, depth int) {
@@ -68,11 +69,9 @@ func (t *tree) match(path string, query url.Values, depth int, matchAll bool) ([
 		case t.id == "":
 			return nil, nil
 		case t.slash == maySlash:
-			parts := make([]string, 0, depth+1)
-			return []*match{{t.id, parts}}, nil
+			return t.matchFound(depth, query)
 		case t.slash == neverSlash:
-			parts := make([]string, 0, depth+1)
-			return []*match{{t.id, parts}}, nil
+			return t.matchFound(depth, query)
 		}
 		return nil, nil
 	case "/":
@@ -80,12 +79,9 @@ func (t *tree) match(path string, query url.Values, depth int, matchAll bool) ([
 		case t.id == "":
 			return nil, nil
 		case t.slash == maySlash:
-			parts := make([]string, 0, depth+1)
-			return []*match{{t.id, parts}}, nil
+			return t.matchFound(depth, query)
 		case t.slash == mustSlash:
-			parts := make([]string, 0, depth+2)
-			parts = append(parts, "")
-			return []*match{{t.id, parts}}, nil
+			return t.matchFound(depth, query)
 		}
 		return nil, nil
 	}
@@ -144,4 +140,40 @@ func (t *tree) matchChildren(path string, query url.Values, depth int, matchAll 
 	}
 
 	return matches, nil
+}
+
+func (t *tree) matchFound(depth int, query url.Values) ([]*match, error) {
+	q, err := t.rewriteQuery(query)
+	if err != nil {
+		return nil, err
+	}
+
+	m := match{id: t.id, query: q}
+	if t.slash == mustSlash {
+		m.parts = make([]string, 0, depth+2)
+		m.parts = append(m.parts, "")
+	} else {
+		m.parts = make([]string, 0, depth+1)
+	}
+
+	return []*match{&m}, nil
+}
+
+func (t *tree) rewriteQuery(query url.Values) (string, error) {
+	result := url.Values{}
+
+	thread := &starlark.Thread{}
+	for key, values := range query {
+		if param, ok := t.params.params[key]; ok {
+			values, err := param.normalize(thread, t.params.dedup, values)
+			if err != nil {
+				return "", err
+			}
+			result[key] = values
+		} else {
+			result[key] = values
+		}
+	}
+
+	return result.Encode(), nil
 }

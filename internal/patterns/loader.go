@@ -148,7 +148,7 @@ func (l *patternLoader) transformParams(p *pattern, query *starlark.Dict) error 
 			}
 		default:
 			return fmt.Errorf(
-				"%s: %q expected None or String value, got %s",
+				"%s: %q expected None, String, or Callable value, got %s",
 				l.Name(), p.id, value.Type(),
 			)
 		}

@@ -9,7 +9,7 @@ add_url("prefix-regex",
     query={
         "dedup": "first",
         "params": {
-          "utf8": lambda x: chr(x),
+          "utf8": lambda x: str(x == "✔"),
         },
     },
     tests={
@@ -29,7 +29,7 @@ add_url("suffix-regex",
     query={
         "dedup": "last",
         "params": {
-          "utf8": lambda x: x == "✔",
+          "utf8": lambda x: str(x == "✔"),
         },
     },
     tests={
