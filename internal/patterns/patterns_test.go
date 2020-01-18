@@ -101,12 +101,10 @@ func TestMatchErrors(t *testing.T) {
 			} else {
 				require.NoError(err)
 				expected := strings.TrimSpace(string(msg))
-
 				if expected != actual {
 					msg = []byte(actual)
 					ioutil.WriteFile(prefix+".actual", msg, 0664)
 				}
-
 				require.Equal(expected, actual)
 			}
 		})
@@ -114,6 +112,79 @@ func TestMatchErrors(t *testing.T) {
 }
 
 func TestTest(t *testing.T) {
+	require := require.New(t)
+
+	const filename = "testdata/test.star"
+	r, err := os.Open(filename)
+	require.NoError(err)
+
+	patterns, err := Load(filename, r)
+	require.NoError(err)
+
+	var stdout, stderr bytes.Buffer
+	sys := &sys.IO{
+		Log:    logger.Discard(),
+		Stdout: &stdout,
+		Stderr: &stderr,
+	}
+
+	actual, err := patterns.Test(sys)
+	require.NoError(err)
+
+	expected := map[string]string{
+		"/foo":  "",
+		"/foo/": "first",
+		"/bar/": "second",
+		"/baz/": "second",
+		"/qux/": "",
+	}
+	require.Equal(expected, actual)
+}
+
+func TestTestErrors(t *testing.T) {
+	files, _ := filepath.Glob("testdata/test-errors/*.star")
+	for _, tc := range files {
+		tc := tc
+		prefix := tc[:len(tc)-5]
+		t.Run(filepath.Base(prefix), func(t *testing.T) {
+			require := require.New(t)
+
+			r, err := os.Open(tc)
+			require.NoError(err)
+
+			patterns, err := Load(filepath.Base(tc), r)
+			require.NoError(err)
+
+			var stdout, stderr bytes.Buffer
+			sys := &sys.IO{
+				Log:    logger.Discard(),
+				Stdout: &stdout,
+				Stderr: &stderr,
+			}
+
+			tests, err := patterns.Test(sys)
+			require.Error(err)
+			require.Nil(tests)
+
+			actual := err.Error()
+			msg, err := ioutil.ReadFile(prefix + ".txt")
+			if os.IsNotExist(err) {
+				msg = []byte(actual)
+				ioutil.WriteFile(prefix+".txt", msg, 0664)
+			} else {
+				require.NoError(err)
+				expected := strings.TrimSpace(string(msg))
+				if expected != actual {
+					msg = []byte(actual)
+					ioutil.WriteFile(prefix+".actual", msg, 0664)
+				}
+				require.Equal(expected, actual)
+			}
+		})
+	}
+}
+
+func TestValidFiles(t *testing.T) {
 	files, _ := filepath.Glob("testdata/*.star")
 	for _, tc := range files {
 		tc := tc

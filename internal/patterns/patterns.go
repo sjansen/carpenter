@@ -78,20 +78,20 @@ func (p *Patterns) Test(sys *sys.IO) (map[string]string, error) {
 		default:
 			passed[rawurl] = expected.id
 		case len(actual) < 1 && expected.url == "":
-			passed[rawurl] = expected.id
+			passed[rawurl] = ""
 		case len(actual) < 1:
 			return nil, fmt.Errorf(
 				"url didn't match expected pattern: url=%q pattern=%q",
 				rawurl, expected.id,
 			)
 		case len(actual) > 1:
-			matches := make([]string, len(actual))
+			matches := make([]string, 0, len(actual))
 			for _, result := range actual {
 				matches = append(matches, result.id)
 			}
 			sort.Strings(matches)
 			return nil, fmt.Errorf(
-				"url matched by multiple patterns: url=%q patterns=%v",
+				"url matched by multiple patterns: url=%q patterns=%q",
 				rawurl, matches,
 			)
 		case actual[0].id != expected.id:
