@@ -1,7 +1,7 @@
 add_url("example",
   path={
     "prefix": [],
-    "suffix": "/?",
+    "suffix": "/",
   },
   query={
     "dedup": True,

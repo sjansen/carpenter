@@ -1,7 +1,7 @@
 add_url("root",
     path={
         "prefix": [],
-        "suffix": "/?",
+        "suffix": "/",
     },
     query={
         "params": {

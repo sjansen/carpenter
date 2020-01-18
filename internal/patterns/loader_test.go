@@ -107,7 +107,7 @@ func TestLoadPatterns(t *testing.T) {
 
 var basicPatterns = []*pattern{{
 	id:     "root",
-	slash:  maySlash,
+	slash:  mustSlash,
 	prefix: []part{},
 	params: params{
 		dedup:  keepAll,
@@ -222,7 +222,7 @@ var basicPatterns = []*pattern{{
 
 var basicTree = &Patterns{tree: tree{
 	id:    "root",
-	slash: maySlash,
+	slash: mustSlash,
 	params: params{
 		dedup:  keepAll,
 		params: map[string]*param{},

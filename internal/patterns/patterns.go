@@ -31,18 +31,12 @@ func (p *Patterns) Match(url *url.URL) (id, normalized string, err error) {
 		return "", "", err
 	}
 
+	var matches []*match
 	if url.Path == "/" && p.tree.id != "" {
-		normalized := "/"
-		query, err := p.tree.rewriteQuery(url.Query())
-		if err != nil {
-			return "", "", err
-		} else if query != "" {
-			normalized = normalized + "?" + query
-		}
-		return p.tree.id, normalized, nil
+		matches, err = p.tree.matchFound(1, url.Query())
+	} else {
+		matches, err = p.tree.match(url.Path[1:], url.Query(), 0, false)
 	}
-
-	matches, err := p.tree.match(url.Path[1:], url.Query(), 0, false)
 	if err != nil {
 		return "", "", err
 	}

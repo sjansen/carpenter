@@ -218,6 +218,11 @@ func (l *patternLoader) transformPath(p *pattern, path *starlark.Dict) error {
 		return fmt.Errorf(`%s: %q missing required key: "prefix"`, l.Name(), p.id)
 	}
 
+	p.prefix, err = l.transformPrefix(p.id, prefix)
+	if err != nil {
+		return err
+	}
+
 	value, found, err := path.Get(starlark.String("suffix"))
 	if err != nil {
 		return err
@@ -245,9 +250,9 @@ func (l *patternLoader) transformPath(p *pattern, path *starlark.Dict) error {
 		p.suffix.suffix = true
 	}
 
-	p.prefix, err = l.transformPrefix(p.id, prefix)
-	if err != nil {
-		return err
+	if len(p.prefix) == 0 && p.suffix == nil && p.slash != mustSlash {
+		// requiring suffix="/" simplifies normalization of queries when path="/"
+		return fmt.Errorf(`suffix must be "/" or regex when no prefix parts are declared`)
 	}
 
 	return nil
