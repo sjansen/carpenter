@@ -32,7 +32,14 @@ func (p *Patterns) Match(url *url.URL) (id, normalized string, err error) {
 	}
 
 	if url.Path == "/" && p.tree.id != "" {
-		return p.tree.id, "/", nil
+		normalized := "/"
+		query, err := p.tree.rewriteQuery(url.Query())
+		if err != nil {
+			return "", "", err
+		} else if query != "" {
+			normalized = normalized + "?" + query
+		}
+		return p.tree.id, normalized, nil
 	}
 
 	matches, err := p.tree.match(url.Path[1:], url.Query(), 0, false)

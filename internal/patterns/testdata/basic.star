@@ -78,6 +78,25 @@ add_url("regex",
     },
 )
 
+add_url("goldilocks",
+    path={
+        "prefix": [
+            "corge",
+            "grault",
+            "garply",
+        ],
+        "suffix": "",
+    },
+    query={},
+    tests={
+        "/corge": None,
+        "/corge/grault": None,
+        "/corge/grault/garply": "/corge/grault/garply",
+        "/corge/grault/garply/": None,
+        "/corge/grault/garply/fred": None,
+    },
+)
+
 add_url("query",
     path={
         "prefix": ["search"],

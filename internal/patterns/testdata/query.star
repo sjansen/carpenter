@@ -1,3 +1,18 @@
+add_url("root",
+    path={
+        "prefix": [],
+        "suffix": "/?",
+    },
+    query={
+        "params": {
+            "foo": lambda x: x,
+        },
+    },
+    tests={
+        "/?foo=bar": "/?foo=bar",
+    },
+)
+
 add_url("basic-query",
     path={
         "prefix": ["search"],
@@ -71,5 +86,16 @@ add_url("dedup-last",
             "/dedup/last/?users%5B%5D=alice",
         "/dedup/last/?users[]=bob&users[]=eve":
             "/dedup/last/?users%5B%5D=eve",
+    },
+)
+
+add_url("extra-params",
+    path={
+        "prefix": ["extra", "params"],
+        "suffix": "/?",
+    },
+    query={},
+    tests={
+        "/extra/params?foo&bar=baz&qux=quux": "/extra/params?bar=baz&foo=&qux=quux",
     },
 )

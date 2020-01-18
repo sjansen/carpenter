@@ -121,9 +121,7 @@ var basicPatterns = []*pattern{{
 	id:    "slash-required",
 	slash: mustSlash,
 	prefix: []part{
-		&plainPart{
-			value: "foo",
-		},
+		&plainPart{"foo"},
 	},
 	params: params{
 		dedup:  keepFirst,
@@ -139,9 +137,7 @@ var basicPatterns = []*pattern{{
 	id:    "no-final-slash",
 	slash: neverSlash,
 	prefix: []part{
-		&plainPart{
-			value: "bar",
-		},
+		&plainPart{"bar"},
 	},
 	params: params{
 		dedup:  keepLast,
@@ -157,9 +153,7 @@ var basicPatterns = []*pattern{{
 	id:    "optional-slash",
 	slash: maySlash,
 	prefix: []part{
-		&plainPart{
-			value: "baz",
-		},
+		&plainPart{"baz"},
 	},
 	params: params{
 		dedup:  keepAll,
@@ -176,10 +170,8 @@ var basicPatterns = []*pattern{{
 	slash: maySlash,
 	prefix: []part{
 		&regexPart{
-			regex: regexp.MustCompile("qux"),
-			rewriter: &staticRewriter{
-				value: "quux",
-			},
+			regex:    regexp.MustCompile("qux"),
+			rewriter: &staticRewriter{"quux"},
 		},
 	},
 	params: params{
@@ -190,21 +182,33 @@ var basicPatterns = []*pattern{{
 		"/qux/": "/quux",
 	},
 }, {
+	id:    "goldilocks",
+	slash: neverSlash,
+	prefix: []part{
+		&plainPart{"corge"},
+		&plainPart{"grault"},
+		&plainPart{"garply"},
+	},
+	params: params{},
+	tests: map[string]string{
+		"/corge":                    "",
+		"/corge/grault":             "",
+		"/corge/grault/garply":      "/corge/grault/garply",
+		"/corge/grault/garply/":     "",
+		"/corge/grault/garply/fred": "",
+	},
+}, {
 	id:    "query",
 	slash: maySlash,
 	prefix: []part{
-		&plainPart{
-			value: "search",
-		},
+		&plainPart{"search"},
 	},
 	params: params{
 		dedup: keepAll,
 		params: map[string]*param{
 			"q": {
-				remove: false,
-				rewriter: &staticRewriter{
-					value: "X",
-				},
+				remove:   false,
+				rewriter: &staticRewriter{"X"},
 			},
 			"utf8": {remove: true},
 		},
@@ -224,9 +228,7 @@ var basicTree = &Patterns{tree: tree{
 		params: map[string]*param{},
 	},
 	children: []*child{{
-		part: &plainPart{
-			value: "foo",
-		},
+		part: &plainPart{"foo"},
 		tree: &tree{
 			id:    "slash-required",
 			slash: mustSlash,
@@ -236,9 +238,7 @@ var basicTree = &Patterns{tree: tree{
 			},
 		},
 	}, {
-		part: &plainPart{
-			value: "bar",
-		},
+		part: &plainPart{"bar"},
 		tree: &tree{
 			id:    "no-final-slash",
 			slash: neverSlash,
@@ -248,9 +248,7 @@ var basicTree = &Patterns{tree: tree{
 			},
 		},
 	}, {
-		part: &plainPart{
-			value: "baz",
-		},
+		part: &plainPart{"baz"},
 		tree: &tree{
 			id:    "optional-slash",
 			slash: maySlash,
@@ -261,10 +259,8 @@ var basicTree = &Patterns{tree: tree{
 		},
 	}, {
 		part: &regexPart{
-			regex: regexp.MustCompile("qux"),
-			rewriter: &staticRewriter{
-				value: "quux",
-			},
+			regex:    regexp.MustCompile("qux"),
+			rewriter: &staticRewriter{"quux"},
 		},
 		tree: &tree{
 			id:    "regex",
@@ -275,9 +271,23 @@ var basicTree = &Patterns{tree: tree{
 			},
 		},
 	}, {
-		part: &plainPart{
-			value: "search",
+		part: &plainPart{"corge"},
+		tree: &tree{
+			children: []*child{{
+				part: &plainPart{"grault"},
+				tree: &tree{
+					children: []*child{{
+						part: &plainPart{"garply"},
+						tree: &tree{
+							id:    "goldilocks",
+							slash: neverSlash,
+						},
+					}},
+				},
+			}},
 		},
+	}, {
+		part: &plainPart{"search"},
 		tree: &tree{
 			id:    "query",
 			slash: maySlash,
@@ -285,10 +295,8 @@ var basicTree = &Patterns{tree: tree{
 				dedup: keepAll,
 				params: map[string]*param{
 					"q": {
-						remove: false,
-						rewriter: &staticRewriter{
-							value: "X",
-						},
+						remove:   false,
+						rewriter: &staticRewriter{"X"},
 					},
 					"utf8": {remove: true},
 				},
@@ -296,18 +304,23 @@ var basicTree = &Patterns{tree: tree{
 		},
 	}},
 }, tests: map[string]result{
-	"/":                      {"root", "/"},
-	"/rfc3092/":              {"root", ""},
-	"/foo":                   {"slash-required", ""},
-	"/foo/":                  {"slash-required", "/foo/"},
-	"/bar":                   {"no-final-slash", "/bar"},
-	"/bar/":                  {"no-final-slash", ""},
-	"/baz":                   {"optional-slash", "/baz"},
-	"/baz/":                  {"optional-slash", "/baz"},
-	"/qux/":                  {"regex", "/quux"},
-	"/search?utf8=✔":         {"query", "/search"},
-	"/search/?q=cats":        {"query", "/search?q=X"},
-	"/search/?q=dogs&utf8=✔": {"query", "/search?q=X"},
+	"/":                         {"root", "/"},
+	"/rfc3092/":                 {"root", ""},
+	"/foo":                      {"slash-required", ""},
+	"/foo/":                     {"slash-required", "/foo/"},
+	"/bar":                      {"no-final-slash", "/bar"},
+	"/bar/":                     {"no-final-slash", ""},
+	"/baz":                      {"optional-slash", "/baz"},
+	"/baz/":                     {"optional-slash", "/baz"},
+	"/qux/":                     {"regex", "/quux"},
+	"/corge":                    {"goldilocks", ""},
+	"/corge/grault":             {"goldilocks", ""},
+	"/corge/grault/garply":      {"goldilocks", "/corge/grault/garply"},
+	"/corge/grault/garply/":     {"goldilocks", ""},
+	"/corge/grault/garply/fred": {"goldilocks", ""},
+	"/search?utf8=✔":            {"query", "/search"},
+	"/search/?q=cats":           {"query", "/search?q=X"},
+	"/search/?q=dogs&utf8=✔":    {"query", "/search?q=X"},
 }}
 
 func regexPatternsFixer(t *testing.T, expected, actual []*pattern) {
@@ -342,10 +355,8 @@ var regexPatterns = []*pattern{{
 	slash: mustSlash,
 	prefix: []part{
 		&regexPart{
-			regex: regexp.MustCompile("foo|bar"),
-			rewriter: &staticRewriter{
-				value: "baz",
-			},
+			regex:    regexp.MustCompile("foo|bar"),
+			rewriter: &staticRewriter{"baz"},
 		},
 		&regexPart{
 			regex:    regexp.MustCompile("qux|quux"),
@@ -372,9 +383,7 @@ var regexPatterns = []*pattern{{
 	id:    "suffix-regex",
 	slash: maySlash,
 	prefix: []part{
-		&plainPart{
-			value: "corge",
-		},
+		&plainPart{"corge"},
 	},
 	suffix: &regexPart{
 		suffix:   true,
@@ -430,10 +439,8 @@ func regexTreeFixer(t *testing.T, expected, actual *tree) {
 var regexTree = &Patterns{tree: tree{
 	children: []*child{{
 		part: &regexPart{
-			regex: regexp.MustCompile("foo|bar"),
-			rewriter: &staticRewriter{
-				value: "baz",
-			},
+			regex:    regexp.MustCompile("foo|bar"),
+			rewriter: &staticRewriter{"baz"},
 		},
 		tree: &tree{
 			children: []*child{{
@@ -457,9 +464,7 @@ var regexTree = &Patterns{tree: tree{
 			}},
 		},
 	}, {
-		part: &plainPart{
-			value: "corge",
-		},
+		part: &plainPart{"corge"},
 		tree: &tree{
 			children: []*child{{
 				part: &regexPart{

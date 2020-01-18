@@ -1,8 +1,11 @@
 package patterns
 
 import (
+	"io/ioutil"
 	"net/url"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -36,5 +39,48 @@ func TestMatch(t *testing.T) {
 			}
 			require.Equal(expected.url, normalized, raw)
 		}
+	}
+}
+
+func TestMatchErrors(t *testing.T) {
+	files, _ := filepath.Glob("testdata/match-errors/*.star")
+	for _, tc := range files {
+		tc := tc
+		prefix := tc[:len(tc)-5]
+		t.Run(filepath.Base(prefix), func(t *testing.T) {
+			require := require.New(t)
+
+			r, err := os.Open(tc)
+			require.NoError(err)
+
+			patterns, err := Load(filepath.Base(tc), r)
+			require.NoError(err)
+
+			raw, err := ioutil.ReadFile(prefix + ".url")
+			require.NoError(err)
+
+			url, err := url.Parse(strings.TrimSpace(string(raw)))
+			require.NoError(err)
+
+			_, _, err = patterns.Match(url)
+			require.Error(err)
+			actual := err.Error()
+
+			msg, err := ioutil.ReadFile(prefix + ".txt")
+			if os.IsNotExist(err) {
+				msg = []byte(actual)
+				ioutil.WriteFile(prefix+".txt", msg, 0664)
+			} else {
+				require.NoError(err)
+				expected := strings.TrimSpace(string(msg))
+
+				if expected != actual {
+					msg = []byte(actual)
+					ioutil.WriteFile(prefix+".actual", msg, 0664)
+				}
+
+				require.Equal(expected, actual)
+			}
+		})
 	}
 }
