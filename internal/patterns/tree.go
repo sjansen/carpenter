@@ -18,7 +18,7 @@ const (
 type tree struct {
 	id       string
 	slash    slash
-	params   params
+	params   query
 	children []*child
 }
 
@@ -50,7 +50,7 @@ func (t *tree) addPattern(p *pattern, depth int) {
 			tree: &tree{
 				id:     p.id,
 				slash:  p.slash,
-				params: p.params,
+				params: p.query,
 			},
 		}
 		t.children = append(t.children, c)
@@ -59,7 +59,7 @@ func (t *tree) addPattern(p *pattern, depth int) {
 
 	t.id = p.id
 	t.slash = p.slash
-	t.params = p.params
+	t.params = p.query
 }
 
 func (t *tree) match(path string, query url.Values, depth int, matchAll bool) ([]*match, error) {

@@ -21,7 +21,7 @@ type pattern struct {
 	slash  slash
 	prefix []part
 	suffix *regexPart
-	params params
+	query  query
 	tests  map[string]string
 }
 

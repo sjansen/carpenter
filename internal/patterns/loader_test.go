@@ -109,7 +109,7 @@ var basicPatterns = []*pattern{{
 	id:     "root",
 	slash:  mustSlash,
 	prefix: []part{},
-	params: params{
+	query: query{
 		dedup:  keepAll,
 		params: map[string]*param{},
 	},
@@ -123,7 +123,7 @@ var basicPatterns = []*pattern{{
 	prefix: []part{
 		&plainPart{"foo"},
 	},
-	params: params{
+	query: query{
 		dedup:  keepFirst,
 		params: map[string]*param{},
 	},
@@ -139,7 +139,7 @@ var basicPatterns = []*pattern{{
 	prefix: []part{
 		&plainPart{"bar"},
 	},
-	params: params{
+	query: query{
 		dedup:  keepLast,
 		params: map[string]*param{},
 	},
@@ -155,7 +155,7 @@ var basicPatterns = []*pattern{{
 	prefix: []part{
 		&plainPart{"baz"},
 	},
-	params: params{
+	query: query{
 		dedup:  keepAll,
 		params: map[string]*param{},
 	},
@@ -174,7 +174,7 @@ var basicPatterns = []*pattern{{
 			rewriter: &staticRewriter{"quux"},
 		},
 	},
-	params: params{
+	query: query{
 		dedup:  keepAll,
 		params: map[string]*param{},
 	},
@@ -189,7 +189,7 @@ var basicPatterns = []*pattern{{
 		&plainPart{"grault"},
 		&plainPart{"garply"},
 	},
-	params: params{},
+	query: query{},
 	tests: map[string]string{
 		"/corge":                    "",
 		"/corge/grault":             "",
@@ -203,7 +203,7 @@ var basicPatterns = []*pattern{{
 	prefix: []part{
 		&plainPart{"search"},
 	},
-	params: params{
+	query: query{
 		dedup: keepAll,
 		params: map[string]*param{
 			"q": {
@@ -223,7 +223,7 @@ var basicPatterns = []*pattern{{
 var basicTree = &Patterns{tree: tree{
 	id:    "root",
 	slash: mustSlash,
-	params: params{
+	params: query{
 		dedup:  keepAll,
 		params: map[string]*param{},
 	},
@@ -232,7 +232,7 @@ var basicTree = &Patterns{tree: tree{
 		tree: &tree{
 			id:    "slash-required",
 			slash: mustSlash,
-			params: params{
+			params: query{
 				dedup:  keepFirst,
 				params: map[string]*param{},
 			},
@@ -242,7 +242,7 @@ var basicTree = &Patterns{tree: tree{
 		tree: &tree{
 			id:    "no-final-slash",
 			slash: neverSlash,
-			params: params{
+			params: query{
 				dedup:  keepLast,
 				params: map[string]*param{},
 			},
@@ -252,7 +252,7 @@ var basicTree = &Patterns{tree: tree{
 		tree: &tree{
 			id:    "optional-slash",
 			slash: maySlash,
-			params: params{
+			params: query{
 				dedup:  keepAll,
 				params: map[string]*param{},
 			},
@@ -265,7 +265,7 @@ var basicTree = &Patterns{tree: tree{
 		tree: &tree{
 			id:    "regex",
 			slash: maySlash,
-			params: params{
+			params: query{
 				dedup:  keepAll,
 				params: map[string]*param{},
 			},
@@ -291,7 +291,7 @@ var basicTree = &Patterns{tree: tree{
 		tree: &tree{
 			id:    "query",
 			slash: maySlash,
-			params: params{
+			params: query{
 				dedup: keepAll,
 				params: map[string]*param{
 					"q": {
@@ -344,8 +344,8 @@ func regexPatternsFixer(t *testing.T, expected, actual []*pattern) {
 			expectedPart.rewriter = actualPart.rewriter
 		}
 
-		actualParam := actual.params.params["utf8"]
-		expectedParam := expected.params.params["utf8"]
+		actualParam := actual.query.params["utf8"]
+		expectedParam := expected.query.params["utf8"]
 		expectedParam.rewriter = actualParam.rewriter
 	}
 }
@@ -363,7 +363,7 @@ var regexPatterns = []*pattern{{
 			rewriter: nil,
 		},
 	},
-	params: params{
+	query: query{
 		dedup: keepFirst,
 		params: map[string]*param{
 			"utf8": {
@@ -390,7 +390,7 @@ var regexPatterns = []*pattern{{
 		regex:    regexp.MustCompile(".+"),
 		rewriter: nil,
 	},
-	params: params{
+	query: query{
 		dedup: keepLast,
 		params: map[string]*param{
 			"utf8": {
@@ -451,7 +451,7 @@ var regexTree = &Patterns{tree: tree{
 				tree: &tree{
 					id:    "prefix-regex",
 					slash: mustSlash,
-					params: params{
+					params: query{
 						dedup: keepFirst,
 						params: map[string]*param{
 							"utf8": {
@@ -475,7 +475,7 @@ var regexTree = &Patterns{tree: tree{
 				tree: &tree{
 					id:    "suffix-regex",
 					slash: maySlash,
-					params: params{
+					params: query{
 						dedup: keepLast,
 						params: map[string]*param{
 							"utf8": {

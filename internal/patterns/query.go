@@ -10,7 +10,7 @@ const (
 	keepLast
 )
 
-type params struct {
+type query struct {
 	dedup  dedup
 	params map[string]*param
 }

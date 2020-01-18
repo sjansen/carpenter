@@ -154,7 +154,7 @@ func (l *patternLoader) transformParams(p *pattern, query *starlark.Dict) error 
 		}
 	}
 
-	p.params.params = result
+	p.query.params = result
 	return nil
 }
 
@@ -300,11 +300,11 @@ func (l *patternLoader) transformQuery(p *pattern, query *starlark.Dict) error {
 			dedup := v.GoString()
 			switch dedup {
 			case "never":
-				p.params.dedup = keepAll
+				p.query.dedup = keepAll
 			case "first":
-				p.params.dedup = keepFirst
+				p.query.dedup = keepFirst
 			case "last":
-				p.params.dedup = keepLast
+				p.query.dedup = keepLast
 			default:
 				return fmt.Errorf(
 					`%s: %q/"query"/%q/"dedup" invalid value: %q`,
