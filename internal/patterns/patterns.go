@@ -3,17 +3,15 @@ package patterns
 import (
 	"fmt"
 	"net/url"
+	"sort"
 	"strings"
+
+	"github.com/sjansen/carpenter/internal/sys"
 )
 
 type Patterns struct {
 	tests map[string]result
 	tree  tree
-}
-
-type result struct {
-	id  string
-	url string
 }
 
 type pattern struct {
@@ -23,6 +21,11 @@ type pattern struct {
 	suffix *regexPart
 	query  query
 	tests  map[string]string
+}
+
+type result struct {
+	id  string
+	url string
 }
 
 func (p *Patterns) Match(url *url.URL) (id, normalized string, err error) {
@@ -48,6 +51,63 @@ func (p *Patterns) MatchAll(url *url.URL) (map[string]string, error) {
 		matches[result.id] = result.url
 	}
 	return matches, nil
+}
+
+func (p *Patterns) Test(sys *sys.IO) (map[string]string, error) {
+	rawurls := make([]string, 0, len(p.tests))
+	for rawurl := range p.tests {
+		rawurls = append(rawurls, rawurl)
+	}
+	sort.Strings(rawurls)
+
+	passed := make(map[string]string, len(p.tests))
+	for _, rawurl := range rawurls {
+		sys.Log.Debugf("testing url=%q", rawurl)
+		url, err := url.Parse(rawurl)
+		if err != nil {
+			return nil, err
+		}
+
+		actual, err := p.match(url, true)
+		if err != nil {
+			return nil, err
+		}
+
+		expected := p.tests[rawurl]
+		switch {
+		default:
+			passed[rawurl] = expected.id
+		case len(actual) < 1 && expected.url == "":
+			passed[rawurl] = expected.id
+		case len(actual) < 1:
+			return nil, fmt.Errorf(
+				"url didn't match expected pattern: url=%q pattern=%q",
+				rawurl, expected.id,
+			)
+		case len(actual) > 1:
+			matches := make([]string, len(actual))
+			for _, result := range actual {
+				matches = append(matches, result.id)
+			}
+			sort.Strings(matches)
+			return nil, fmt.Errorf(
+				"url matched by multiple patterns: url=%q patterns=%v",
+				rawurl, matches,
+			)
+		case actual[0].id != expected.id:
+			return nil, fmt.Errorf(
+				"unexpected pattern matched: expected=%q actual=%q (url=%q)",
+				expected.id, actual[0].id, rawurl,
+			)
+		case actual[0].url != expected.url:
+			return nil, fmt.Errorf(
+				"unexpected result: expected=%q actual=%q (pattern=%q url=%q)",
+				expected.url, actual[0].url, expected.id, rawurl,
+			)
+		}
+	}
+
+	return passed, nil
 }
 
 func (p *Patterns) match(url *url.URL, matchAll bool) ([]*result, error) {

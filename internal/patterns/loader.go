@@ -29,23 +29,23 @@ func Load(filename string, src io.Reader) (*Patterns, error) {
 	}
 	for _, p := range loaded {
 		patterns.tree.addPattern(p, 0)
-		for raw, normalized := range p.tests {
-			original, ok := patterns.tests[raw]
+		for raw, expected := range p.tests {
+			other, ok := patterns.tests[raw]
 			switch {
-			case ok && normalized != "" && original.url != "":
+			case ok && expected != "" && other.url != "":
 				err := fmt.Errorf(
 					"test case repeated: %q (original=%q) (conflict=%q)",
-					raw, original.id, p.id,
+					raw, other.id, p.id,
 				)
 				return nil, err
-			case ok && normalized == "":
+			case ok && expected == "":
 				continue
-			case ok && original.url == "":
+			case ok && other.url == "":
 				fallthrough
 			default:
 				patterns.tests[raw] = result{
 					id:  p.id,
-					url: normalized,
+					url: expected,
 				}
 			}
 		}

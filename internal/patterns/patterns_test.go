@@ -10,6 +10,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/sjansen/carpenter/internal/logger"
+	"github.com/sjansen/carpenter/internal/sys"
 )
 
 func TestMatch(t *testing.T) {
@@ -106,6 +109,34 @@ func TestMatchErrors(t *testing.T) {
 
 				require.Equal(expected, actual)
 			}
+		})
+	}
+}
+
+func TestTest(t *testing.T) {
+	files, _ := filepath.Glob("testdata/*.star")
+	for _, tc := range files {
+		tc := tc
+		prefix := tc[:len(tc)-5]
+		t.Run(filepath.Base(prefix), func(t *testing.T) {
+			require := require.New(t)
+
+			r, err := os.Open(tc)
+			require.NoError(err)
+
+			patterns, err := Load(filepath.Base(tc), r)
+			require.NoError(err)
+
+			var stdout, stderr bytes.Buffer
+			sys := &sys.IO{
+				Log:    logger.Discard(),
+				Stdout: &stdout,
+				Stderr: &stderr,
+			}
+
+			tests, err := patterns.Test(sys)
+			require.NoError(err)
+			require.NotNil(tests)
 		})
 	}
 }
