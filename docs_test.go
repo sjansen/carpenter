@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,7 +15,52 @@ import (
 	"github.com/sjansen/carpenter/internal/sys"
 )
 
-func TestExamples(t *testing.T) {
+func TestTransform(t *testing.T) {
+	for _, format := range []string{
+		"alb",
+	} {
+		format := format
+		t.Run(format, func(t *testing.T) {
+			require := require.New(t)
+
+			var stdout, stderr bytes.Buffer
+			base := &cmd.Base{
+				IO: sys.IO{
+					Log:    logger.Discard(),
+					Stdout: &stdout,
+					Stderr: &stderr,
+				},
+			}
+
+			dir, err := ioutil.TempDir("", format)
+			require.NoError(err)
+			cmd := &cmd.TransformCmd{
+				Patterns: "docs/examples/echo.star",
+				SrcDir:   filepath.Join("docs", "examples", format, "src"),
+				DstDir:   filepath.Join(dir, "dst"),
+				ErrDir:   filepath.Join(dir, "err"),
+			}
+
+			err = cmd.Run(base)
+			require.NoError(err)
+
+			expected, err := ioutil.ReadFile(
+				filepath.Join("docs", "examples", format, "dst", "example.csv"),
+			)
+			require.NoError(err)
+
+			actual, err := ioutil.ReadFile(
+				filepath.Join(dir, "dst", "example.csv"),
+			)
+			require.NoError(err)
+
+			require.Equal(expected, actual)
+		})
+	}
+
+}
+
+func TestTestCases(t *testing.T) {
 	const suffix = "-test-cases.json"
 	files, _ := filepath.Glob("docs/examples/*" + suffix)
 	for _, tc := range files {

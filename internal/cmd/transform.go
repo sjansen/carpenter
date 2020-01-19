@@ -100,10 +100,12 @@ func (c *TransformCmd) verifyArgs() error {
 
 	c.DstDir = filepath.Clean(c.DstDir)
 	if info, err := os.Stat(c.DstDir); err != nil {
-		if os.IsNotExist(err) {
-			return os.MkdirAll(c.DstDir, 0777)
+		if !os.IsNotExist(err) {
+			return err
 		}
-		return err
+		if err = os.MkdirAll(c.DstDir, 0777); err != nil {
+			return err
+		}
 	} else if !info.IsDir() {
 		return fmt.Errorf("error: not a directory %q", c.DstDir)
 	}
@@ -111,10 +113,12 @@ func (c *TransformCmd) verifyArgs() error {
 	if c.ErrDir != "" {
 		c.ErrDir = filepath.Clean(c.ErrDir)
 		if info, err := os.Stat(c.ErrDir); err != nil {
-			if os.IsNotExist(err) {
-				return os.MkdirAll(c.ErrDir, 0777)
+			if !os.IsNotExist(err) {
+				return err
 			}
-			return err
+			if err = os.MkdirAll(c.ErrDir, 0777); err != nil {
+				return err
+			}
 		} else if !info.IsDir() {
 			return fmt.Errorf("error: not a directory %q", c.ErrDir)
 		}
