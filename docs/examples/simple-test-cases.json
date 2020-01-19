@@ -1,0 +1,5 @@
+{
+    "/": "root",
+    "/search?q=apples": "search",
+    "/search/?q=oranges": "search"
+}
