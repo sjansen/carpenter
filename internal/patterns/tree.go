@@ -7,14 +7,6 @@ import (
 	"go.starlark.net/starlark"
 )
 
-type slash int
-
-const (
-	maySlash slash = iota
-	mustSlash
-	neverSlash
-)
-
 type tree struct {
 	id       string
 	slash    slash

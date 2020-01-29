@@ -28,6 +28,14 @@ type result struct {
 	url string
 }
 
+type slash int
+
+const (
+	maySlash slash = iota
+	mustSlash
+	neverSlash
+)
+
 func (p *Patterns) Match(url *url.URL) (id, normalized string, err error) {
 	results, err := p.match(url, false)
 	if err != nil {
