@@ -94,10 +94,10 @@ func TestMatchErrors(t *testing.T) {
 			require.Error(err)
 			actual := err.Error()
 
-			msg, err := ioutil.ReadFile(prefix + ".txt")
+			msg, err := ioutil.ReadFile(prefix + ".err")
 			if os.IsNotExist(err) {
 				msg = []byte(actual)
-				ioutil.WriteFile(prefix+".txt", msg, 0664)
+				ioutil.WriteFile(prefix+".err", msg, 0664)
 			} else {
 				require.NoError(err)
 				expected := strings.TrimSpace(string(msg))
@@ -167,10 +167,10 @@ func TestTestErrors(t *testing.T) {
 			require.Nil(tests)
 
 			actual := err.Error()
-			msg, err := ioutil.ReadFile(prefix + ".txt")
+			msg, err := ioutil.ReadFile(prefix + ".err")
 			if os.IsNotExist(err) {
 				msg = []byte(actual)
-				ioutil.WriteFile(prefix+".txt", msg, 0664)
+				ioutil.WriteFile(prefix+".err", msg, 0664)
 			} else {
 				require.NoError(err)
 				expected := strings.TrimSpace(string(msg))
