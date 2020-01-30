@@ -36,9 +36,9 @@ func TestTransform(t *testing.T) {
 			require.NoError(err)
 			cmd := &cmd.TransformCmd{
 				Patterns: "docs/examples/echo.star",
-				SrcDir:   filepath.Join("docs", "examples", format, "src"),
-				DstDir:   filepath.Join(dir, "dst"),
-				ErrDir:   filepath.Join(dir, "err"),
+				SrcURI:   filepath.Join("docs", "examples", format, "src"),
+				DstURI:   filepath.Join(dir, "dst"),
+				ErrURI:   filepath.Join(dir, "err"),
 			}
 
 			err = cmd.Run(base)

@@ -17,9 +17,9 @@ import (
 
 type TransformCmd struct {
 	Patterns string
-	SrcDir   string
-	DstDir   string
-	ErrDir   string
+	SrcURI   string
+	DstURI   string
+	ErrURI   string
 }
 
 func (c *TransformCmd) Run(base *Base) error {
@@ -32,7 +32,7 @@ func (c *TransformCmd) Run(base *Base) error {
 		return err
 	}
 
-	return filepath.Walk(c.SrcDir, func(src string, info os.FileInfo, err error) error {
+	return filepath.Walk(c.SrcURI, func(src string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		} else if !info.Mode().IsRegular() {
@@ -46,7 +46,7 @@ func (c *TransformCmd) Run(base *Base) error {
 		defer f.Close()
 
 		var r io.ReadCloser = f
-		suffix := src[len(c.SrcDir):]
+		suffix := src[len(c.SrcURI):]
 		if strings.HasSuffix(src, ".gz") {
 			suffix = suffix[:len(suffix)-3]
 			r, err = gzip.NewReader(r)
@@ -78,49 +78,49 @@ func (c *TransformCmd) newPipeline() (*pipeline.Pipeline, error) {
 	}
 
 	pipeline := &pipeline.Pipeline{
-		Result:    &lazyio.FileOpener{Dir: c.DstDir},
+		Result:    &lazyio.FileOpener{Dir: c.DstURI},
 		Patterns:  patterns,
 		Tokenizer: tokenizer.ALB,
 		UAParser:  uaparser,
 	}
-	if c.ErrDir != "" {
-		pipeline.Debug = &lazyio.FileOpener{Dir: c.ErrDir}
+	if c.ErrURI != "" {
+		pipeline.Debug = &lazyio.FileOpener{Dir: c.ErrURI}
 	}
 
 	return pipeline, nil
 }
 
 func (c *TransformCmd) verifyArgs() error {
-	c.SrcDir = filepath.Clean(c.SrcDir)
-	if info, err := os.Stat(c.SrcDir); err != nil {
+	c.SrcURI = filepath.Clean(c.SrcURI)
+	if info, err := os.Stat(c.SrcURI); err != nil {
 		return err
 	} else if !info.IsDir() {
-		return fmt.Errorf("error: not a directory %q", c.SrcDir)
+		return fmt.Errorf("error: not a directory %q", c.SrcURI)
 	}
 
-	c.DstDir = filepath.Clean(c.DstDir)
-	if info, err := os.Stat(c.DstDir); err != nil {
+	c.DstURI = filepath.Clean(c.DstURI)
+	if info, err := os.Stat(c.DstURI); err != nil {
 		if !os.IsNotExist(err) {
 			return err
 		}
-		if err = os.MkdirAll(c.DstDir, 0777); err != nil {
+		if err = os.MkdirAll(c.DstURI, 0777); err != nil {
 			return err
 		}
 	} else if !info.IsDir() {
-		return fmt.Errorf("error: not a directory %q", c.DstDir)
+		return fmt.Errorf("error: not a directory %q", c.DstURI)
 	}
 
-	if c.ErrDir != "" {
-		c.ErrDir = filepath.Clean(c.ErrDir)
-		if info, err := os.Stat(c.ErrDir); err != nil {
+	if c.ErrURI != "" {
+		c.ErrURI = filepath.Clean(c.ErrURI)
+		if info, err := os.Stat(c.ErrURI); err != nil {
 			if !os.IsNotExist(err) {
 				return err
 			}
-			if err = os.MkdirAll(c.ErrDir, 0777); err != nil {
+			if err = os.MkdirAll(c.ErrURI, 0777); err != nil {
 				return err
 			}
 		} else if !info.IsDir() {
-			return fmt.Errorf("error: not a directory %q", c.ErrDir)
+			return fmt.Errorf("error: not a directory %q", c.ErrURI)
 		}
 	}
 
