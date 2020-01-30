@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-type UploaderFactory struct {
+type UploaderConfig struct {
 	Profile  string
 	Region   string
 	Bucket   string
@@ -18,25 +18,25 @@ type UploaderFactory struct {
 	Endpoint string
 }
 
-func (f *UploaderFactory) New() (*s3manager.Uploader, error) {
+func NewUploader(cfg *UploaderConfig) (*s3manager.Uploader, error) {
 	opts := session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}
-	if f.Profile != "" {
-		opts.Profile = f.Profile
+	if cfg.Profile != "" {
+		opts.Profile = cfg.Profile
 	}
 
 	config := &opts.Config
 	config.CredentialsChainVerboseErrors = aws.Bool(true)
-	if f.Endpoint != "" {
-		config.Region = aws.String(f.Region)
-		config.Endpoint = aws.String(f.Endpoint)
-		if strings.HasPrefix(f.Endpoint, "http://") {
+	if cfg.Endpoint != "" {
+		config.Region = aws.String(cfg.Region)
+		config.Endpoint = aws.String(cfg.Endpoint)
+		if strings.HasPrefix(cfg.Endpoint, "http://") {
 			config.DisableSSL = aws.Bool(true)
 		}
 		config.S3ForcePathStyle = aws.Bool(true)
-	} else if f.Region != "" {
-		config.Region = aws.String(f.Region)
+	} else if cfg.Region != "" {
+		config.Region = aws.String(cfg.Region)
 	}
 
 	sess := session.Must(session.NewSessionWithOptions(opts))
@@ -44,7 +44,7 @@ func (f *UploaderFactory) New() (*s3manager.Uploader, error) {
 	return uploader, nil
 }
 
-func NewTestUploaderFactory() (*UploaderFactory, error) {
+func UploaderTestConfig() (*UploaderConfig, error) {
 	bucket := os.Getenv(S3_TEST_BUCKET)
 	if bucket == "" {
 		return nil, errors.New("$" + S3_TEST_BUCKET + " not set")
@@ -59,7 +59,7 @@ func NewTestUploaderFactory() (*UploaderFactory, error) {
 		)
 	}
 
-	return &UploaderFactory{
+	return &UploaderConfig{
 		Region:   region,
 		Bucket:   bucket,
 		Prefix:   prefix,

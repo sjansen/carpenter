@@ -21,17 +21,17 @@ func TestS3Opener(t *testing.T) {
 		t.Skip("skipping test")
 	}
 
-	f, err := s3util.NewTestUploaderFactory()
+	cfg, err := s3util.UploaderTestConfig()
 	require.NoError(err)
-	require.NotNil(f)
+	require.NotNil(cfg)
 
-	uploader, err := f.New()
+	uploader, err := s3util.NewUploader(cfg)
 	require.NoError(err)
 	require.NotNil(uploader)
 
 	o := lazyio.S3Opener{
-		Bucket:   f.Bucket,
-		Prefix:   f.Prefix,
+		Bucket:   cfg.Bucket,
+		Prefix:   cfg.Prefix,
 		Uploader: uploader,
 	}
 
@@ -45,8 +45,8 @@ func TestS3Opener(t *testing.T) {
 	require.NoError(err)
 
 	result, err := uploader.S3.GetObject(&s3.GetObjectInput{
-		Bucket: aws.String(f.Bucket),
-		Key:    aws.String(f.Prefix + "battlecry"),
+		Bucket: aws.String(cfg.Bucket),
+		Key:    aws.String(cfg.Prefix + "battlecry"),
 	})
 	require.NoError(err)
 

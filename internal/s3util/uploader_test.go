@@ -19,24 +19,24 @@ func TestS3Opener(t *testing.T) {
 		t.Skip("skipping test")
 	}
 
-	f, err := NewTestUploaderFactory()
+	cfg, err := UploaderTestConfig()
 	require.NoError(err)
-	require.NotNil(f)
+	require.NotNil(cfg)
 
-	uploader, err := f.New()
+	uploader, err := NewUploader(cfg)
 	require.NoError(err)
 	require.NotNil(uploader)
 
 	uuid := uuid.New().String()
 	_, err = uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(f.Bucket),
+		Bucket: aws.String(cfg.Bucket),
 		Key:    aws.String(uuid),
 		Body:   strings.NewReader(uuid),
 	})
 	require.NoError(err)
 
 	result, err := uploader.S3.GetObject(&s3.GetObjectInput{
-		Bucket: aws.String(f.Bucket),
+		Bucket: aws.String(cfg.Bucket),
 		Key:    aws.String(uuid),
 	})
 	require.NoError(err)
