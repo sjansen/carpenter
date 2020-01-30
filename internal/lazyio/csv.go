@@ -42,7 +42,7 @@ func (f *CSV) Flush() {
 
 func (f *CSV) Write(row ...string) error {
 	switch {
-	case f == nil:
+	case f == nil || f.Opener == nil:
 		return nil
 	case f.err != nil:
 		return f.err

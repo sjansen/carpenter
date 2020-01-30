@@ -21,7 +21,7 @@ func (f *TXT) Close() error {
 
 func (f *TXT) Write(line string) error {
 	switch {
-	case f == nil:
+	case f == nil || f.Opener == nil:
 		return nil
 	case f.err != nil:
 		return f.err
