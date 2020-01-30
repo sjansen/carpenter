@@ -12,8 +12,8 @@ type FileOpener struct {
 	Dir string
 }
 
-func (f *FileOpener) Open(path string) (io.WriteCloser, error) {
-	path = filepath.Join(f.Dir, filepath.FromSlash(path))
+func (o *FileOpener) Open(path string) (io.WriteCloser, error) {
+	path = filepath.Join(o.Dir, filepath.FromSlash(path))
 	err := os.MkdirAll(filepath.Dir(path), 0777)
 	if err != nil {
 		return nil, err
