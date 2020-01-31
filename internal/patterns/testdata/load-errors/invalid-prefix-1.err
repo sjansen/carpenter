@@ -1,1 +1,1 @@
-add_url: "example"/"prefix" expected Iterable, got string
+url: "example"/"prefix" expected Iterable, got string

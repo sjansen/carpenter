@@ -1,4 +1,4 @@
-add_url(
+url(
     "slash-required",
     path = {
         "prefix": [
@@ -14,7 +14,7 @@ add_url(
     },
 )
 
-add_url(
+url(
     "optional-slash",
     path = {
         "prefix": [

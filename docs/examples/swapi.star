@@ -12,8 +12,8 @@ def wookiee(x):
         return "wookiee"
     return "INVALID"
 
-def add_urls():
-    add_url(
+def urls():
+    url(
         "root",
         path = {
             "prefix": ["api"],
@@ -33,7 +33,7 @@ def add_urls():
     )
 
     for x in resources:
-        add_url(
+        url(
             "/%s/" % x,
             path = {
                 "prefix": ["api", x],
@@ -53,7 +53,7 @@ def add_urls():
         )
 
     for x in resources:
-        add_url(
+        url(
             "/%s/:id/" % x,
             path = {
                 "prefix": ["api", x, ("[1-9][0-9]*", "ID")],
@@ -72,4 +72,4 @@ def add_urls():
             },
         )
 
-add_urls()
+urls()

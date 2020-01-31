@@ -1,1 +1,1 @@
-add_url: "example"/"prefix" expected String or Tuple, got function
+url: "example"/"prefix" expected String or Tuple, got function

@@ -1,4 +1,4 @@
-add_url(
+url(
     "root",
     path = {
         "prefix": [],
@@ -10,7 +10,7 @@ add_url(
     },
 )
 
-add_url(
+url(
     "search",
     path = {
         "prefix": ["search"],

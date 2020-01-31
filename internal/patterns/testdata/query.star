@@ -1,4 +1,4 @@
-add_url(
+url(
     "root",
     path = {
         "prefix": [],
@@ -14,7 +14,7 @@ add_url(
     },
 )
 
-add_url(
+url(
     "basic-query",
     path = {
         "prefix": ["search"],
@@ -34,7 +34,7 @@ add_url(
     },
 )
 
-add_url(
+url(
     "dedup-never",
     path = {
         "prefix": ["team", "membership"],
@@ -52,7 +52,7 @@ add_url(
     },
 )
 
-add_url(
+url(
     "dedup-first",
     path = {
         "prefix": ["dedup", "first"],
@@ -70,7 +70,7 @@ add_url(
     },
 )
 
-add_url(
+url(
     "dedup-last",
     path = {
         "prefix": ["dedup", "last"],
@@ -88,7 +88,7 @@ add_url(
     },
 )
 
-add_url(
+url(
     "extra-params",
     path = {
         "prefix": ["extra", "params"],

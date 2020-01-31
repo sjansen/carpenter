@@ -1,4 +1,4 @@
-add_url(
+url(
     "root",
     path = {
         "prefix": [],
@@ -14,7 +14,7 @@ add_url(
     },
 )
 
-add_url(
+url(
     "slash-required",
     path = {
         "prefix": ["foo"],
@@ -32,7 +32,7 @@ add_url(
     },
 )
 
-add_url(
+url(
     "no-final-slash",
     path = {
         "prefix": ["bar"],
@@ -50,7 +50,7 @@ add_url(
     },
 )
 
-add_url(
+url(
     "optional-slash",
     path = {
         "prefix": ["baz"],
@@ -68,7 +68,7 @@ add_url(
     },
 )
 
-add_url(
+url(
     "regex",
     path = {
         "prefix": [("qux", "quux")],
@@ -83,7 +83,7 @@ add_url(
     },
 )
 
-add_url(
+url(
     "goldilocks",
     path = {
         "prefix": [
@@ -103,7 +103,7 @@ add_url(
     },
 )
 
-add_url(
+url(
     "query",
     path = {
         "prefix": ["search"],

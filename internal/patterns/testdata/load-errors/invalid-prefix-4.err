@@ -1,1 +1,1 @@
-add_url: "example"/"prefix" expected Callable or String, got int
+url: "example"/"prefix" expected Callable or String, got int

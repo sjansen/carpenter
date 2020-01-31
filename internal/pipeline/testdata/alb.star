@@ -1,10 +1,11 @@
-add_url("root",
-    path={
+url(
+    "root",
+    path = {
         "prefix": [],
         "suffix": "/",
     },
-    query={},
-    tests={
+    query = {},
+    tests = {
         "/": "/",
     },
 )

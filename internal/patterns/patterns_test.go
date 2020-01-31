@@ -50,8 +50,8 @@ func TestMatchAll(t *testing.T) {
 	require := require.New(t)
 
 	r := bytes.NewBufferString(`
-add_url("first", path={"prefix": ["foo"], "suffix": "/"}, query={}, tests={})
-add_url("second", path={"prefix": [(".+", "ANY")], "suffix": "/"}, query={}, tests={})
+url("first", path={"prefix": ["foo"], "suffix": "/"}, query={}, tests={})
+url("second", path={"prefix": [(".+", "ANY")], "suffix": "/"}, query={}, tests={})
 	`)
 
 	patterns, err := Load("<buffer>", r)

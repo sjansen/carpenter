@@ -1,4 +1,4 @@
-add_url(
+url(
     "first",
     path = {
         "prefix": ["foo"],
@@ -10,7 +10,7 @@ add_url(
     },
 )
 
-add_url(
+url(
     "second",
     path = {
         "prefix": [(".+", "ANY")],

@@ -1,4 +1,4 @@
-add_url(
+url(
     "prefix-regex",
     path = {
         "prefix": [
@@ -22,7 +22,7 @@ add_url(
     },
 )
 
-add_url(
+url(
     "suffix-regex",
     path = {
         "prefix": ["corge"],

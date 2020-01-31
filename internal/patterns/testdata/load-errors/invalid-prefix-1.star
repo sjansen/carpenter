@@ -1,4 +1,4 @@
-add_url(
+url(
     "example",
     path = {
         "prefix": "",

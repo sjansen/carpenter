@@ -59,10 +59,10 @@ func loadPatterns(filename string, src io.Reader) ([]*pattern, error) {
 		patterns: make([]*pattern, 0),
 	}
 
-	loader.Builtin = starlark.NewBuiltin("add_url", loader.addURL)
+	loader.Builtin = starlark.NewBuiltin("url", loader.addURL)
 
 	globals := starlark.StringDict{
-		"add_url": loader,
+		"url": loader,
 	}
 	thread := &starlark.Thread{}
 	_, err := starlark.ExecFile(thread, filename, src, globals)
