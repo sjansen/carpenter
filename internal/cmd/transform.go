@@ -23,8 +23,11 @@ type TransformCmd struct {
 }
 
 func (c *TransformCmd) Run(base *Base) error {
-	if err := c.verifyArgs(); err != nil {
+	c.SrcURI = filepath.Clean(c.SrcURI)
+	if info, err := os.Stat(c.SrcURI); err != nil {
 		return err
+	} else if !info.IsDir() {
+		return fmt.Errorf("error: not a directory %q", c.SrcURI)
 	}
 
 	pipeline, err := c.newPipeline()
@@ -78,51 +81,44 @@ func (c *TransformCmd) newPipeline() (*pipeline.Pipeline, error) {
 	}
 
 	pipeline := &pipeline.Pipeline{
-		Result:    &lazyio.FileOpener{Dir: c.DstURI},
 		Patterns:  patterns,
 		Tokenizer: tokenizer.ALB,
 		UAParser:  uaparser,
 	}
+
+	opener, err := newOpener(c.DstURI)
+	if err != nil {
+		return nil, err
+	}
+	pipeline.Result = opener
+
 	if c.ErrURI != "" {
-		pipeline.Debug = &lazyio.FileOpener{Dir: c.ErrURI}
+		opener, err := newOpener(c.ErrURI)
+		if err != nil {
+			return nil, err
+		}
+		pipeline.Debug = opener
 	}
 
 	return pipeline, nil
 }
 
-func (c *TransformCmd) verifyArgs() error {
-	c.SrcURI = filepath.Clean(c.SrcURI)
-	if info, err := os.Stat(c.SrcURI); err != nil {
-		return err
-	} else if !info.IsDir() {
-		return fmt.Errorf("error: not a directory %q", c.SrcURI)
-	}
-
-	c.DstURI = filepath.Clean(c.DstURI)
-	if info, err := os.Stat(c.DstURI); err != nil {
-		if !os.IsNotExist(err) {
-			return err
-		}
-		if err = os.MkdirAll(c.DstURI, 0777); err != nil {
-			return err
-		}
-	} else if !info.IsDir() {
-		return fmt.Errorf("error: not a directory %q", c.DstURI)
-	}
-
-	if c.ErrURI != "" {
-		c.ErrURI = filepath.Clean(c.ErrURI)
-		if info, err := os.Stat(c.ErrURI); err != nil {
+func newOpener(uri string) (lazyio.Opener, error) {
+	switch {
+	case strings.HasPrefix(uri, "s3://") || strings.HasPrefix(uri, "S3://"):
+		return lazyio.NewS3Opener(uri)
+	default:
+		uri = filepath.Clean(uri)
+		if info, err := os.Stat(uri); err != nil {
 			if !os.IsNotExist(err) {
-				return err
+				return nil, err
 			}
-			if err = os.MkdirAll(c.ErrURI, 0777); err != nil {
-				return err
+			if err = os.MkdirAll(uri, 0777); err != nil {
+				return nil, err
 			}
 		} else if !info.IsDir() {
-			return fmt.Errorf("error: not a directory %q", c.ErrURI)
+			return nil, fmt.Errorf("error: not a directory %q", uri)
 		}
+		return &lazyio.FileOpener{Dir: uri}, nil
 	}
-
-	return nil
 }
