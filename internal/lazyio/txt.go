@@ -6,7 +6,7 @@ import (
 
 type TXT struct {
 	Path   string
-	Opener Opener
+	Opener OutputOpener
 
 	w   io.WriteCloser
 	err error

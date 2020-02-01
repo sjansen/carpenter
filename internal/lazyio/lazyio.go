@@ -2,6 +2,11 @@ package lazyio
 
 import "io"
 
-type Opener interface {
+type InputOpener interface {
+	Open(path string) (io.ReadCloser, error)
+	StripPrefix(path string) string
+}
+
+type OutputOpener interface {
 	Open(path string) (io.WriteCloser, error)
 }

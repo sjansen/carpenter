@@ -29,22 +29,20 @@ func TestPipeline(t *testing.T) {
 	uaparser, err := uaparser.UserAgentParser()
 	require.NoError(err)
 
-	debug := &lazyio.BufferOpener{}
-	result := &lazyio.BufferOpener{}
+	debug := &lazyio.BufferWriter{}
+	result := &lazyio.BufferWriter{}
 	pipeline := &pipeline.Pipeline{
-		Debug:     debug,
-		Result:    result,
 		Patterns:  patterns,
 		Tokenizer: tokenizer.ALB,
 		UAParser:  uaparser,
+		Source:    &lazyio.FileReader{Dir: "testdata/src"},
+		Result:    result,
+		Debug:     debug,
 	}
 
-	src, err := os.Open("testdata/src/alb.log")
-	require.NoError(err)
-
-	task := pipeline.NewTask(src, "alb.log")
-	err = task.Run()
-	require.NoError(err)
+	pipeline.Start()
+	pipeline.AddTask("alb.log")
+	pipeline.Wait()
 
 	expected, err := ioutil.ReadFile("testdata/dst/alb.csv")
 	require.NoError(err)

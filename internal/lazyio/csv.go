@@ -7,7 +7,7 @@ import (
 
 type CSV struct {
 	Path   string
-	Opener Opener
+	Opener OutputOpener
 
 	w   io.WriteCloser
 	csv *csv.Writer

@@ -18,7 +18,7 @@ type Task struct {
 	tokenizer *tokenizer.Tokenizer
 	uaparser  *uaparser.Parser
 
-	src   *bufio.Reader
+	src   *lazyio.Input
 	dst   lazyio.CSV
 	debug debug
 }
@@ -38,13 +38,19 @@ func (d *debug) Close() {
 }
 
 func (t *Task) Run() error {
+	r, err := t.src.Open()
+	if err != nil {
+		return err
+	}
+	defer t.src.Close()
 	defer t.dst.Close()
 	defer t.debug.Close()
 
+	buf := bufio.NewReader(r)
 	var cols []string
 	var row []string
 	for {
-		line, err := t.src.ReadString('\n')
+		line, err := buf.ReadString('\n')
 		if err == io.EOF {
 			break
 		} else if err != nil {

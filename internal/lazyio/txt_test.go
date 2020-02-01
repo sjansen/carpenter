@@ -16,7 +16,7 @@ func TestTXT(t *testing.T) {
 	err = txt.Close()
 	require.NoError(err)
 
-	o := &lazyio.BufferOpener{}
+	o := &lazyio.BufferWriter{}
 	expectedPath := "better/off/dead.txt"
 	txt = &lazyio.TXT{
 		Path:   expectedPath,

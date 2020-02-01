@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"compress/gzip"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,8 +33,8 @@ func (c *TransformCmd) Run(base *Base) error {
 		return err
 	}
 
-	ch := pipeline.Start()
-	defer close(ch)
+	pipeline.Start()
+	defer pipeline.Wait()
 
 	return filepath.Walk(c.SrcURI, func(src string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -45,25 +43,8 @@ func (c *TransformCmd) Run(base *Base) error {
 			return nil
 		}
 
-		f, err := os.Open(src)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		var r io.ReadCloser = f
-		suffix := src[len(c.SrcURI):]
-		if strings.HasSuffix(src, ".gz") {
-			suffix = suffix[:len(suffix)-3]
-			r, err = gzip.NewReader(r)
-			if err != nil {
-				return err
-			}
-			defer r.Close()
-		}
-
-		task := pipeline.NewTask(r, suffix)
-		ch <- task
+		suffix := pipeline.Source.StripPrefix(src)
+		pipeline.AddTask(suffix)
 
 		return nil
 	})
@@ -91,14 +72,20 @@ func (c *TransformCmd) newPipeline() (*pipeline.Pipeline, error) {
 		UAParser:  uaparser,
 	}
 
-	opener, err := newOpener(c.DstURI)
+	input, err := newInputOpener(c.SrcURI)
 	if err != nil {
 		return nil, err
 	}
-	pipeline.Result = opener
+	pipeline.Source = input
+
+	output, err := newOutputOpener(c.DstURI)
+	if err != nil {
+		return nil, err
+	}
+	pipeline.Result = output
 
 	if c.ErrURI != "" {
-		opener, err := newOpener(c.ErrURI)
+		opener, err := newOutputOpener(c.ErrURI)
 		if err != nil {
 			return nil, err
 		}
@@ -108,7 +95,17 @@ func (c *TransformCmd) newPipeline() (*pipeline.Pipeline, error) {
 	return pipeline, nil
 }
 
-func newOpener(uri string) (lazyio.Opener, error) {
+func newInputOpener(uri string) (lazyio.InputOpener, error) {
+	switch {
+	case strings.HasPrefix(uri, "s3://") || strings.HasPrefix(uri, "S3://"):
+		return nil, nil
+	default:
+		uri = filepath.Clean(uri)
+		return &lazyio.FileReader{Dir: uri}, nil
+	}
+}
+
+func newOutputOpener(uri string) (lazyio.OutputOpener, error) {
 	switch {
 	case strings.HasPrefix(uri, "s3://") || strings.HasPrefix(uri, "S3://"):
 		return lazyio.NewS3Opener(uri)
@@ -124,6 +121,6 @@ func newOpener(uri string) (lazyio.Opener, error) {
 		} else if !info.IsDir() {
 			return nil, fmt.Errorf("error: not a directory %q", uri)
 		}
-		return &lazyio.FileOpener{Dir: uri}, nil
+		return &lazyio.FileWriter{Dir: uri}, nil
 	}
 }

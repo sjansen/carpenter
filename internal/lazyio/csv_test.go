@@ -16,7 +16,7 @@ func TestCSV(t *testing.T) {
 	err = csv.Close()
 	require.NoError(err)
 
-	o := &lazyio.BufferOpener{}
+	o := &lazyio.BufferWriter{}
 	expectedPath := "space/magic.csv"
 	csv = &lazyio.CSV{
 		Path:   expectedPath,

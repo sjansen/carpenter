@@ -10,7 +10,7 @@ import (
 func TestBufferOpener(t *testing.T) {
 	require := require.New(t)
 
-	o := lazyio.BufferOpener{}
+	o := lazyio.BufferWriter{}
 
 	w, err := o.Open("foo")
 	require.NoError(err, "open")

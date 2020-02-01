@@ -15,13 +15,13 @@ func (b *buffer) Close() error {
 	return nil
 }
 
-var _ Opener = &BufferOpener{}
+var _ OutputOpener = &BufferWriter{}
 
-type BufferOpener struct {
+type BufferWriter struct {
 	buffers map[string]*buffer
 }
 
-func (b *BufferOpener) Open(path string) (io.WriteCloser, error) {
+func (b *BufferWriter) Open(path string) (io.WriteCloser, error) {
 	if b.buffers == nil {
 		b.buffers = make(map[string]*buffer, 1)
 	}
@@ -30,7 +30,7 @@ func (b *BufferOpener) Open(path string) (io.WriteCloser, error) {
 	return buf, nil
 }
 
-func (b *BufferOpener) Buffer(path string) *bytes.Buffer {
+func (b *BufferWriter) Buffer(path string) *bytes.Buffer {
 	buf, ok := b.buffers[path]
 	if ok {
 		return &buf.Buffer
@@ -38,7 +38,7 @@ func (b *BufferOpener) Buffer(path string) *bytes.Buffer {
 	return nil
 }
 
-func (b *BufferOpener) Buffers() []string {
+func (b *BufferWriter) Buffers() []string {
 	result := make([]string, 0, len(b.buffers))
 	for k := range b.buffers {
 		result = append(result, k)

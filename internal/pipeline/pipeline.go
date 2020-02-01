@@ -1,10 +1,9 @@
 package pipeline
 
 import (
-	"bufio"
-	"io"
 	pathlib "path"
 	"runtime"
+	"sync"
 
 	"github.com/sjansen/carpenter/internal/lazyio"
 	"github.com/sjansen/carpenter/internal/patterns"
@@ -13,24 +12,30 @@ import (
 )
 
 type Pipeline struct {
-	Debug     lazyio.Opener
-	Result    lazyio.Opener
 	Patterns  *patterns.Patterns
 	Tokenizer *tokenizer.Tokenizer
 	UAParser  *uaparser.Parser
+
+	Source lazyio.InputOpener
+	Result lazyio.OutputOpener
+	Debug  lazyio.OutputOpener
+
+	ch chan<- *Task
+	wg sync.WaitGroup
 }
 
-func (p *Pipeline) NewTask(r io.Reader, path string) *Task {
-	base := path
-	if n := len(pathlib.Ext(path)); n > 0 {
-		base = path[:len(path)-n]
+func (p *Pipeline) AddTask(path string) {
+	input := &lazyio.Input{
+		Path:   path,
+		Opener: p.Source,
 	}
+	base := input.StripExt()
 
 	task := &Task{
 		patterns:  p.Patterns,
 		tokenizer: p.Tokenizer,
 		uaparser:  p.UAParser,
-		src:       bufio.NewReader(r),
+		src:       input,
 		dst: lazyio.CSV{
 			Opener: p.Result,
 			Path:   base + ".csv",
@@ -58,19 +63,26 @@ func (p *Pipeline) NewTask(r io.Reader, path string) *Task {
 		}
 	}
 
-	return task
+	p.ch <- task
 }
 
-func (p *Pipeline) Start() chan<- *Task {
+func (p *Pipeline) Start() {
 	ch := make(chan *Task)
 	for i := runtime.NumCPU(); i > 0; i-- {
-		go worker(ch)
+		p.wg.Add(1)
+		go worker(ch, &p.wg)
 	}
-	return ch
+	p.ch = ch
 }
 
-func worker(ch <-chan *Task) {
+func (p *Pipeline) Wait() {
+	close(p.ch)
+	p.wg.Wait()
+}
+
+func worker(ch <-chan *Task, wg *sync.WaitGroup) {
 	for t := range ch {
 		t.Run()
 	}
+	wg.Done()
 }

@@ -10,15 +10,15 @@ import (
 	"github.com/sjansen/carpenter/internal/s3util"
 )
 
-var _ Opener = &S3Opener{}
+var _ OutputOpener = &S3Writer{}
 
-type S3Opener struct {
+type S3Writer struct {
 	Bucket   string
 	Prefix   string
 	Uploader *s3manager.Uploader
 }
 
-func NewS3Opener(uri string) (*S3Opener, error) {
+func NewS3Opener(uri string) (*S3Writer, error) {
 	parsed, err := s3util.ParseURI(uri)
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func NewS3Opener(uri string) (*S3Opener, error) {
 	if err != nil {
 		return nil, err
 	}
-	opener := &S3Opener{
+	opener := &S3Writer{
 		Bucket:   cfg.Bucket,
 		Prefix:   cfg.Prefix,
 		Uploader: uploader,
@@ -36,7 +36,7 @@ func NewS3Opener(uri string) (*S3Opener, error) {
 	return opener, nil
 }
 
-func (o *S3Opener) Open(path string) (io.WriteCloser, error) {
+func (o *S3Writer) Open(path string) (io.WriteCloser, error) {
 	ch := make(chan error)
 	r, w := io.Pipe()
 	obj := &s3object{
@@ -48,7 +48,7 @@ func (o *S3Opener) Open(path string) (io.WriteCloser, error) {
 	return obj, nil
 }
 
-func (o *S3Opener) upload(suffix string, r io.Reader, ch chan<- error) {
+func (o *S3Writer) upload(suffix string, r io.Reader, ch chan<- error) {
 	key := path.Join(o.Prefix, suffix)
 	_, err := o.Uploader.Upload(&s3manager.UploadInput{
 		Bucket: aws.String(o.Bucket),

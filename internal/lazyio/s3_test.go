@@ -29,7 +29,7 @@ func TestS3Opener(t *testing.T) {
 	require.NoError(err)
 	require.NotNil(uploader)
 
-	o := lazyio.S3Opener{
+	o := lazyio.S3Writer{
 		Bucket:   cfg.Bucket,
 		Prefix:   cfg.Prefix,
 		Uploader: uploader,
