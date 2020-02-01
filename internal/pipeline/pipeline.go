@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	pathlib "path"
+	"runtime"
 
 	"github.com/sjansen/carpenter/internal/lazyio"
 	"github.com/sjansen/carpenter/internal/patterns"
@@ -58,4 +59,18 @@ func (p *Pipeline) NewTask(r io.Reader, path string) *Task {
 	}
 
 	return task
+}
+
+func (p *Pipeline) Start() chan<- *Task {
+	ch := make(chan *Task)
+	for i := runtime.NumCPU(); i > 0; i-- {
+		go worker(ch)
+	}
+	return ch
+}
+
+func worker(ch <-chan *Task) {
+	for t := range ch {
+		t.Run()
+	}
 }

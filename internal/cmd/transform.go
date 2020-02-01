@@ -35,6 +35,9 @@ func (c *TransformCmd) Run(base *Base) error {
 		return err
 	}
 
+	ch := pipeline.Start()
+	defer close(ch)
+
 	return filepath.Walk(c.SrcURI, func(src string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -60,7 +63,9 @@ func (c *TransformCmd) Run(base *Base) error {
 		}
 
 		task := pipeline.NewTask(r, suffix)
-		return task.Run()
+		ch <- task
+
+		return nil
 	})
 }
 
