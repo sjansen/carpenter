@@ -3,7 +3,6 @@ services:
   go:
     build:
       context: ./docker/go
-    command: ./scripts/run-all-tests
     environment:
       AWS_ACCESS_KEY_ID:     "AKIzEXAMPLE123456789"
       AWS_SECRET_ACCESS_KEY: "EXAMPLE!SECRET!KEY0123example!secret!key"
@@ -12,10 +11,6 @@ services:
       CARPENTER_TEST_S3_REGION:   "us-east-1"
       CARPENTER_TEST_S3_ENDPOINT: "http://minio:9000"
       GO111MODULE: "on"
-    volumes:
-     - .:/go/src/github.com/sjansen/carpenter
-     - "${GOPATH:-/tmp}/pkg/mod:/go/pkg/mod"
-    working_dir: /go/src/github.com/sjansen/carpenter
   minio:
     build:
       context: ./docker/minio
