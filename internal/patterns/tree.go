@@ -101,7 +101,7 @@ func (t *tree) matchChildren(path string, query url.Values, depth int, matchAll 
 
 		prefix := prefix
 		suffix := suffix
-		if !part.split() {
+		if part.greedy() {
 			prefix = path
 			suffix = ""
 		}

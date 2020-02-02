@@ -9,7 +9,7 @@ import (
 type part interface {
 	match(string) bool
 	normalize(*starlark.Thread, string) (string, error)
-	split() bool
+	greedy() bool
 }
 
 type plainPart struct {
@@ -24,8 +24,8 @@ func (p *plainPart) normalize(_ *starlark.Thread, path string) (string, error) {
 	return path, nil
 }
 
-func (p *plainPart) split() bool {
-	return true
+func (p *plainPart) greedy() bool {
+	return false
 }
 
 type regexPart struct {
@@ -42,6 +42,6 @@ func (p *regexPart) normalize(thread *starlark.Thread, path string) (string, err
 	return p.rewriter.rewrite(thread, path)
 }
 
-func (p *regexPart) split() bool {
-	return !p.suffix
+func (p *regexPart) greedy() bool {
+	return p.suffix
 }

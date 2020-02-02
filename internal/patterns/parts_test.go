@@ -16,7 +16,7 @@ func TestPlainPart(t *testing.T) {
 		value: "foo",
 	}
 
-	require.True(p.split())
+	require.False(p.greedy())
 
 	match := p.match("foo")
 	require.Equal(true, match)
@@ -95,9 +95,9 @@ func TestRegexpPart(t *testing.T) {
 		p := tc.part
 
 		p.suffix = true
-		require.False(p.split())
+		require.True(p.greedy())
 		p.suffix = false
-		require.True(p.split())
+		require.False(p.greedy())
 
 		match := p.match("should not match")
 		require.Equal(false, match, tc.id)
