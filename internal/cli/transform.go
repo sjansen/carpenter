@@ -6,7 +6,7 @@ func registerTransform(p *ArgParser) {
 	c := &cmd.TransformCmd{}
 	cmd := p.addCommand(c, "transform", "TODO")
 	cmd.Arg("PATTERNS", "Pattern file").Required().
-		ExistingFileVar(&c.Patterns)
+		StringVar(&c.Patterns)
 	cmd.Arg("SRC", "Source directory").Required().
 		StringVar(&c.SrcURI)
 	cmd.Arg("DST", "Target directory").Required().

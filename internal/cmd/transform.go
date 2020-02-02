@@ -6,9 +6,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
+
 	"github.com/sjansen/carpenter/internal/lazyio"
 	"github.com/sjansen/carpenter/internal/patterns"
 	"github.com/sjansen/carpenter/internal/pipeline"
+	"github.com/sjansen/carpenter/internal/s3util"
 	"github.com/sjansen/carpenter/internal/tokenizer"
 	"github.com/sjansen/carpenter/internal/uaparser"
 )
@@ -36,12 +40,7 @@ func (c *TransformCmd) Run(base *Base) error {
 }
 
 func (c *TransformCmd) newPipeline() (*pipeline.Pipeline, lazyio.InputWalker, error) {
-	r, err := os.Open(c.Patterns)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	patterns, err := patterns.Load(c.Patterns, r)
+	patterns, err := loadPatterns(c.Patterns)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -78,6 +77,35 @@ func (c *TransformCmd) newPipeline() (*pipeline.Pipeline, lazyio.InputWalker, er
 	}
 
 	return pipeline, input, nil
+}
+
+func loadPatterns(uri string) (*patterns.Patterns, error) {
+	switch {
+	case strings.HasPrefix(uri, "s3://") || strings.HasPrefix(uri, "S3://"):
+		parsed, err := s3util.ParseURI(uri)
+		if err != nil {
+			return nil, err
+		}
+		cfg := parsed.ToConfig()
+		downloader, err := s3util.NewDownloader(cfg)
+		if err != nil {
+			return nil, err
+		}
+		result, err := downloader.GetObject(&s3.GetObjectInput{
+			Bucket: aws.String(parsed.Bucket),
+			Key:    aws.String(parsed.Key),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return patterns.Load(uri, result.Body)
+	default:
+		r, err := os.Open(uri)
+		if err != nil {
+			return nil, err
+		}
+		return patterns.Load(uri, r)
+	}
 }
 
 type inputOpenWalker interface {
