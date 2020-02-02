@@ -12,16 +12,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestS3Opener(t *testing.T) {
+func TestRoundTrip(t *testing.T) {
 	require := require.New(t)
 
 	if SkipTest() {
 		t.Skip("skipping test")
 	}
 
-	cfg, err := UploaderTestConfig()
+	cfg, err := NewTestConfig()
 	require.NoError(err)
 	require.NotNil(cfg)
+
+	downloader, err := NewDownloader(cfg)
+	require.NoError(err)
+	require.NotNil(downloader)
 
 	uploader, err := NewUploader(cfg)
 	require.NoError(err)
@@ -35,7 +39,7 @@ func TestS3Opener(t *testing.T) {
 	})
 	require.NoError(err)
 
-	result, err := uploader.S3.GetObject(&s3.GetObjectInput{
+	result, err := downloader.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(cfg.Bucket),
 		Key:    aws.String(uuid),
 	})

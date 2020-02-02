@@ -21,7 +21,7 @@ func TestS3Opener(t *testing.T) {
 		t.Skip("skipping test")
 	}
 
-	cfg, err := s3util.UploaderTestConfig()
+	cfg, err := s3util.NewTestConfig()
 	require.NoError(err)
 	require.NotNil(cfg)
 

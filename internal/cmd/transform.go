@@ -21,14 +21,7 @@ type TransformCmd struct {
 }
 
 func (c *TransformCmd) Run(base *Base) error {
-	c.SrcURI = filepath.Clean(c.SrcURI)
-	if info, err := os.Stat(c.SrcURI); err != nil {
-		return err
-	} else if !info.IsDir() {
-		return fmt.Errorf("error: not a directory %q", c.SrcURI)
-	}
-
-	pipeline, err := c.newPipeline()
+	pipeline, walker, err := c.newPipeline()
 	if err != nil {
 		return err
 	}
@@ -36,34 +29,26 @@ func (c *TransformCmd) Run(base *Base) error {
 	pipeline.Start()
 	defer pipeline.Wait()
 
-	return filepath.Walk(c.SrcURI, func(src string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		} else if !info.Mode().IsRegular() {
-			return nil
-		}
-
-		suffix := pipeline.Source.StripPrefix(src)
-		pipeline.AddTask(suffix)
-
+	return walker.Walk(func(path string) error {
+		pipeline.AddTask(path)
 		return nil
 	})
 }
 
-func (c *TransformCmd) newPipeline() (*pipeline.Pipeline, error) {
+func (c *TransformCmd) newPipeline() (*pipeline.Pipeline, lazyio.InputWalker, error) {
 	r, err := os.Open(c.Patterns)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	patterns, err := patterns.Load(c.Patterns, r)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	uaparser, err := uaparser.UserAgentParser()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	pipeline := &pipeline.Pipeline{
@@ -72,35 +57,45 @@ func (c *TransformCmd) newPipeline() (*pipeline.Pipeline, error) {
 		UAParser:  uaparser,
 	}
 
-	input, err := newInputOpener(c.SrcURI)
+	input, err := newInputOpenWalker(c.SrcURI)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	pipeline.Source = input
 
 	output, err := newOutputOpener(c.DstURI)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	pipeline.Result = output
 
 	if c.ErrURI != "" {
 		opener, err := newOutputOpener(c.ErrURI)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		pipeline.Debug = opener
 	}
 
-	return pipeline, nil
+	return pipeline, input, nil
 }
 
-func newInputOpener(uri string) (lazyio.InputOpener, error) {
+type inputOpenWalker interface {
+	lazyio.InputOpener
+	lazyio.InputWalker
+}
+
+func newInputOpenWalker(uri string) (inputOpenWalker, error) {
 	switch {
 	case strings.HasPrefix(uri, "s3://") || strings.HasPrefix(uri, "S3://"):
-		return nil, nil
+		return lazyio.NewS3Reader(uri)
 	default:
 		uri = filepath.Clean(uri)
+		if info, err := os.Stat(uri); err != nil {
+			return nil, err
+		} else if !info.IsDir() {
+			return nil, fmt.Errorf("error: not a directory %q", uri)
+		}
 		return &lazyio.FileReader{Dir: uri}, nil
 	}
 }
@@ -108,7 +103,7 @@ func newInputOpener(uri string) (lazyio.InputOpener, error) {
 func newOutputOpener(uri string) (lazyio.OutputOpener, error) {
 	switch {
 	case strings.HasPrefix(uri, "s3://") || strings.HasPrefix(uri, "S3://"):
-		return lazyio.NewS3Opener(uri)
+		return lazyio.NewS3Writer(uri)
 	default:
 		uri = filepath.Clean(uri)
 		if info, err := os.Stat(uri); err != nil {

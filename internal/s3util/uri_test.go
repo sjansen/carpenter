@@ -58,7 +58,7 @@ func TestURI_ToUploaderConfig(t *testing.T) {
 		Key:      "prefix",
 		Endpoint: "endpoint",
 	}
-	expected := &s3util.UploaderConfig{
+	expected := &s3util.Config{
 		Profile:  "profile",
 		Region:   "region",
 		Bucket:   "bucket",
@@ -66,6 +66,6 @@ func TestURI_ToUploaderConfig(t *testing.T) {
 		Endpoint: "endpoint",
 	}
 
-	actual := uri.ToUploaderConfig()
+	actual := uri.ToConfig()
 	require.Equal(expected, actual)
 }

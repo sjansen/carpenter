@@ -7,10 +7,9 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-type UploaderConfig struct {
+type Config struct {
 	Profile  string
 	Region   string
 	Bucket   string
@@ -18,7 +17,7 @@ type UploaderConfig struct {
 	Endpoint string
 }
 
-func NewUploader(cfg *UploaderConfig) (*s3manager.Uploader, error) {
+func (cfg *Config) newSession() (*session.Session, error) {
 	opts := session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}
@@ -39,12 +38,10 @@ func NewUploader(cfg *UploaderConfig) (*s3manager.Uploader, error) {
 		config.Region = aws.String(cfg.Region)
 	}
 
-	sess := session.Must(session.NewSessionWithOptions(opts))
-	uploader := s3manager.NewUploader(sess)
-	return uploader, nil
+	return session.NewSessionWithOptions(opts)
 }
 
-func UploaderTestConfig() (*UploaderConfig, error) {
+func NewTestConfig() (*Config, error) {
 	bucket := os.Getenv(S3_TEST_BUCKET)
 	if bucket == "" {
 		return nil, errors.New("$" + S3_TEST_BUCKET + " not set")
@@ -59,7 +56,7 @@ func UploaderTestConfig() (*UploaderConfig, error) {
 		)
 	}
 
-	return &UploaderConfig{
+	return &Config{
 		Region:   region,
 		Bucket:   bucket,
 		Prefix:   prefix,

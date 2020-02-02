@@ -8,7 +8,7 @@ func registerTransform(p *ArgParser) {
 	cmd.Arg("PATTERNS", "Pattern file").Required().
 		ExistingFileVar(&c.Patterns)
 	cmd.Arg("SRC", "Source directory").Required().
-		ExistingDirVar(&c.SrcURI)
+		StringVar(&c.SrcURI)
 	cmd.Arg("DST", "Target directory").Required().
 		StringVar(&c.DstURI)
 	cmd.Arg("ERRORS", "Errors directory").

@@ -4,7 +4,10 @@ import "io"
 
 type InputOpener interface {
 	Open(path string) (io.ReadCloser, error)
-	StripPrefix(path string) string
+}
+
+type InputWalker interface {
+	Walk(fn func(path string) error) error
 }
 
 type OutputOpener interface {

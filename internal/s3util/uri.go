@@ -48,8 +48,8 @@ func ParseURI(s string) (*URI, error) {
 	return uri, nil
 }
 
-func (uri *URI) ToUploaderConfig() *UploaderConfig {
-	return &UploaderConfig{
+func (uri *URI) ToConfig() *Config {
+	return &Config{
 		Profile:  uri.Profile,
 		Region:   uri.Region,
 		Bucket:   uri.Bucket,

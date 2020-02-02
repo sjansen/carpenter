@@ -7,6 +7,7 @@ import (
 )
 
 var _ InputOpener = &FileReader{}
+var _ InputWalker = &FileReader{}
 var _ OutputOpener = &FileWriter{}
 
 type FileReader struct {
@@ -18,7 +19,19 @@ func (fr *FileReader) Open(path string) (io.ReadCloser, error) {
 	return os.Open(path)
 }
 
-func (fr *FileReader) StripPrefix(path string) string {
+func (fr *FileReader) Walk(fn func(string) error) error {
+	return filepath.Walk(fr.Dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		} else if !info.Mode().IsRegular() {
+			return nil
+		}
+		suffix := fr.stripPrefix(path)
+		return fn(suffix)
+	})
+}
+
+func (fr *FileReader) stripPrefix(path string) string {
 	n := len(fr.Dir)
 	if fr.Dir[n-1] == '/' {
 		path = path[n:]
