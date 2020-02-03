@@ -2,6 +2,7 @@ package lazyio_test
 
 import (
 	"io/ioutil"
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -44,9 +45,15 @@ func TestS3Opener(t *testing.T) {
 	err = w.Close()
 	require.NoError(err)
 
+	var key string
+	if strings.HasSuffix(cfg.Prefix, "/") {
+		key = cfg.Prefix + "battlecry"
+	} else {
+		key = cfg.Prefix + "/battlecry"
+	}
 	result, err := uploader.S3.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(cfg.Bucket),
-		Key:    aws.String(cfg.Prefix + "battlecry"),
+		Key:    aws.String(key),
 	})
 	require.NoError(err)
 

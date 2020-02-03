@@ -42,24 +42,21 @@ func (cfg *Config) newSession() (*session.Session, error) {
 }
 
 func NewTestConfig() (*Config, error) {
-	bucket := os.Getenv(S3_TEST_BUCKET)
-	if bucket == "" {
-		return nil, errors.New("$" + S3_TEST_BUCKET + " not set")
+	uri := os.Getenv(s3TestURI)
+	if uri == "" {
+		return nil, errors.New("$" + s3TestURI + " not set")
 	}
 
-	prefix := os.Getenv(S3_TEST_PREFIX)
-	region := os.Getenv(S3_TEST_REGION)
-	endpoint := os.Getenv(S3_TEST_ENDPOINT)
-	if endpoint != "" && region == "" {
+	parsed, err := ParseURI(uri)
+	switch {
+	case err != nil:
+		return nil, err
+	case parsed.Endpoint != "" && parsed.Region == "":
 		return nil, errors.New(
-			"$" + S3_TEST_REGION + " must be set when $" + S3_TEST_ENDPOINT + " is set",
+			"invalid $" + s3TestURI + ": region must be set when endpoint is set",
 		)
 	}
 
-	return &Config{
-		Region:   region,
-		Bucket:   bucket,
-		Prefix:   prefix,
-		Endpoint: endpoint,
-	}, nil
+	cfg := parsed.ToConfig()
+	return cfg, nil
 }

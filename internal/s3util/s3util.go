@@ -7,13 +7,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-const S3_TEST_BUCKET = "CARPENTER_TEST_S3_BUCKET"     //nolint:golint
-const S3_TEST_PREFIX = "CARPENTER_TEST_S3_PREFIX"     //nolint:golint
-const S3_TEST_REGION = "CARPENTER_TEST_S3_REGION"     //nolint:golint
-const S3_TEST_ENDPOINT = "CARPENTER_TEST_S3_ENDPOINT" //nolint:golint
+const s3TestURI = "CARPENTER_TEST_S3_URI"
 
 func SkipTest() bool {
-	bucket := os.Getenv(S3_TEST_BUCKET)
+	bucket := os.Getenv(s3TestURI)
 	return bucket == ""
 }
 

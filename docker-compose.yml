@@ -6,10 +6,7 @@ services:
     environment:
       AWS_ACCESS_KEY_ID:     "AKIzEXAMPLE123456789"
       AWS_SECRET_ACCESS_KEY: "EXAMPLE!SECRET!KEY0123example!secret!key"
-      CARPENTER_TEST_S3_BUCKET:   "bucket1"
-      CARPENTER_TEST_S3_PREFIX:   "stuff/"
-      CARPENTER_TEST_S3_REGION:   "us-east-1"
-      CARPENTER_TEST_S3_ENDPOINT: "http://minio:9000"
+      CARPENTER_TEST_S3_URI: "s3://bucket1/stuff?endpoint=http://minio:9000&region=us-east-1"
       GO111MODULE: "on"
   minio:
     build:
