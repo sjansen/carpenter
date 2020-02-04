@@ -88,6 +88,10 @@ func (l *patternLoader) addURL(
 		return nil, err
 	}
 
+	if id == "" {
+		return nil, fmt.Errorf(`%s: invalid pattern ID: ""`, l.Name())
+	}
+
 	p := &pattern{id: id}
 	if err := l.transformPath(p, path); err != nil {
 		return nil, err
@@ -141,7 +145,11 @@ func (l *patternLoader) transformParams(p *pattern, query *starlark.Dict) error 
 				remove: true,
 			}
 		case starlark.String:
-			result[k.GoString()] = &param{
+			key := k.GoString()
+			if key == "" {
+				return fmt.Errorf(`%s: %q invalid query key: ""`, l.Name(), p.id)
+			}
+			result[key] = &param{
 				rewriter: &staticRewriter{
 					value: v.GoString(),
 				},
@@ -161,8 +169,12 @@ func (l *patternLoader) transformParams(p *pattern, query *starlark.Dict) error 
 func (l *patternLoader) transformPart(parent, child string, value starlark.Value) (part, error) {
 	switch v := value.(type) {
 	case starlark.String:
+		value := v.GoString()
+		if value == "" {
+			return nil, fmt.Errorf(`%s: %q/%q invalid value: ""`, l.Name(), parent, child)
+		}
 		m := &plainPart{
-			value: v.GoString(),
+			value: value,
 		}
 		return m, nil
 	case starlark.Tuple:
