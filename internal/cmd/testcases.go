@@ -8,8 +8,9 @@ import (
 )
 
 type TestCasesCmd struct {
-	File    string
-	Verbose bool
+	File       string
+	SkipVerify bool
+	Verbose    bool
 }
 
 func (c *TestCasesCmd) Run(base *Base) error {
@@ -23,9 +24,14 @@ func (c *TestCasesCmd) Run(base *Base) error {
 		return err
 	}
 
-	testcases, err := patterns.Test(&base.IO)
-	if err != nil {
-		return err
+	var testcases map[string]string
+	if c.SkipVerify {
+		testcases = patterns.TestCases()
+	} else {
+		testcases, err = patterns.Test(&base.IO)
+		if err != nil {
+			return err
+		}
 	}
 
 	enc := json.NewEncoder(base.IO.Stdout)

@@ -118,6 +118,18 @@ func (p *Patterns) Test(sys *sys.IO) (map[string]string, error) {
 	return passed, nil
 }
 
+func (p *Patterns) TestCases() map[string]string {
+	testcases := make(map[string]string, len(p.tests))
+	for rawurl, result := range p.tests {
+		if result.url == "" {
+			testcases[rawurl] = ""
+		} else {
+			testcases[rawurl] = result.id
+		}
+	}
+	return testcases
+}
+
 func (p *Patterns) match(url *url.URL, matchAll bool) ([]*result, error) {
 	if len(url.Path) < 1 || url.Path[0] != '/' {
 		err := fmt.Errorf(`URLs must start with "/": %q`, url.Path)
