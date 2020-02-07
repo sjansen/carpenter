@@ -19,17 +19,19 @@ class Command(BaseCommand):
             ))
 
 
-def extract_pattern(p):
+def extract_pattern(base, p):
     if hasattr(p, 'pattern'):
         pattern = str(p.pattern)
+        if p.pattern._is_endpoint and not hasattr(p.pattern, '_regex'):
+            pattern += "$"
     else:
         pattern = p.regex.pattern
-    if pattern.startswith("^"):
-        return pattern[1:]
-    return pattern
+    if base and pattern.startswith("^"):
+        pattern = pattern[1:]
+    return base + pattern
 
 
-def extract_views_from_urlpatterns(urlpatterns, base=''):
+def extract_views_from_urlpatterns(urlpatterns, base=""):
     """
     Return a list of views from a list of urlpatterns.
     Each object in the returned list is a two-tuple: (pattern, lookup_str)
@@ -42,12 +44,14 @@ def extract_views_from_urlpatterns(urlpatterns, base=''):
             except ImportError:
                 continue
             views.extend(extract_views_from_urlpatterns(
-                patterns, base + extract_pattern(p),
+                patterns,
+                extract_pattern(base, p),
             ))
         elif hasattr(p, 'lookup_str'):
             try:
                 views.append((
-                    base + extract_pattern(p), p.lookup_str,
+                    extract_pattern(base, p),
+                    p.lookup_str,
                 ))
             except ViewDoesNotExist:
                 continue
