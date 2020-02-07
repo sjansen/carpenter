@@ -162,7 +162,7 @@ func (l *patternLoader) transformParams(p *pattern, query *starlark.Dict) error 
 		}
 	}
 
-	p.query.params = result
+	p.query.match = result
 	return nil
 }
 
@@ -323,7 +323,7 @@ func (l *patternLoader) transformQuery(p *pattern, query *starlark.Dict) error {
 					l.Name(), p.id, k, dedup,
 				)
 			}
-		case "params":
+		case "match":
 			value := item.Index(1)
 			v, ok := value.(*starlark.Dict)
 			if !ok {
@@ -337,7 +337,7 @@ func (l *patternLoader) transformQuery(p *pattern, query *starlark.Dict) error {
 			}
 		default:
 			return fmt.Errorf(
-				`%s: %q expected "dedup" or "params", got %s`,
+				`%s: %q expected "dedup" or "match", got %s`,
 				l.Name(), p.id, k,
 			)
 		}

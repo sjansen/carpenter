@@ -5,7 +5,7 @@ url(
         "suffix": "/",
     },
     query = {
-        "params": {
+        "match": {
             "foo": lambda x: x,
         },
     },
@@ -22,7 +22,7 @@ url(
     },
     query = {
         "dedup": "never",
-        "params": {
+        "match": {
             "q": "X",
             "utf8": None,
         },
@@ -42,7 +42,7 @@ url(
     },
     query = {
         "dedup": "never",
-        "params": {
+        "match": {
             "users[]": "X",
         },
     },
@@ -60,7 +60,7 @@ url(
     },
     query = {
         "dedup": "first",
-        "params": {
+        "match": {
             "users[]": lambda x: x,
         },
     },
@@ -78,7 +78,7 @@ url(
     },
     query = {
         "dedup": "last",
-        "params": {
+        "match": {
             "users[]": lambda x: x,
         },
     },

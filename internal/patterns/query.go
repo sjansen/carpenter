@@ -11,8 +11,8 @@ const (
 )
 
 type query struct {
-	dedup  dedup
-	params map[string]*param
+	dedup dedup
+	match map[string]*param
 }
 
 type param struct {

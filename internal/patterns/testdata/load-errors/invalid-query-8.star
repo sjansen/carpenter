@@ -5,7 +5,7 @@ url(
         "suffix": "/",
     },
     query = {
-        "params": {
+        "match": {
             "": "Spoon!",
         },
     },

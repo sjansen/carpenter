@@ -9,7 +9,7 @@ url(
     },
     query = {
         "dedup": "first",
-        "params": {
+        "match": {
             "utf8": lambda x: str(x == "✔"),
         },
     },
@@ -30,7 +30,7 @@ url(
     },
     query = {
         "dedup": "last",
-        "params": {
+        "match": {
             "utf8": lambda x: str(x == "✔"),
         },
     },

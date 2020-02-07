@@ -10,7 +10,7 @@ import (
 type tree struct {
 	id       string
 	slash    slash
-	params   query
+	query    query
 	children []*child
 }
 
@@ -40,9 +40,9 @@ func (t *tree) addPattern(p *pattern, depth int) {
 		c := &child{
 			part: p.suffix,
 			tree: &tree{
-				id:     p.id,
-				slash:  p.slash,
-				params: p.query,
+				id:    p.id,
+				slash: p.slash,
+				query: p.query,
 			},
 		}
 		t.children = append(t.children, c)
@@ -51,7 +51,7 @@ func (t *tree) addPattern(p *pattern, depth int) {
 
 	t.id = p.id
 	t.slash = p.slash
-	t.params = p.query
+	t.query = p.query
 }
 
 func (t *tree) match(path string, query url.Values, depth int, matchAll bool) ([]*match, error) {
@@ -156,8 +156,8 @@ func (t *tree) rewriteQuery(query url.Values) (string, error) {
 
 	thread := &starlark.Thread{}
 	for key, values := range query {
-		if param, ok := t.params.params[key]; ok {
-			values, err := param.normalize(thread, t.params.dedup, values)
+		if param, ok := t.query.match[key]; ok {
+			values, err := param.normalize(thread, t.query.dedup, values)
 			if err != nil {
 				return "", err
 			}

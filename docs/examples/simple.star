@@ -17,7 +17,7 @@ url(
         "suffix": "/?",
     },
     query = {
-        "params": {
+        "match": {
             "q": "X",
         },
     },

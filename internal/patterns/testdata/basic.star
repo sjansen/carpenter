@@ -6,7 +6,7 @@ url(
     },
     query = {
         "dedup": "never",
-        "params": {},
+        "match": {},
     },
     tests = {
         "/": "/",
@@ -22,7 +22,7 @@ url(
     },
     query = {
         "dedup": "first",
-        "params": {},
+        "match": {},
     },
     tests = {
         "/foo": None,
@@ -40,7 +40,7 @@ url(
     },
     query = {
         "dedup": "last",
-        "params": {},
+        "match": {},
     },
     tests = {
         "/foo": None,  # shadowed by slash-required
@@ -58,7 +58,7 @@ url(
     },
     query = {
         "dedup": "never",
-        "params": {},
+        "match": {},
     },
     tests = {
         "/foo": None,  # shadowed by slash-required
@@ -76,7 +76,7 @@ url(
     },
     query = {
         "dedup": "never",
-        "params": {},
+        "match": {},
     },
     tests = {
         "/qux/": "/quux",
@@ -111,7 +111,7 @@ url(
     },
     query = {
         "dedup": "never",
-        "params": {
+        "match": {
             "q": "X",
             "utf8": None,
         },

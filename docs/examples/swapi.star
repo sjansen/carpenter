@@ -21,7 +21,7 @@ def urls():
         },
         query = {
             "dedup": "never",
-            "params": {
+            "match": {
                 "format": wookiee,
             },
         },
@@ -41,7 +41,7 @@ def urls():
             },
             query = {
                 "dedup": "never",
-                "params": {
+                "match": {
                     "format": wookiee,
                     "search": "X",
                 },
@@ -61,7 +61,7 @@ def urls():
             },
             query = {
                 "dedup": "never",
-                "params": {
+                "match": {
                     "format": wookiee,
                 },
             },
