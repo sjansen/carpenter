@@ -13,42 +13,41 @@ const (
 type query struct {
 	dedup dedup
 	match map[string]*param
+	other *param
 }
 
 type param struct {
 	remove   bool
-	rewriter rewriter
+	rewriter queryRewriter
 }
 
-func (p *param) normalize(thread *starlark.Thread, dedup dedup, values []string) ([]string, error) {
+func (p *param) normalize(thread *starlark.Thread, dedup dedup, key string, values []string) ([]string, error) {
 	if p.remove {
 		return nil, nil
 	} else if len(values) < 1 {
 		return values, nil
 	}
 
-	switch dedup {
-	case keepFirst:
-		v, err := p.rewriter.rewrite(thread, values[0])
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		v, err := p.rewriter.rewrite(thread, key, value)
 		if err != nil {
 			return nil, err
 		}
-		return []string{v}, nil
-	case keepLast:
-		v, err := p.rewriter.rewrite(thread, values[len(values)-1])
-		if err != nil {
-			return nil, err
+		if v != nil {
+			result = append(result, *v)
 		}
-		return []string{v}, nil
+	}
+	if len(result) < 1 {
+		return nil, nil
 	}
 
-	result := make([]string, 0, len(values))
-	for _, v := range values {
-		v, err := p.rewriter.rewrite(thread, v)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, v)
+	switch dedup {
+	case keepFirst:
+		return []string{result[0]}, nil
+	case keepLast:
+		return []string{result[len(result)-1]}, nil
 	}
+
 	return result, nil
 }

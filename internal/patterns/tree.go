@@ -156,13 +156,21 @@ func (t *tree) rewriteQuery(query url.Values) (string, error) {
 
 	thread := &starlark.Thread{}
 	for key, values := range query {
-		if param, ok := t.query.match[key]; ok {
-			values, err := param.normalize(thread, t.query.dedup, values)
+		param, ok := t.query.match[key]
+		switch {
+		case ok:
+			values, err := param.normalize(thread, t.query.dedup, key, values)
 			if err != nil {
 				return "", err
 			}
 			result[key] = values
-		} else {
+		case t.query.other != nil:
+			values, err := t.query.other.normalize(thread, t.query.dedup, key, values)
+			if err != nil {
+				return "", err
+			}
+			result[key] = values
+		default:
 			result[key] = values
 		}
 	}

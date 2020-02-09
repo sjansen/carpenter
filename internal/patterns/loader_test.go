@@ -171,7 +171,7 @@ var basicPatterns = []*pattern{{
 	prefix: []part{
 		&regexPart{
 			regex:    regexp.MustCompile("qux"),
-			rewriter: &staticRewriter{"quux"},
+			rewriter: &staticStringRewriter{"quux"},
 		},
 	},
 	query: query{
@@ -208,7 +208,7 @@ var basicPatterns = []*pattern{{
 		match: map[string]*param{
 			"q": {
 				remove:   false,
-				rewriter: &staticRewriter{"X"},
+				rewriter: &staticQueryRewriter{"X"},
 			},
 			"utf8": {remove: true},
 		},
@@ -260,7 +260,7 @@ var basicTree = &Patterns{tree: tree{
 	}, {
 		part: &regexPart{
 			regex:    regexp.MustCompile("qux"),
-			rewriter: &staticRewriter{"quux"},
+			rewriter: &staticStringRewriter{"quux"},
 		},
 		tree: &tree{
 			id:    "regex",
@@ -296,7 +296,7 @@ var basicTree = &Patterns{tree: tree{
 				match: map[string]*param{
 					"q": {
 						remove:   false,
-						rewriter: &staticRewriter{"X"},
+						rewriter: &staticQueryRewriter{"X"},
 					},
 					"utf8": {remove: true},
 				},
@@ -332,14 +332,14 @@ func regexPatternsFixer(t *testing.T, expected, actual []*pattern) {
 
 		if len(actual.prefix) > 1 {
 			actualPart := actual.prefix[1].(*regexPart)
-			require.IsType(&callableRewriter{}, actualPart.rewriter)
+			require.IsType(&callableStringRewriter{}, actualPart.rewriter)
 			expectedPart := expected.prefix[1].(*regexPart)
 			expectedPart.rewriter = actualPart.rewriter
 		}
 
 		if actual.suffix != nil {
 			actualPart := actual.suffix
-			require.IsType(&callableRewriter{}, actualPart.rewriter)
+			require.IsType(&callableStringRewriter{}, actualPart.rewriter)
 			expectedPart := expected.suffix
 			expectedPart.rewriter = actualPart.rewriter
 		}
@@ -356,7 +356,7 @@ var regexPatterns = []*pattern{{
 	prefix: []part{
 		&regexPart{
 			regex:    regexp.MustCompile("foo|bar"),
-			rewriter: &staticRewriter{"baz"},
+			rewriter: &staticStringRewriter{"baz"},
 		},
 		&regexPart{
 			regex:    regexp.MustCompile("qux|quux"),
@@ -440,7 +440,7 @@ var regexTree = &Patterns{tree: tree{
 	children: []*child{{
 		part: &regexPart{
 			regex:    regexp.MustCompile("foo|bar"),
-			rewriter: &staticRewriter{"baz"},
+			rewriter: &staticStringRewriter{"baz"},
 		},
 		tree: &tree{
 			children: []*child{{

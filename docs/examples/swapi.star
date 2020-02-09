@@ -7,8 +7,8 @@ resources = [
     "vehicles",
 ]
 
-def wookiee(x):
-    if x == "wookiee":
+def wookiee(k, v):
+    if v == "wookiee":
         return "wookiee"
     return "INVALID"
 

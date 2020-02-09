@@ -42,7 +42,7 @@ func TestRegexpPart(t *testing.T) {
 		"id1", "foo", "bar", "",
 		&regexPart{
 			regex: regexp.MustCompile("^foo$"),
-			rewriter: &staticRewriter{
+			rewriter: &staticStringRewriter{
 				value: "bar",
 			},
 		},
@@ -50,7 +50,7 @@ func TestRegexpPart(t *testing.T) {
 		"id2", "qux", "quux", "",
 		&regexPart{
 			regex: regexp.MustCompile("^qux$"),
-			rewriter: &callableRewriter{
+			rewriter: &callableStringRewriter{
 				Callable: starlark.NewBuiltin("rewrite", func(
 					t *starlark.Thread,
 					fn *starlark.Builtin,
@@ -65,7 +65,7 @@ func TestRegexpPart(t *testing.T) {
 		"id3", "corge", "", "expected String, got int",
 		&regexPart{
 			regex: regexp.MustCompile("^c.*$"),
-			rewriter: &callableRewriter{
+			rewriter: &callableStringRewriter{
 				Callable: starlark.NewBuiltin("rewrite", func(
 					t *starlark.Thread,
 					fn *starlark.Builtin,
@@ -80,7 +80,7 @@ func TestRegexpPart(t *testing.T) {
 		"id4", "grault", "", "418 I'm a teapot",
 		&regexPart{
 			regex: regexp.MustCompile("^g.....$"),
-			rewriter: &callableRewriter{
+			rewriter: &callableStringRewriter{
 				Callable: starlark.NewBuiltin("rewrite", func(
 					t *starlark.Thread,
 					fn *starlark.Builtin,

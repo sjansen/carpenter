@@ -14,7 +14,7 @@ var echo = starlark.NewBuiltin("echo", func(
 	args starlark.Tuple,
 	kwargs []starlark.Tuple,
 ) (starlark.Value, error) {
-	return args.Index(0), nil
+	return args.Index(1), nil
 })
 
 var fail = starlark.NewBuiltin("rewrite", func(
@@ -42,7 +42,7 @@ func TestParam(t *testing.T) {
 		[]string{},
 		&param{
 			remove: false,
-			rewriter: &staticRewriter{
+			rewriter: &staticQueryRewriter{
 				value: "X",
 			},
 		},
@@ -52,7 +52,7 @@ func TestParam(t *testing.T) {
 		[]string{"foo", "bar", "baz"},
 		&param{
 			remove: true,
-			rewriter: &staticRewriter{
+			rewriter: &staticQueryRewriter{
 				value: "X",
 			},
 		},
@@ -62,7 +62,7 @@ func TestParam(t *testing.T) {
 		[]string{"foo", "bar", "baz"},
 		&param{
 			remove: false,
-			rewriter: &staticRewriter{
+			rewriter: &staticQueryRewriter{
 				value: "X",
 			},
 		},
@@ -72,7 +72,7 @@ func TestParam(t *testing.T) {
 		[]string{"foo", "bar", "baz"},
 		&param{
 			remove: false,
-			rewriter: &callableRewriter{
+			rewriter: &callableQueryRewriter{
 				Callable: echo,
 			},
 		},
@@ -82,7 +82,7 @@ func TestParam(t *testing.T) {
 		[]string{"foo", "bar", "baz"},
 		&param{
 			remove: false,
-			rewriter: &callableRewriter{
+			rewriter: &callableQueryRewriter{
 				Callable: echo,
 			},
 		},
@@ -92,7 +92,7 @@ func TestParam(t *testing.T) {
 		[]string{"foo", "bar", "baz"},
 		&param{
 			remove: false,
-			rewriter: &callableRewriter{
+			rewriter: &callableQueryRewriter{
 				Callable: fail,
 			},
 		},
@@ -102,7 +102,7 @@ func TestParam(t *testing.T) {
 		[]string{"foo", "bar", "baz"},
 		&param{
 			remove: false,
-			rewriter: &callableRewriter{
+			rewriter: &callableQueryRewriter{
 				Callable: fail,
 			},
 		},
@@ -112,14 +112,14 @@ func TestParam(t *testing.T) {
 		[]string{"foo", "bar", "baz"},
 		&param{
 			remove: false,
-			rewriter: &callableRewriter{
+			rewriter: &callableQueryRewriter{
 				Callable: fail,
 			},
 		},
 	}} {
 		p := tc.param
 
-		actual, err := p.normalize(&starlark.Thread{}, tc.dedup, tc.values)
+		actual, err := p.normalize(&starlark.Thread{}, tc.dedup, tc.id, tc.values)
 		if tc.error != "" {
 			require.Contains(err.Error(), tc.error, tc.id)
 		} else {

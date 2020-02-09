@@ -6,7 +6,7 @@ url(
     },
     query = {
         "match": {
-            "foo": lambda x: x,
+            "foo": lambda k, v: v,
         },
     },
     tests = {
@@ -61,7 +61,7 @@ url(
     query = {
         "dedup": "first",
         "match": {
-            "users[]": lambda x: x,
+            "users[]": lambda k, v: v,
         },
     },
     tests = {
@@ -79,7 +79,7 @@ url(
     query = {
         "dedup": "last",
         "match": {
-            "users[]": lambda x: x,
+            "users[]": lambda k, v: v,
         },
     },
     tests = {
@@ -97,5 +97,19 @@ url(
     query = {},
     tests = {
         "/extra/params?foo&bar=baz&qux=quux": "/extra/params?bar=baz&foo=&qux=quux",
+    },
+)
+
+url(
+    "unmatched-params",
+    path = {
+        "prefix": ["unmatched", "params"],
+        "suffix": "/?",
+    },
+    query = {
+        "other": lambda k, v: "replaced" if k == "qux" else None,
+    },
+    tests = {
+        "/unmatched/params?foo&bar=baz&qux=original": "/unmatched/params?qux=replaced",
     },
 )

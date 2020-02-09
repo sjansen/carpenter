@@ -119,53 +119,6 @@ func (l *patternLoader) getIterableFromDict(parent, key string, pattern *starlar
 	return iter, nil
 }
 
-func (l *patternLoader) transformParams(p *pattern, query *starlark.Dict) error {
-	result := make(map[string]*param)
-
-	for _, item := range query.Items() {
-		key := item.Index(0)
-		k, ok := key.(starlark.String)
-		if !ok {
-			return fmt.Errorf(
-				"%s: %q expected String key, got %s",
-				l.Name(), p.id, key.Type(),
-			)
-		}
-
-		value := item.Index(1)
-		switch v := value.(type) {
-		case starlark.Callable:
-			result[k.GoString()] = &param{
-				rewriter: &callableRewriter{
-					Callable: v,
-				},
-			}
-		case starlark.NoneType:
-			result[k.GoString()] = &param{
-				remove: true,
-			}
-		case starlark.String:
-			key := k.GoString()
-			if key == "" {
-				return fmt.Errorf(`%s: %q invalid query key: ""`, l.Name(), p.id)
-			}
-			result[key] = &param{
-				rewriter: &staticRewriter{
-					value: v.GoString(),
-				},
-			}
-		default:
-			return fmt.Errorf(
-				"%s: %q expected None, String, or Callable value, got %s",
-				l.Name(), p.id, value.Type(),
-			)
-		}
-	}
-
-	p.query.match = result
-	return nil
-}
-
 func (l *patternLoader) transformPart(parent, child string, value starlark.Value) (part, error) {
 	switch v := value.(type) {
 	case starlark.String:
@@ -205,12 +158,12 @@ func (l *patternLoader) transformPart(parent, child string, value starlark.Value
 		iter.Next(&value)
 		switch v := value.(type) {
 		case starlark.Callable:
-			m.rewriter = &callableRewriter{
+			m.rewriter = &callableStringRewriter{
 				Callable: v,
 			}
 			return m, nil
 		case starlark.String:
-			m.rewriter = &staticRewriter{
+			m.rewriter = &staticStringRewriter{
 				value: v.GoString(),
 			}
 			return m, nil
@@ -301,48 +254,134 @@ func (l *patternLoader) transformQuery(p *pattern, query *starlark.Dict) error {
 
 		switch k {
 		case "dedup":
-			value := item.Index(1)
-			v, ok := value.(starlark.String)
-			if !ok {
-				return fmt.Errorf(
-					"%s: %q expected String, got %s",
-					l.Name(), p.id, value.Type(),
-				)
-			}
-			dedup := v.GoString()
-			switch dedup {
-			case "never":
-				p.query.dedup = keepAll
-			case "first":
-				p.query.dedup = keepFirst
-			case "last":
-				p.query.dedup = keepLast
-			default:
-				return fmt.Errorf(
-					`%s: %q/"query"/%q/"dedup" invalid value: %q`,
-					l.Name(), p.id, k, dedup,
-				)
+			if err := l.transformQueryDedup(item, p, k); err != nil {
+				return err
 			}
 		case "match":
-			value := item.Index(1)
-			v, ok := value.(*starlark.Dict)
-			if !ok {
-				return fmt.Errorf(
-					"%s: %q expected Dict, got %s",
-					l.Name(), p.id, value.Type(),
-				)
+			if err := l.transformQueryMatch(item, p); err != nil {
+				return err
 			}
-			if err := l.transformParams(p, v); err != nil {
+		case "other":
+			if err := l.transformQueryOther(item, p); err != nil {
 				return err
 			}
 		default:
 			return fmt.Errorf(
-				`%s: %q expected "dedup" or "match", got %s`,
-				l.Name(), p.id, k,
+				`%s: %q expected "dedup", "match" or "other", got %q`,
+				l.Name(), p.id, k.GoString(),
 			)
 		}
 	}
 
+	return nil
+}
+
+func (l *patternLoader) transformQueryDedup(item starlark.Tuple, p *pattern, k starlark.String) error {
+	value := item.Index(1)
+	v, ok := value.(starlark.String)
+	if !ok {
+		return fmt.Errorf(
+			"%s: %q expected String, got %s",
+			l.Name(), p.id, value.Type(),
+		)
+	}
+	dedup := v.GoString()
+	switch dedup {
+	case "never":
+		p.query.dedup = keepAll
+	case "first":
+		p.query.dedup = keepFirst
+	case "last":
+		p.query.dedup = keepLast
+	default:
+		return fmt.Errorf(
+			`%s: %q/"query"/%q/"dedup" invalid value: %q`,
+			l.Name(), p.id, k, dedup,
+		)
+	}
+	return nil
+}
+
+func (l *patternLoader) transformQueryMatch(item starlark.Tuple, p *pattern) error {
+	value := item.Index(1)
+	query, ok := value.(*starlark.Dict)
+	if !ok {
+		return fmt.Errorf(
+			"%s: %q expected Dict, got %s",
+			l.Name(), p.id, value.Type(),
+		)
+	}
+
+	result := make(map[string]*param)
+	for _, item := range query.Items() {
+		key := item.Index(0)
+		k, ok := key.(starlark.String)
+		if !ok {
+			return fmt.Errorf(
+				"%s: %q expected String key, got %s",
+				l.Name(), p.id, key.Type(),
+			)
+		}
+
+		value := item.Index(1)
+		switch v := value.(type) {
+		case starlark.Callable:
+			result[k.GoString()] = &param{
+				rewriter: &callableQueryRewriter{
+					Callable: v,
+				},
+			}
+		case starlark.NoneType:
+			result[k.GoString()] = &param{
+				remove: true,
+			}
+		case starlark.String:
+			key := k.GoString()
+			if key == "" {
+				return fmt.Errorf(`%s: %q invalid query key: ""`, l.Name(), p.id)
+			}
+			result[key] = &param{
+				rewriter: &staticQueryRewriter{
+					value: v.GoString(),
+				},
+			}
+		default:
+			return fmt.Errorf(
+				"%s: %q expected None, String, or Callable value, got %s",
+				l.Name(), p.id, value.Type(),
+			)
+		}
+	}
+
+	p.query.match = result
+	return nil
+}
+
+func (l *patternLoader) transformQueryOther(item starlark.Tuple, p *pattern) error {
+	value := item.Index(1)
+	switch v := value.(type) {
+	case starlark.Callable:
+		p.query.other = &param{
+			rewriter: &callableQueryRewriter{
+				Callable: v,
+			},
+		}
+	case starlark.NoneType:
+		p.query.other = &param{
+			remove: true,
+		}
+	case starlark.String:
+		p.query.other = &param{
+			rewriter: &staticQueryRewriter{
+				value: v.GoString(),
+			},
+		}
+	default:
+		return fmt.Errorf(
+			"%s: %q expected None, String, or Callable value, got %s",
+			l.Name(), p.id, value.Type(),
+		)
+	}
 	return nil
 }
 

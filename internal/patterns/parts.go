@@ -30,7 +30,7 @@ func (p *plainPart) greedy() bool {
 
 type regexPart struct {
 	regex    *regexp.Regexp
-	rewriter rewriter
+	rewriter stringRewriter
 	suffix   bool
 }
 

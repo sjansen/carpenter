@@ -20,8 +20,8 @@ func TestMatch(t *testing.T) {
 
 	for _, filename := range []string{
 		"testdata/basic.star",
-		"testdata/regex.star",
 		"testdata/query.star",
+		"testdata/regex.star",
 	} {
 		r, err := os.Open(filename)
 		require.NoError(err)

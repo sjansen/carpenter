@@ -6,7 +6,7 @@ url(
     },
     query = {
         "match": {
-            "x": lambda n: chr(n),
+            "x": lambda k, v: chr(v),
         },
     },
     tests = {

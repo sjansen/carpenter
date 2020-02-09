@@ -10,7 +10,7 @@ url(
     query = {
         "dedup": "first",
         "match": {
-            "utf8": lambda x: str(x == "✔"),
+            "utf8": lambda k, v: str(v == "✔"),
         },
     },
     tests = {
@@ -31,7 +31,7 @@ url(
     query = {
         "dedup": "last",
         "match": {
-            "utf8": lambda x: str(x == "✔"),
+            "utf8": lambda k, v: str(v == "✔"),
         },
     },
     tests = {
