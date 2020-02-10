@@ -389,25 +389,30 @@ func (l *patternLoader) transformTests(p *pattern, tests *starlark.Dict) error {
 	result := make(map[string]string)
 
 	for _, item := range tests.Items() {
-		key := item.Index(0)
-		k, ok := key.(starlark.String)
+		tmp := item.Index(0)
+		key, ok := tmp.(starlark.String)
 		if !ok {
 			return fmt.Errorf(
 				"%s: %q expected String key, got %s",
-				l.Name(), p.id, key.Type(),
+				l.Name(), p.id, tmp.Type(),
 			)
 		}
 
-		value := item.Index(1)
-		switch v := value.(type) {
+		k := key.GoString()
+		if len(k) < 1 || k[0] != '/' {
+			return fmt.Errorf(`invalid test case: %q (should start with "/")`, k)
+		}
+
+		tmp = item.Index(1)
+		switch value := tmp.(type) {
 		case starlark.NoneType:
-			result[k.GoString()] = ""
+			result[k] = ""
 		case starlark.String:
-			result[k.GoString()] = v.GoString()
+			result[k] = value.GoString()
 		default:
 			return fmt.Errorf(
 				"%s: %q expected None or String value, got %s",
-				l.Name(), p.id, value.Type(),
+				l.Name(), p.id, tmp.Type(),
 			)
 		}
 	}
