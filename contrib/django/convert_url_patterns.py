@@ -1,7 +1,10 @@
+import argparse
 import re
+import sys
+import textwrap
 
-import django
 from django.core.management import BaseCommand
+from django.template import Context, Template
 
 try:
     from django.urls.converters import get_converters
@@ -17,19 +20,46 @@ PLAIN_PART = re.compile("[^|.*+?\\\[\](){}]+")
 
 
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "-o",
+            "--output",
+            nargs="?",
+            default=sys.stdout,
+            type=argparse.FileType("w"),
+        )
+        parser.add_argument("-t", "--self-test", action="store_true")
+
     def handle(self, *args, **options):
-        self_test()
+        output = options["output"]
+        if options["self_test"]:
+            self_test(output)
+        else:
+            patterns = [
+                Pattern(tc, tc)
+                for tc in TEST_CASES.keys()
+            ]
+            self.__render(output, patterns)
+
+    def __render(self, output, patterns):
+        template = Template(URL_TEMPLATE)
+        for p in patterns:
+            context = Context({
+                "handler": p.handler,
+                "prefix": p.prefix,
+            })
+            output.write(template.render(context))
 
 
-def self_test():
+def self_test(output):
     for tc, expected in TEST_CASES.items():
         actual = Pattern("tc", tc)
         if expected == actual.prefix:
-            print("PASS: {}".format(tc))
+            output.write("PASS: {}\n".format(tc))
         else:
-            print("FAIL: {}".format(tc))
-            print("  expected: {}".format(expected))
-            print("    actual: {}".format(actual.prefix))
+            output.write("FAIL: {}\n".format(tc))
+            output.write("  expected: {}\n".format(expected))
+            output.write("    actual: {}\n".format(actual.prefix))
 
 
 def tokenize(pattern):
@@ -148,3 +178,22 @@ TEST_CASES = {
     "groups/<gid>": [PlainPart("groups"), RegexPart(r"[^/]+", "gid")],
     "^users/(?P<uid>[^/]+)": [PlainPart("users"), RegexPart(r"[^/]+", "uid")],
 }
+
+
+URL_TEMPLATE = textwrap.dedent('''\
+    {% autoescape off %}url(
+        "{{ handler }}",
+        path = {
+            "prefix": [{% for part in prefix %}{% if part.type == "plain" %}
+                "{{ part.value|escapejs }}",{% else %}
+                (r"""{{ part.regex }}""", "{{ part.replacement|escapejs }}"),{% endif %}{% endfor %}
+            ],
+            "suffix": "/?",
+        },
+        query = {
+            "other": "X",
+        },
+        tests = {},
+    ){% endautoescape %}
+
+''')
