@@ -26,4 +26,4 @@ repos:
       entry: buildifier -mode check
       pass_filenames: true
       files: '.*\.star$'
-      exclude: '/err-'
+      exclude: 'contrib/|/err-'

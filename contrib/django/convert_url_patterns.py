@@ -1,4 +1,5 @@
 import argparse
+import csv
 import re
 import sys
 import textwrap
@@ -14,13 +15,16 @@ except:
     converters = {}
 
 
-NAMED_REGEX_PART = re.compile(r"^\(\?P<(?P<name>[^>]+)>(?P<regex>.*)\)$")
-NAMED_TYPE_PART = re.compile(r"^<((?P<type>[^:]+):)?(?P<name>[^:]+)>$")
+NAMED_REGEX_PART = re.compile(r"^\(\?P<(?P<name>[^>]+)>\(?(?P<regex>[^)]+)\)?\)$")
+NAMED_TYPE_PART = re.compile(r"^<((?P<type>[^:>]+):)?(?P<name>[^:>]+)>$")
 PLAIN_PART = re.compile("[^|.*+?\\\[\](){}]+")
 
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
+        parser.add_argument(
+            "-i", "--input", nargs="?", type=argparse.FileType("r"),
+        )
         parser.add_argument(
             "-o",
             "--output",
@@ -34,20 +38,26 @@ class Command(BaseCommand):
         output = options["output"]
         if options["self_test"]:
             self_test(output)
-        else:
+            return
+        if options["input"]:
+            reader = csv.DictReader(options["input"])
             patterns = [
-                Pattern(tc, tc)
-                for tc in TEST_CASES.keys()
+                Pattern(
+                    row["Handler"],
+                    row["Pattern"],
+                    test_case=row.get("Test Case"),
+                    expected=row.get("Expected"),
+                )
+                for row in reader
             ]
-            self.__render(output, patterns)
+        else:
+            patterns = [Pattern(tc, tc) for tc in TEST_CASES.keys()]
+        self.__render(output, patterns)
 
     def __render(self, output, patterns):
         template = Template(URL_TEMPLATE)
         for p in patterns:
-            context = Context({
-                "handler": p.handler,
-                "prefix": p.prefix,
-            })
+            context = Context({"pattern": p})
             output.write(template.render(context))
 
 
@@ -93,12 +103,14 @@ def tokenize(pattern):
 
 
 class Pattern(object):
-    def __init__(self, handler, pattern):
+    def __init__(self, handler, pattern, test_case=None, expected=None):
         self.handler = handler
-        self.prefix = []
         self.__parse(pattern)
+        self.test_case = test_case
+        self.expected = expected
 
     def __parse(self, pattern):
+        self.prefix = []
         for token in tokenize(pattern):
             if self.__match_named_regex(token):
                 continue
@@ -106,7 +118,12 @@ class Pattern(object):
                 continue
             elif self.__match_plain(token):
                 continue
-            prefix.append(RegexPart(token, "TODO"))
+            self.prefix.append(RegexPart(token, "TODO"))
+
+        if pattern.endswith("/$") or len(self.prefix) < 1:
+            self.suffix = "/"
+        else:
+            self.suffix = "/?"
 
     def __match_named_regex(self, token):
         m = NAMED_REGEX_PART.match(token)
@@ -175,25 +192,30 @@ TEST_CASES = {
         RegexPart(r"[0-9]{2}", "month"),
         RegexPart(r"[\w-]+", "slug"),
     ],
+    "^go/(?P<page>(a|b))": [PlainPart("go"), RegexPart(r"a|b", "page")],
     "groups/<gid>": [PlainPart("groups"), RegexPart(r"[^/]+", "gid")],
     "^users/(?P<uid>[^/]+)": [PlainPart("users"), RegexPart(r"[^/]+", "uid")],
 }
 
 
-URL_TEMPLATE = textwrap.dedent('''\
-    {% autoescape off %}url(
-        "{{ handler }}",
+URL_TEMPLATE = textwrap.dedent(
+    '''\
+    url({% with p=pattern %}{% autoescape off %}
+        "{{ p.handler }}",
         path = {
-            "prefix": [{% for part in prefix %}{% if part.type == "plain" %}
-                "{{ part.value|escapejs }}",{% else %}
-                (r"""{{ part.regex }}""", "{{ part.replacement|escapejs }}"),{% endif %}{% endfor %}
+            "prefix": [{% for part in p.prefix %}{% if part.type == "plain" %}
+                "{{ part.value }}",{% else %}
+                (r"""{{ part.regex }}""", "{{ part.replacement|upper }}"),{% endif %}{% endfor %}
             ],
-            "suffix": "/?",
+            "suffix": "{{ p.suffix }}",
         },
         query = {
             "other": "X",
         },
-        tests = {},
-    ){% endautoescape %}
+        tests = {{% if p.test_case %}
+            "{{ p.test_case }}": "{{ p.expected }}",
+        {% endif %}},
+    {% endautoescape %}{% endwith %})
 
-''')
+'''
+)
