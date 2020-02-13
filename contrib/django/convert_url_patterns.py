@@ -33,6 +33,12 @@ class Command(BaseCommand):
             type=argparse.FileType("w"),
         )
         parser.add_argument("-t", "--self-test", action="store_true")
+        parser.add_argument(
+            "-u",
+            "--unknown-regexes",
+            nargs="?",
+            type=argparse.FileType("w"),
+        )
 
     def handle(self, *args, **options):
         output = options["output"]
@@ -53,6 +59,17 @@ class Command(BaseCommand):
         else:
             patterns = [Pattern(tc, tc) for tc in TEST_CASES.keys()]
         self.__render(output, patterns)
+        if options["unknown_regexes"]:
+            self.__dump_regexes(options["unknown_regexes"], patterns)
+
+    def __dump_regexes(self, output, patterns):
+        regexes = set()
+        for p in patterns:
+            regexes.update(p.regexes)
+        w = csv.writer(output)
+        w.writerow(["RegEx", "Name", "Example"])
+        for row in sorted(regexes):
+            w.writerow(row)
 
     def __render(self, output, patterns):
         template = Template(URL_TEMPLATE)
@@ -105,9 +122,11 @@ def tokenize(pattern):
 class Pattern(object):
     def __init__(self, handler, pattern, test_case=None, expected=None):
         self.handler = handler
-        self.__parse(pattern)
         self.test_case = test_case
         self.expected = expected
+
+        self.regexes = set()
+        self.__parse(pattern)
 
     def __parse(self, pattern):
         self.prefix = []
@@ -118,19 +137,24 @@ class Pattern(object):
                 continue
             elif self.__match_plain(token):
                 continue
-            self.prefix.append(RegexPart(token, "TODO"))
+            self.__add_regex(token, "")
 
         if pattern.endswith("/$") or len(self.prefix) < 1:
             self.suffix = "/"
         else:
             self.suffix = "/?"
 
+    def __add_regex(self, regex, name):
+        self.prefix.append(RegexPart(regex, name))
+        self.regexes.add((regex, name))
+
     def __match_named_regex(self, token):
         m = NAMED_REGEX_PART.match(token)
         if not m:
             return False
         groups = m.groupdict()
-        self.prefix.append(RegexPart(groups["regex"], groups["name"]))
+        regex = groups["regex"]
+        self.__add_regex(regex, groups["name"])
         return True
 
     def __match_named_type(self, token):
@@ -142,7 +166,7 @@ class Pattern(object):
             regex = converters[groups["type"]].regex
         else:
             regex = "[^/]+"
-        self.prefix.append(RegexPart(regex, groups["name"]))
+        self.__add_regex(regex, groups["name"])
         return True
 
     def __match_plain(self, token):
@@ -205,7 +229,7 @@ URL_TEMPLATE = textwrap.dedent(
         path = {
             "prefix": [{% for part in p.prefix %}{% if part.type == "plain" %}
                 "{{ part.value }}",{% else %}
-                (r"""{{ part.regex }}""", "{{ part.replacement|upper }}"),{% endif %}{% endfor %}
+                ({% if '"' in part.regex %}r"""{{ part.regex }}"""{% else %}r"{{ part.regex }}"{% endif %}, "{{ part.replacement|upper|default:"TODO" }}"),{% endif %}{% endfor %}
             ],
             "suffix": "{{ p.suffix }}",
         },
