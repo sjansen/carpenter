@@ -3,6 +3,7 @@ import csv
 import re
 import sys
 import textwrap
+from collections import defaultdict
 
 from django.core.management import BaseCommand
 from django.template import Context, Template
@@ -17,7 +18,7 @@ except:
 
 NAMED_REGEX_PART = re.compile(r"^\(\?P<(?P<name>[^>]+)>\(?(?P<regex>[^)]+)\)?\)$")
 NAMED_TYPE_PART = re.compile(r"^<((?P<type>[^:>]+):)?(?P<name>[^:>]+)>$")
-PLAIN_PART = re.compile("[^|.*+?\\\[\](){}]+")
+PLAIN_PART = re.compile(r"^[^.*?+^$|\\[\](){}]+$")
 
 
 class Command(BaseCommand):
@@ -32,12 +33,12 @@ class Command(BaseCommand):
             default=sys.stdout,
             type=argparse.FileType("w"),
         )
-        parser.add_argument("-t", "--self-test", action="store_true")
+        parser.add_argument("--self-test", action="store_true")
         parser.add_argument(
-            "-u",
-            "--unknown-regexes",
-            nargs="?",
-            type=argparse.FileType("w"),
+            "-t", "--test-values", nargs="?", type=argparse.FileType("r"),
+        )
+        parser.add_argument(
+            "-u", "--unknown-regexes", nargs="?", type=argparse.FileType("w"),
         )
 
     def handle(self, *args, **options):
@@ -45,48 +46,102 @@ class Command(BaseCommand):
         if options["self_test"]:
             self_test(output)
             return
-        if options["input"]:
-            reader = csv.DictReader(options["input"])
-            patterns = [
-                Pattern(
-                    row["Handler"],
-                    row["Pattern"],
-                    test_case=row.get("Test Case"),
-                    expected=row.get("Expected"),
-                )
-                for row in reader
-            ]
-        else:
-            patterns = [Pattern(tc, tc) for tc in TEST_CASES.keys()]
-        self.__render(output, patterns)
-        if options["unknown_regexes"]:
-            self.__dump_regexes(options["unknown_regexes"], patterns)
 
-    def __dump_regexes(self, output, patterns):
+        patterns = self.__load_patterns(options["input"])
+        test_values = self.__load_test_values(options["test_values"])
+        self.__render(output, patterns, test_values)
+        if options["unknown_regexes"]:
+            self.__dump_regexes(options["unknown_regexes"], patterns, test_values)
+
+    def __dump_regexes(self, output, patterns, test_values):
         regexes = set()
         for p in patterns:
-            regexes.update(p.regexes)
+            for key in p.regexes:
+                if key not in test_values:
+                    regexes.update(p.regexes)
         w = csv.writer(output)
         w.writerow(["RegEx", "Name", "Example"])
         for row in sorted(regexes):
             w.writerow(row)
 
-    def __render(self, output, patterns):
+    def __load_patterns(self, input):
+        if not input:
+            return [Pattern(tc, tc) for tc in TEST_CASES.keys()]
+
+        reader = csv.DictReader(input)
+        return [
+            Pattern(
+                row["Handler"],
+                row["Pattern"],
+                test_cases={
+                    row["Test Case"]: row["Expected"],
+                }
+            )
+            if row["Test Case"] else
+            Pattern(
+                row["Handler"],
+                row["Pattern"],
+            )
+            for row in reader
+        ]
+
+    def __load_test_values(self, input):
+        test_values = defaultdict(lambda: set())
+        if input:
+            reader = csv.DictReader(input)
+            for row in reader:
+                regex = row["RegEx"]
+                name = row.get("Name", "")
+                value = row.get("Example")
+                if regex and value:
+                    test_values[(regex, name)].add(value)
+        for k, v in test_values.items():
+            test_values[k] = sorted(v)
+        return test_values
+
+    def __render(self, output, patterns, test_values):
         template = Template(URL_TEMPLATE)
         for p in patterns:
-            context = Context({"pattern": p})
+            context = Context({
+                "pattern": p,
+                "test_cases": create_test_cases(p, test_values),
+            })
             output.write(template.render(context))
 
 
-def self_test(output):
-    for tc, expected in TEST_CASES.items():
-        actual = Pattern("tc", tc)
-        if expected == actual.prefix:
-            output.write("PASS: {}\n".format(tc))
+def create_test_cases(pattern, test_values):
+    if not test_values:
+        return {}
+
+    expected = ""
+    test_cases = [""]
+    for part in pattern.prefix:
+        if isinstance(part, PlainPart):
+            expected = expected + "/" + part.value
+            test_cases = [
+                tc + "/" + part.value
+                for tc in test_cases
+            ]
         else:
-            output.write("FAIL: {}\n".format(tc))
-            output.write("  expected: {}\n".format(expected))
-            output.write("    actual: {}\n".format(actual.prefix))
+            expected = expected + "/" + part.replacement
+            values = test_values.get((part.regex, part.name))
+            if not values:
+                values = test_values.get((part.regex, ''))
+            tmp = []
+            if values:
+                for v in values:
+                    for tc in test_cases:
+                        tmp.append(tc+"/"+v)
+            test_cases = tmp
+
+    if pattern.suffix == "/":
+        expected += "/"
+        test_cases = [tc + "/" for tc in test_cases]
+
+    return {
+        tc: expected
+        for tc in test_cases
+    }
 
 
 def tokenize(pattern):
@@ -120,10 +175,9 @@ def tokenize(pattern):
 
 
 class Pattern(object):
-    def __init__(self, handler, pattern, test_case=None, expected=None):
+    def __init__(self, handler, pattern, test_cases=None):
         self.handler = handler
-        self.test_case = test_case
-        self.expected = expected
+        self.test_cases = test_cases if test_cases is not None else {}
 
         self.regexes = set()
         self.__parse(pattern)
@@ -189,10 +243,11 @@ class PlainPart(object):
 
 
 class RegexPart(object):
-    def __init__(self, regex, replacement):
+    def __init__(self, regex, name):
         self.type = "regex"
         self.regex = regex
-        self.replacement = replacement
+        self.name = name
+        self.replacement = name.upper() if name else "TODO"
 
     def __eq__(self, other):
         if not type(self) == type(other):
@@ -202,9 +257,26 @@ class RegexPart(object):
         return self.replacement == other.replacement
 
 
-TEST_CASES = {
-    "^$": [],
-    "articles/<int:year>/<int:month>/<slug:slug>/": [
+def self_test(output):
+    for tc, expected in EXPECTED_PATTERNS.items():
+        pattern = Pattern("tc", tc)
+        if expected != pattern.prefix:
+            output.write("FAIL: {}\n".format(tc))
+            output.write("  expected: {}\n".format(expected))
+            output.write("    actual: {}\n".format(pattern.prefix))
+            continue
+        output.write("PASS: {}\n".format(tc))
+        expected = EXPECTED_TEST_CASES[tc]
+        actual = create_test_cases(pattern, TEST_VALUES)
+        if expected != actual:
+            output.write("FAIL: {}\n".format(tc))
+            output.write("  expected: {}\n".format(expected))
+            output.write("    actual: {}\n".format(actual))
+
+
+EXPECTED_PATTERNS = {
+    "": [],
+    "articles/<int:year>/<int:month>/<slug:slug>/$": [
         PlainPart("articles"),
         RegexPart(r"[0-9]+", "year"),
         RegexPart(r"[0-9]+", "month"),
@@ -216,9 +288,49 @@ TEST_CASES = {
         RegexPart(r"[0-9]{2}", "month"),
         RegexPart(r"[\w-]+", "slug"),
     ],
+    "a|b|c": [RegexPart("a|b|c", "")],
     "^go/(?P<page>(a|b))": [PlainPart("go"), RegexPart(r"a|b", "page")],
     "groups/<gid>": [PlainPart("groups"), RegexPart(r"[^/]+", "gid")],
     "^users/(?P<uid>[^/]+)": [PlainPart("users"), RegexPart(r"[^/]+", "uid")],
+}
+
+EXPECTED_TEST_CASES = {
+    "": {"/": "/"},
+    "articles/<int:year>/<int:month>/<slug:slug>/$": {
+        "/articles/2020/02/Slurms_MacKenzie/": "/articles/YEAR/MONTH/SLUG/",
+    },
+    "^articles/(?P<year>[0-9]{4})/(?P<month>[0-9]{2})/(?P<slug>[\w-]+)/$": {
+        "/articles/1974/08/Philip_J_Fry/": "/articles/YEAR/MONTH/SLUG/",
+    },
+    "a|b|c": {
+        "/a": "/TODO",
+        "/b": "/TODO",
+        "/c": "/TODO",
+    },
+    "^go/(?P<page>(a|b))": {
+        "/go/a": "/go/PAGE",
+        "/go/b": "/go/PAGE",
+    },
+    "groups/<gid>": {
+        "/groups/wheel": "/groups/GID",
+    },
+    "^users/(?P<uid>[^/]+)": {
+        "/users/sjansen": "/users/UID",
+    },
+}
+
+
+TEST_VALUES = {
+    (r"[0-9]+", "year"): ["2020"],
+    (r"[0-9]+", "month"): ["02"],
+    (r"[-a-zA-Z0-9_]+", "slug"): ["Slurms_MacKenzie"],
+    (r"[0-9]{4}", "year"): ["1974"],
+    (r"[0-9]{2}", "month"): ["08"],
+    (r"[\w-]+", "slug"): ["Philip_J_Fry"],
+    (r"a|b|c", ""): ["a", "b", "c"],
+    (r"a|b", "page"): ["a", "b"],
+    (r"[^/]+", "gid"): ["wheel"],
+    (r"[^/]+", "uid"): ["sjansen"],
 }
 
 
@@ -229,16 +341,17 @@ URL_TEMPLATE = textwrap.dedent(
         path = {
             "prefix": [{% for part in p.prefix %}{% if part.type == "plain" %}
                 "{{ part.value }}",{% else %}
-                ({% if '"' in part.regex %}r"""{{ part.regex }}"""{% else %}r"{{ part.regex }}"{% endif %}, "{{ part.replacement|upper|default:"TODO" }}"),{% endif %}{% endfor %}
+                ({% if '"' in part.regex %}r"""{{ part.regex }}"""{% else %}r"{{ part.regex }}"{% endif %}, "{{ part.replacement }}"),{% endif %}{% endfor %}
             ],
             "suffix": "{{ p.suffix }}",
         },
         query = {
             "other": "X",
         },
-        tests = {{% if p.test_case %}
-            "{{ p.test_case }}": "{{ p.expected }}",
-        {% endif %}},
+        tests = {{% for test_case, expected in p.test_cases.items %}
+            "{{ test_case }}": "{{ expected }}",{% endfor %}{% for test_case, expected in test_cases.items %}
+            "{{ test_case }}": "{{ expected }}",{% endfor %}
+        },
     {% endautoescape %}{% endwith %})
 
 '''
