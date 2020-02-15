@@ -2,8 +2,8 @@ url(
     "prefix-regex",
     path = {
         "prefix": [
-            ("foo|bar", "baz"),
-            ("qux|quux", lambda x: "n=%s" % len(x)),
+            (r"foo|bar", "baz"),
+            (r"qux|quux", lambda x: "n=%s" % len(x)),
         ],
         "suffix": "/",
     },
@@ -26,7 +26,7 @@ url(
     "suffix-regex",
     path = {
         "prefix": ["corge"],
-        "suffix": (".+", lambda x: x.upper()),
+        "suffix": (r".+", lambda x: x.upper()),
     },
     query = {
         "dedup": "last",
@@ -41,5 +41,21 @@ url(
         "/corge/waldo/": "/corge/WALDO/",
         "/corge/fred?utf8=✔": "/corge/FRED?utf8=True",
         "/corge/fred?utf8=!": "/corge/FRED?utf8=False",
+    },
+)
+
+url(
+    "reject-regex",
+    path = {
+        "prefix": [
+            (r"[a-z]", "X", r"[aeiou]"),
+        ],
+        "suffix": "/?",
+    },
+    query = {},
+    tests = {
+        "/a": None,
+        "/b": "/X",
+        "/c/": "/X",
     },
 )

@@ -74,7 +74,7 @@ func loadPatterns(filename string, src io.Reader) ([]*pattern, error) {
 }
 
 func (l *patternLoader) addURL(
-	thread *starlark.Thread,
+	_ *starlark.Thread,
 	fn *starlark.Builtin,
 	args starlark.Tuple,
 	kwargs []starlark.Tuple,
@@ -131,8 +131,11 @@ func (l *patternLoader) transformPart(parent, child string, value starlark.Value
 		}
 		return m, nil
 	case starlark.Tuple:
-		if n := v.Len(); n != 2 {
-			return nil, fmt.Errorf("%s: %q/%q expected 2 item Tuple, got %d", l.Name(), parent, child, n)
+		if n := v.Len(); n < 2 || n > 3 {
+			return nil, fmt.Errorf(
+				"%s: %q/%q expected 2 or 3 item Tuple, got %d",
+				l.Name(), parent, child, n,
+			)
 		}
 
 		m := &regexPart{}
@@ -161,16 +164,33 @@ func (l *patternLoader) transformPart(parent, child string, value starlark.Value
 			m.rewriter = &callableStringRewriter{
 				Callable: v,
 			}
-			return m, nil
 		case starlark.String:
 			m.rewriter = &staticStringRewriter{
 				value: v.GoString(),
 			}
-			return m, nil
+		default:
+			return nil, fmt.Errorf(
+				"%s: %q/%q expected Callable or String, got %s",
+				l.Name(), parent, child, value.Type(),
+			)
 		}
-		return nil, fmt.Errorf(
-			"%s: %q/%q expected Callable or String, got %s", l.Name(), parent, child, value.Type(),
-		)
+
+		if iter.Next(&value) {
+			expr, ok := value.(starlark.String)
+			if !ok {
+				return nil, fmt.Errorf(
+					"%s: %q/%q expected String, got %s", l.Name(), parent, child, value.Type(),
+				)
+			}
+
+			regex, err := regexp.Compile(expr.GoString())
+			if err != nil {
+				return nil, err
+			}
+			m.reject = regex
+		}
+
+		return m, nil
 	}
 	return nil, fmt.Errorf("%s: %q/%q expected String or Tuple, got %s", l.Name(), parent, child, value.Type())
 }

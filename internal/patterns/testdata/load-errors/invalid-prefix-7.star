@@ -2,9 +2,9 @@ url(
     "example",
     path = {
         "prefix": [
-            ("a", "b", "c", "d"),
+            (".*", lambda x: "<" + x + ">", lambda x: x == "hunter2"),
         ],
-        "suffix": "/?",
+        "suffix": "/",
     },
     query = {},
     tests = {},

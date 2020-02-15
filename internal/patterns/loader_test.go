@@ -344,9 +344,10 @@ func regexPatternsFixer(t *testing.T, expected, actual []*pattern) {
 			expectedPart.rewriter = actualPart.rewriter
 		}
 
-		actualParam := actual.query.match["utf8"]
-		expectedParam := expected.query.match["utf8"]
-		expectedParam.rewriter = actualParam.rewriter
+		if actualParam, ok := actual.query.match["utf8"]; ok {
+			expectedParam := expected.query.match["utf8"]
+			expectedParam.rewriter = actualParam.rewriter
+		}
 	}
 }
 
@@ -406,6 +407,22 @@ var regexPatterns = []*pattern{{
 		"/corge/waldo/":      "/corge/WALDO/",
 		"/corge/fred?utf8=✔": "/corge/FRED?utf8=True",
 		"/corge/fred?utf8=!": "/corge/FRED?utf8=False",
+	},
+}, {
+	id:    "reject-regex",
+	slash: maySlash,
+	prefix: []part{
+		&regexPart{
+			regex:    regexp.MustCompile("[a-z]"),
+			reject:   regexp.MustCompile("[aeiou]"),
+			rewriter: &staticStringRewriter{"X"},
+		},
+	},
+	query: query{},
+	tests: map[string]string{
+		"/a":  "",
+		"/b":  "/X",
+		"/c/": "/X",
 	},
 }}
 
@@ -487,8 +504,22 @@ var regexTree = &Patterns{tree: tree{
 				},
 			}},
 		},
+	}, {
+		part: &regexPart{
+			regex:    regexp.MustCompile("[a-z]"),
+			reject:   regexp.MustCompile("[aeiou]"),
+			rewriter: &staticStringRewriter{"X"},
+		},
+		tree: &tree{
+			id:    "reject-regex",
+			slash: maySlash,
+			query: query{},
+		},
 	}},
 }, tests: map[string]result{
+	"/a":                 {"reject-regex", ""},
+	"/b":                 {"reject-regex", "/X"},
+	"/c/":                {"reject-regex", "/X"},
 	"/foo/qux":           {"prefix-regex", ""},
 	"/foo/qux/":          {"prefix-regex", "/baz/n=3/"},
 	"/bar/qux/":          {"prefix-regex", "/baz/n=3/"},

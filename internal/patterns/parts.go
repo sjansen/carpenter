@@ -30,12 +30,19 @@ func (p *plainPart) greedy() bool {
 
 type regexPart struct {
 	regex    *regexp.Regexp
+	reject   *regexp.Regexp
 	rewriter stringRewriter
 	suffix   bool
 }
 
 func (p *regexPart) match(path string) bool {
-	return p.regex.MatchString(path)
+	if p.regex.MatchString(path) {
+		if p.reject == nil {
+			return true
+		}
+		return !p.reject.MatchString(path)
+	}
+	return false
 }
 
 func (p *regexPart) normalize(thread *starlark.Thread, path string) (string, error) {
