@@ -144,36 +144,6 @@ def create_test_cases(pattern, test_values):
     }
 
 
-def tokenize(pattern):
-    pattern = pattern.lstrip("^").rstrip("/$")
-
-    begin, brackets, parens, escaped = 0, 0, 0, False
-    for i, c in enumerate(pattern):
-        if c == "/" and (brackets + parens) < 1:
-            if escaped:
-                end = i - 1
-            else:
-                end = i
-            yield pattern[begin:end]
-            begin = i + 1
-        if escaped:
-            escaped = False
-        else:
-            if c == "\\":
-                escaped = True
-            elif c == "[":
-                brackets += 1
-            elif c == "]":
-                brackets -= 1
-            elif c == "(":
-                parens += 1
-            elif c == ")":
-                parens -= 1
-
-    if begin < len(pattern):
-        yield pattern[begin:]
-
-
 class Pattern(object):
     def __init__(self, handler, pattern, test_cases=None):
         self.handler = handler
@@ -235,6 +205,7 @@ class PlainPart(object):
     def __init__(self, value):
         self.type = "plain"
         self.value = value
+        self.value_as_repr = repr(value)
 
     def __eq__(self, other):
         if not type(self) == type(other):
@@ -245,9 +216,11 @@ class PlainPart(object):
 class RegexPart(object):
     def __init__(self, regex, name):
         self.type = "regex"
-        self.regex = regex
         self.name = name
+        self.regex = regex
+        self.regex_as_raw = as_raw(self.regex)
         self.replacement = name.upper() if name else "TODO"
+        self.replacement_as_repr = repr(self.replacement)
 
     def __eq__(self, other):
         if not type(self) == type(other):
@@ -256,11 +229,13 @@ class RegexPart(object):
             return False
         return self.replacement == other.replacement
 
-    def __repr__(self):
-        if '"' in self.regex:
-            return 'r"""' + self.regex + '"""'
-        else:
-            return 'r"' + self.regex + '"'
+
+def as_raw(value):
+    if '"' in value:
+        return 'r"""' + value + '"""'
+    else:
+        return 'r"' + value + '"'
+
 
 def self_test(output):
     for tc, expected in EXPECTED_PATTERNS.items():
@@ -277,6 +252,36 @@ def self_test(output):
             output.write("FAIL: {}\n".format(tc))
             output.write("  expected: {}\n".format(expected))
             output.write("    actual: {}\n".format(actual))
+
+
+def tokenize(pattern):
+    pattern = pattern.lstrip("^").rstrip("/$")
+
+    begin, brackets, parens, escaped = 0, 0, 0, False
+    for i, c in enumerate(pattern):
+        if c == "/" and (brackets + parens) < 1:
+            if escaped:
+                end = i - 1
+            else:
+                end = i
+            yield pattern[begin:end]
+            begin = i + 1
+        if escaped:
+            escaped = False
+        else:
+            if c == "\\":
+                escaped = True
+            elif c == "[":
+                brackets += 1
+            elif c == "]":
+                brackets -= 1
+            elif c == "(":
+                parens += 1
+            elif c == ")":
+                parens -= 1
+
+    if begin < len(pattern):
+        yield pattern[begin:]
 
 
 EXPECTED_PATTERNS = {
@@ -345,8 +350,8 @@ URL_TEMPLATE = textwrap.dedent(
         "{{ p.handler }}",
         path = {
             "prefix": [{% for part in p.prefix %}{% if part.type == "plain" %}
-                "{{ part.value }}",{% else %}
-                ({{ part|stringformat:"r" }}, "{{ part.replacement }}"),{% endif %}{% endfor %}
+                {{ part.value_as_repr }},{% else %}
+                ({{ part.regex_as_raw }}, {{ part.replacement_as_repr }}),{% endif %}{% endfor %}
             ],
             "suffix": "{{ p.suffix }}",
         },
