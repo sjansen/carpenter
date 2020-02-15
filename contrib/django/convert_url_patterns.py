@@ -256,6 +256,11 @@ class RegexPart(object):
             return False
         return self.replacement == other.replacement
 
+    def __repr__(self):
+        if '"' in self.regex:
+            return 'r"""' + self.regex + '"""'
+        else:
+            return 'r"' + self.regex + '"'
 
 def self_test(output):
     for tc, expected in EXPECTED_PATTERNS.items():
@@ -341,7 +346,7 @@ URL_TEMPLATE = textwrap.dedent(
         path = {
             "prefix": [{% for part in p.prefix %}{% if part.type == "plain" %}
                 "{{ part.value }}",{% else %}
-                ({% if '"' in part.regex %}r"""{{ part.regex }}"""{% else %}r"{{ part.regex }}"{% endif %}, "{{ part.replacement }}"),{% endif %}{% endfor %}
+                ({{ part|stringformat:"r" }}, "{{ part.replacement }}"),{% endif %}{% endfor %}
             ],
             "suffix": "{{ p.suffix }}",
         },
