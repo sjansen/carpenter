@@ -16,7 +16,7 @@ except:
     converters = {}
 
 
-NAMED_REGEX_PART = re.compile(r"^\(\?P<(?P<name>[^>]+)>\(?(?P<regex>[^)]+)\)?\)$")
+NAMED_REGEX_PART = re.compile(r"^(\(\?\!(?P<reject>[^)]+)\))?\(\?P<(?P<name>[^>]+)>\(?(?P<regex>[^)]+)\)?\)$")
 NAMED_TYPE_PART = re.compile(r"^<((?P<type>[^:>]+):)?(?P<name>[^:>]+)>$")
 PLAIN_PART = re.compile(r"^[^.*?+^$|\\[\](){}]+$")
 
@@ -168,8 +168,12 @@ class Pattern(object):
         else:
             self.suffix = "/?"
 
-    def __add_regex(self, regex, name):
-        self.prefix.append(RegexPart(regex, name))
+    def __add_regex(self, regex, name, reject=""):
+        if reject:
+            self.prefix.append(RegexPart(regex, name, reject))
+            self.regexes.add((reject, ""))
+        else:
+            self.prefix.append(RegexPart(regex, name))
         self.regexes.add((regex, name))
 
     def __match_named_regex(self, token):
@@ -177,8 +181,7 @@ class Pattern(object):
         if not m:
             return False
         groups = m.groupdict()
-        regex = groups["regex"]
-        self.__add_regex(regex, groups["name"])
+        self.__add_regex(groups["regex"], groups["name"], groups["reject"])
         return True
 
     def __match_named_type(self, token):
@@ -212,13 +215,17 @@ class PlainPart(object):
             return False
         return self.value == other.value
 
+    def __repr__(self):
+        return "PlainPart(%r)" % self.value
 
 class RegexPart(object):
-    def __init__(self, regex, name):
+    def __init__(self, regex, name, reject=""):
         self.type = "regex"
         self.name = name
         self.regex = regex
         self.regex_as_raw = as_raw(self.regex)
+        self.reject = reject
+        self.reject_as_raw = as_raw(self.reject)
         self.replacement = name.upper() if name else "TODO"
         self.replacement_as_repr = repr(self.replacement)
 
@@ -228,6 +235,12 @@ class RegexPart(object):
         if not self.regex == other.regex:
             return False
         return self.replacement == other.replacement
+
+    def __repr__(self):
+        if self.reject:
+            return "RegexPart(%r, %r, %r)" % (self.regex, self.replacement, self.reject)
+        else:
+            return "RegexPart(%r, %r)" % (self.regex, self.replacement)
 
 
 def as_raw(value):
@@ -302,6 +315,7 @@ EXPECTED_PATTERNS = {
     "^go/(?P<page>(a|b))": [PlainPart("go"), RegexPart(r"a|b", "page")],
     "groups/<gid>": [PlainPart("groups"), RegexPart(r"[^/]+", "gid")],
     "^users/(?P<uid>[^/]+)": [PlainPart("users"), RegexPart(r"[^/]+", "uid")],
+    "^(?!groups|users)(?P<resource>[^/]+)/$": [RegexPart(r"[^/]+", "resource", r"groups|users")],
 }
 
 EXPECTED_TEST_CASES = {
@@ -327,6 +341,9 @@ EXPECTED_TEST_CASES = {
     "^users/(?P<uid>[^/]+)": {
         "/users/sjansen": "/users/UID",
     },
+    "^(?!groups|users)(?P<resource>[^/]+)/$": {
+        "/roles/": "/RESOURCE/",
+    },
 }
 
 
@@ -341,6 +358,7 @@ TEST_VALUES = {
     (r"a|b", "page"): ["a", "b"],
     (r"[^/]+", "gid"): ["wheel"],
     (r"[^/]+", "uid"): ["sjansen"],
+    (r"[^/]+", "resource"): ["roles"],
 }
 
 
@@ -351,7 +369,7 @@ URL_TEMPLATE = textwrap.dedent(
         path = {
             "prefix": [{% for part in p.prefix %}{% if part.type == "plain" %}
                 {{ part.value_as_repr }},{% else %}
-                ({{ part.regex_as_raw }}, {{ part.replacement_as_repr }}),{% endif %}{% endfor %}
+                ({{ part.regex_as_raw }}, {{ part.replacement_as_repr }}{% if part.reject %}, {{ part.reject_as_raw }}{% endif %}),{% endif %}{% endfor %}
             ],
             "suffix": "{{ p.suffix }}",
         },

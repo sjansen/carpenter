@@ -20,3 +20,4 @@ admin/auth/user/<path:object_id>/history/$,django.contrib.admin.options.ModelAdm
 admin/auth/user/<path:object_id>/delete/$,django.contrib.admin.options.ModelAdmin.delete_view,/admin/auth/user/foo/delete/,/admin/auth/user/OBJECT_ID/delete/
 admin/auth/user/<path:object_id>/change/$,django.contrib.admin.options.ModelAdmin.change_view,/admin/auth/user/foo/change/,/admin/auth/user/OBJECT_ID/change/
 admin/(?P<app_label>auth)/$,django.contrib.admin.sites.AdminSite.app_index,/admin/auth/,/admin/APP_LABEL/
+admin/(?!auth|jsi18n|login|logout|password_change)(?P<app_label>[^/])/$,django.views.defaults.page_not_found,,
