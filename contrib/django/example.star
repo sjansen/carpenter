@@ -4,7 +4,7 @@ url(
         "prefix": [
             'admin',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -21,7 +21,7 @@ url(
             'admin',
             'login',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -38,7 +38,7 @@ url(
             'admin',
             'logout',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -55,7 +55,7 @@ url(
             'admin',
             'password_change',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -73,7 +73,7 @@ url(
             'password_change',
             'done',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -90,7 +90,7 @@ url(
             'admin',
             'jsi18n',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -109,7 +109,7 @@ url(
             (r"[0-9]+", 'CONTENT_TYPE_ID'),
             (r".+", 'OBJECT_ID'),
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -128,7 +128,7 @@ url(
             'auth',
             'group',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -147,7 +147,7 @@ url(
             'group',
             'add',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -166,7 +166,7 @@ url(
             'group',
             'autocomplete',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -186,7 +186,7 @@ url(
             (r".+", 'OBJECT_ID'),
             'history',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -206,7 +206,7 @@ url(
             (r".+", 'OBJECT_ID'),
             'delete',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -226,7 +226,7 @@ url(
             (r".+", 'OBJECT_ID'),
             'change',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -246,7 +246,7 @@ url(
             (r"[^/]+", 'ID'),
             'password',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -265,7 +265,7 @@ url(
             'auth',
             'user',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -284,7 +284,7 @@ url(
             'user',
             'add',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -303,7 +303,7 @@ url(
             'user',
             'autocomplete',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -323,7 +323,7 @@ url(
             (r".+", 'OBJECT_ID'),
             'history',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -343,7 +343,7 @@ url(
             (r".+", 'OBJECT_ID'),
             'delete',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -363,7 +363,7 @@ url(
             (r".+", 'OBJECT_ID'),
             'change',
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -381,7 +381,7 @@ url(
             'admin',
             (r"auth", 'APP_LABEL'),
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
@@ -398,13 +398,29 @@ url(
             'admin',
             (r"[^/]", 'APP_LABEL', r"auth|jsi18n|login|logout|password_change"),
         ],
-        "suffix": "/",
+        "suffix": '/',
     },
     query = {
         "other": "X",
     },
     tests = {
         "/admin/roles/": "/admin/APP_LABEL/",
+    },
+)
+
+url(
+    "django.views.defaults.page_not_found",
+    path = {
+        "prefix": [
+            '.well-known',
+        ],
+        "suffix": (r".*", 'SUFFIX'),
+    },
+    query = {
+        "other": "X",
+    },
+    tests = {
+        "/.well-known/apple-app-site-association": "/.well-known/SUFFIX",
     },
 )
 

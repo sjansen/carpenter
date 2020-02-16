@@ -164,9 +164,11 @@ class Pattern(object):
             self.__add_regex(token, "")
 
         if pattern.endswith("/$") or len(self.prefix) < 1:
-            self.suffix = "/"
+            self.suffix = PlainPart("/")
+        elif pattern.endswith("/"):
+            self.suffix = RegexPart(".*", "SUFFIX")
         else:
-            self.suffix = "/?"
+            self.suffix = PlainPart("/?")
 
     def __add_regex(self, regex, name, reject=""):
         if reject:
@@ -211,9 +213,11 @@ class PlainPart(object):
         self.value_as_repr = repr(value)
 
     def __eq__(self, other):
-        if not type(self) == type(other):
-            return False
-        return self.value == other.value
+        if type(self) == type(other):
+            return self.value == other.value
+        if isinstance(other, str):
+            return self.value == other
+        return False
 
     def __repr__(self):
         return "PlainPart(%r)" % self.value
@@ -370,9 +374,9 @@ URL_TEMPLATE = textwrap.dedent(
             "prefix": [{% for part in p.prefix %}{% if part.type == "plain" %}
                 {{ part.value_as_repr }},{% else %}
                 ({{ part.regex_as_raw }}, {{ part.replacement_as_repr }}{% if part.reject %}, {{ part.reject_as_raw }}{% endif %}),{% endif %}{% endfor %}
-            ],
-            "suffix": "{{ p.suffix }}",
-        },
+            ],{% with s=p.suffix %}
+            "suffix": {% if s.type == "plain" %}{{ s.value_as_repr }}{% else %}({{ s.regex_as_raw }}, {{ s.replacement_as_repr }}){% endif %},
+        },{% endwith %}
         query = {
             "other": "X",
         },

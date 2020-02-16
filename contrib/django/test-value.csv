@@ -8,3 +8,4 @@ auth|jsi18n|login|logout|password_change,,jsi18n
 auth|jsi18n|login|logout|password_change,,login
 auth|jsi18n|login|logout|password_change,,logout
 auth|jsi18n|login|logout|password_change,,password_change
+.well-known,,.well-known
