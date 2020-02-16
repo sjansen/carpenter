@@ -16,9 +16,10 @@ except:
     converters = {}
 
 
+ANON_REGEX_PART  = re.compile(r"^(\(\?\!(?P<reject>[^)]+)\))?\(?(?P<regex>[^)]+)\)?$")
 NAMED_REGEX_PART = re.compile(r"^(\(\?\!(?P<reject>[^)]+)\))?\(\?P<(?P<name>[^>]+)>\(?(?P<regex>[^)]+)\)?\)$")
-NAMED_TYPE_PART = re.compile(r"^<((?P<type>[^:>]+):)?(?P<name>[^:>]+)>$")
-PLAIN_PART = re.compile(r"^[^.*?+^$|\\[\](){}]+$")
+NAMED_TYPE_PART  = re.compile(r"^<((?P<type>[^:>]+):)?(?P<name>[^:>]+)>$")
+PLAIN_PART       = re.compile(r"^[^.*?+^$|\\[\](){}]+$")
 
 
 class Command(BaseCommand):
@@ -152,6 +153,14 @@ class Pattern(object):
         self.regexes = set()
         self.__parse(pattern)
 
+    def __add_regex(self, regex, name, reject=""):
+        if reject:
+            self.prefix.append(RegexPart(regex, name, reject))
+            self.regexes.add((reject, ""))
+        else:
+            self.prefix.append(RegexPart(regex, name))
+        self.regexes.add((regex, name))
+
     def __parse(self, pattern):
         self.prefix = []
         for token in tokenize(pattern):
@@ -161,7 +170,8 @@ class Pattern(object):
                 continue
             elif self.__match_plain(token):
                 continue
-            self.__add_regex(token, "")
+            groups = ANON_REGEX_PART.match(token).groupdict()
+            self.__add_regex(groups["regex"], "", groups["reject"])
 
         if pattern.endswith("/$") or len(self.prefix) < 1:
             self.suffix = PlainPart("/")
@@ -169,14 +179,6 @@ class Pattern(object):
             self.suffix = RegexPart(".*", "SUFFIX")
         else:
             self.suffix = PlainPart("/?")
-
-    def __add_regex(self, regex, name, reject=""):
-        if reject:
-            self.prefix.append(RegexPart(regex, name, reject))
-            self.regexes.add((reject, ""))
-        else:
-            self.prefix.append(RegexPart(regex, name))
-        self.regexes.add((regex, name))
 
     def __match_named_regex(self, token):
         m = NAMED_REGEX_PART.match(token)
@@ -319,7 +321,8 @@ EXPECTED_PATTERNS = {
     "^go/(?P<page>(a|b))": [PlainPart("go"), RegexPart(r"a|b", "page")],
     "groups/<gid>": [PlainPart("groups"), RegexPart(r"[^/]+", "gid")],
     "^users/(?P<uid>[^/]+)": [PlainPart("users"), RegexPart(r"[^/]+", "uid")],
-    "^(?!groups|users)(?P<resource>[^/]+)/$": [RegexPart(r"[^/]+", "resource", r"groups|users")],
+    "^(?!users|groups)(?P<resource>[^/]+)/$": [RegexPart(r"[^/]+", "resource", r"users|groups")],
+    "help/(?!search)(.*)": [PlainPart("help"), RegexPart(r".*", "", r"search")],
 }
 
 EXPECTED_TEST_CASES = {
@@ -345,8 +348,11 @@ EXPECTED_TEST_CASES = {
     "^users/(?P<uid>[^/]+)": {
         "/users/sjansen": "/users/UID",
     },
-    "^(?!groups|users)(?P<resource>[^/]+)/$": {
+    "^(?!users|groups)(?P<resource>[^/]+)/$": {
         "/roles/": "/RESOURCE/",
+    },
+    "help/(?!search)(.*)": {
+        "/help/TODO": "/help/TODO",
     },
 }
 
@@ -363,6 +369,7 @@ TEST_VALUES = {
     (r"[^/]+", "gid"): ["wheel"],
     (r"[^/]+", "uid"): ["sjansen"],
     (r"[^/]+", "resource"): ["roles"],
+    (r".*", ""): ["TODO"],
 }
 
 
