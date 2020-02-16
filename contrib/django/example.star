@@ -1,3 +1,4 @@
+# admin/$
 url(
     "django.contrib.admin.sites.AdminSite.index",
     path = {
@@ -14,6 +15,7 @@ url(
     },
 )
 
+# admin/login/$
 url(
     "django.contrib.admin.sites.AdminSite.login",
     path = {
@@ -31,6 +33,7 @@ url(
     },
 )
 
+# admin/logout/$
 url(
     "django.contrib.admin.sites.AdminSite.logout",
     path = {
@@ -48,6 +51,7 @@ url(
     },
 )
 
+# admin/password_change/$
 url(
     "django.contrib.admin.sites.AdminSite.password_change",
     path = {
@@ -65,6 +69,7 @@ url(
     },
 )
 
+# admin/password_change/done/$
 url(
     "django.contrib.admin.sites.AdminSite.password_change_done",
     path = {
@@ -83,6 +88,7 @@ url(
     },
 )
 
+# admin/jsi18n/$
 url(
     "django.contrib.admin.sites.AdminSite.i18n_javascript",
     path = {
@@ -100,6 +106,7 @@ url(
     },
 )
 
+# admin/r/<int:content_type_id>/<path:object_id>/$
 url(
     "django.contrib.contenttypes.views.shortcut",
     path = {
@@ -120,6 +127,7 @@ url(
     },
 )
 
+# admin/auth/group/$
 url(
     "django.contrib.admin.options.ModelAdmin.changelist_view",
     path = {
@@ -138,6 +146,7 @@ url(
     },
 )
 
+# admin/auth/group/add/$
 url(
     "django.contrib.admin.options.ModelAdmin.add_view",
     path = {
@@ -157,6 +166,7 @@ url(
     },
 )
 
+# admin/auth/group/autocomplete/$
 url(
     "django.contrib.admin.options.ModelAdmin.autocomplete_view",
     path = {
@@ -176,6 +186,7 @@ url(
     },
 )
 
+# admin/auth/group/<path:object_id>/history/$
 url(
     "django.contrib.admin.options.ModelAdmin.history_view",
     path = {
@@ -197,6 +208,7 @@ url(
     },
 )
 
+# admin/auth/group/<path:object_id>/delete/$
 url(
     "django.contrib.admin.options.ModelAdmin.delete_view",
     path = {
@@ -218,6 +230,7 @@ url(
     },
 )
 
+# admin/auth/group/<path:object_id>/change/$
 url(
     "django.contrib.admin.options.ModelAdmin.change_view",
     path = {
@@ -239,6 +252,7 @@ url(
     },
 )
 
+# admin/auth/user/<id>/password/$
 url(
     "django.contrib.auth.admin.UserAdmin.user_change_password",
     path = {
@@ -260,6 +274,7 @@ url(
     },
 )
 
+# admin/auth/user/$
 url(
     "django.contrib.admin.options.ModelAdmin.changelist_view",
     path = {
@@ -278,6 +293,7 @@ url(
     },
 )
 
+# admin/auth/user/add/$
 url(
     "django.contrib.auth.admin.UserAdmin.add_view",
     path = {
@@ -297,6 +313,7 @@ url(
     },
 )
 
+# admin/auth/user/autocomplete/$
 url(
     "django.contrib.admin.options.ModelAdmin.autocomplete_view",
     path = {
@@ -316,6 +333,7 @@ url(
     },
 )
 
+# admin/auth/user/<path:object_id>/history/$
 url(
     "django.contrib.admin.options.ModelAdmin.history_view",
     path = {
@@ -337,6 +355,7 @@ url(
     },
 )
 
+# admin/auth/user/<path:object_id>/delete/$
 url(
     "django.contrib.admin.options.ModelAdmin.delete_view",
     path = {
@@ -358,6 +377,7 @@ url(
     },
 )
 
+# admin/auth/user/<path:object_id>/change/$
 url(
     "django.contrib.admin.options.ModelAdmin.change_view",
     path = {
@@ -379,6 +399,7 @@ url(
     },
 )
 
+# admin/(?P<app_label>auth)/$
 url(
     "django.contrib.admin.sites.AdminSite.app_index",
     path = {
@@ -396,6 +417,7 @@ url(
     },
 )
 
+# admin/(?!auth|jsi18n|login|logout|password_change)(?P<app_label>[^/])/$
 url(
     "django.views.defaults.page_not_found",
     path = {
@@ -413,6 +435,7 @@ url(
     },
 )
 
+# .well-known/
 url(
     "django.views.defaults.page_not_found",
     path = {
@@ -426,6 +449,7 @@ url(
     },
     tests = {
         "/.well-known/": "/.well-known/SUFFIX",
+        "/.well-known/apple-app-site-association": "/.well-known/SUFFIX",
     },
 )
 

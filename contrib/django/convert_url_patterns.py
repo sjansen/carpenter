@@ -20,6 +20,7 @@ ANON_REGEX_PART  = re.compile(r"^(\(\?\!(?P<reject>[^)]+)\))?\(?(?P<regex>[^)]+)
 NAMED_REGEX_PART = re.compile(r"^(\(\?\!(?P<reject>[^)]+)\))?\(\?P<(?P<name>[^>]+)>\(?(?P<regex>[^)]+)\)?\)$")
 NAMED_TYPE_PART  = re.compile(r"^<((?P<type>[^:>]+):)?(?P<name>[^:>]+)>$")
 PLAIN_PART       = re.compile(r"^[^.*?+^$|\\[\](){}]+$")
+PLAIN_PART_GUESS = re.compile(r"^[.]?[a-zA-Z][-_a-zA-Z0-9]+(\\?[.][a-zA-Z]+)?$")
 
 
 class Command(BaseCommand):
@@ -103,9 +104,12 @@ class Command(BaseCommand):
     def __render(self, output, patterns, test_values):
         template = Template(URL_TEMPLATE)
         for p in patterns:
+            test_cases = create_test_cases(p, test_values)
+            for k, v in p.test_cases.items():
+                test_cases[k] = v
             context = Context({
                 "pattern": p,
-                "test_cases": create_test_cases(p, test_values),
+                "test_cases": test_cases,
             })
             output.write(template.render(context))
 
@@ -142,21 +146,16 @@ def create_test_cases(pattern, test_values):
         expected += "/SUFFIX"
         test_cases = [tc + "/" for tc in test_cases]
 
-    test_cases = {
+    return {
         tc: expected
         for tc in test_cases
     }
-
-    if pattern.test_cases:
-        for k, v in pattern.test_cases.items():
-            test_cases[k] = v
-
-    return test_cases
 
 
 class Pattern(object):
     def __init__(self, handler, pattern, test_cases=None):
         self.handler = handler
+        self.raw = pattern
         self.test_cases = test_cases if test_cases is not None else {}
 
         self.regexes = set()
@@ -179,8 +178,10 @@ class Pattern(object):
                 continue
             elif self.__match_plain(token):
                 continue
-            groups = ANON_REGEX_PART.match(token).groupdict()
-            self.__add_regex(groups["regex"], "", groups["reject"])
+            m = ANON_REGEX_PART.match(token)
+            if m:
+                groups = m.groupdict()
+                self.__add_regex(groups["regex"], "", groups["reject"])
 
         if pattern.endswith("/$") or len(self.prefix) < 1:
             self.suffix = PlainPart("/")
@@ -211,10 +212,15 @@ class Pattern(object):
 
     def __match_plain(self, token):
         m = PLAIN_PART.match(token)
-        if not m:
-            return False
-        self.prefix.append(PlainPart(token))
-        return True
+        if m:
+            self.prefix.append(PlainPart(token))
+            return True
+        m = PLAIN_PART_GUESS.match(token)
+        if m:
+            token = token.replace(r"\.", ".")
+            self.prefix.append(PlainPart(token))
+            return True
+        return False
 
 
 class PlainPart(object):
@@ -232,6 +238,7 @@ class PlainPart(object):
 
     def __repr__(self):
         return "PlainPart(%r)" % self.value
+
 
 class RegexPart(object):
     def __init__(self, regex, name, reject=""):
@@ -332,7 +339,10 @@ EXPECTED_PATTERNS = {
     "^users/(?P<uid>[^/]+)": [PlainPart("users"), RegexPart(r"[^/]+", "uid")],
     "^(?!users|groups)(?P<resource>[^/]+)/$": [RegexPart(r"[^/]+", "resource", r"users|groups")],
     "help/(?!search)(.*)": [PlainPart("help"), RegexPart(r".*", "", r"search")],
+    "favicon.ico": [PlainPart("favicon.ico")],
+    ".well-known/": [PlainPart(".well-known")],
 }
+
 
 EXPECTED_TEST_CASES = {
     "": {"/": "/"},
@@ -347,6 +357,9 @@ EXPECTED_TEST_CASES = {
         "/b": "/TODO",
         "/c": "/TODO",
     },
+    "favicon.ico": {
+        "/favicon.ico": "/favicon.ico",
+    },
     "^go/(?P<page>(a|b))": {
         "/go/a": "/go/PAGE",
         "/go/b": "/go/PAGE",
@@ -354,14 +367,17 @@ EXPECTED_TEST_CASES = {
     "groups/<gid>": {
         "/groups/wheel": "/groups/GID",
     },
+    "help/(?!search)(.*)": {
+        "/help/TODO": "/help/TODO",
+    },
     "^users/(?P<uid>[^/]+)": {
         "/users/sjansen": "/users/UID",
     },
     "^(?!users|groups)(?P<resource>[^/]+)/$": {
         "/roles/": "/RESOURCE/",
     },
-    "help/(?!search)(.*)": {
-        "/help/TODO": "/help/TODO",
+    ".well-known/": {
+        "/.well-known/": "/.well-known/SUFFIX",
     },
 }
 
@@ -384,7 +400,8 @@ TEST_VALUES = {
 
 URL_TEMPLATE = textwrap.dedent(
     '''\
-    url({% with p=pattern %}{% autoescape off %}
+    {% with p=pattern %}{% autoescape off %}# {{ p.raw }}
+    url(
         "{{ p.handler }}",
         path = {
             "prefix": [{% for part in p.prefix %}{% if part.type == "plain" %}
@@ -399,7 +416,7 @@ URL_TEMPLATE = textwrap.dedent(
         tests = {{% for test_case, expected in test_cases.items %}
             "{{ test_case }}": "{{ expected }}",{% endfor %}
         },
-    {% endautoescape %}{% endwith %})
+    ){% endautoescape %}{% endwith %}
 
 '''
 )
