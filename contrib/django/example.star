@@ -115,8 +115,8 @@ url(
         "other": "X",
     },
     tests = {
-        "/admin/r/42/foo/": "/admin/r/CONTENT_TYPE_ID/OBJECT_ID/",
         "/admin/r/6/bar/": "/admin/r/CONTENT_TYPE_ID/OBJECT_ID/",
+        "/admin/r/42/foo/": "/admin/r/CONTENT_TYPE_ID/OBJECT_ID/",
     },
 )
 
@@ -192,6 +192,7 @@ url(
         "other": "X",
     },
     tests = {
+        "/admin/auth/group/bar/history/": "/admin/auth/group/OBJECT_ID/history/",
         "/admin/auth/group/foo/history/": "/admin/auth/group/OBJECT_ID/history/",
     },
 )
@@ -212,6 +213,7 @@ url(
         "other": "X",
     },
     tests = {
+        "/admin/auth/group/bar/delete/": "/admin/auth/group/OBJECT_ID/delete/",
         "/admin/auth/group/foo/delete/": "/admin/auth/group/OBJECT_ID/delete/",
     },
 )
@@ -232,6 +234,7 @@ url(
         "other": "X",
     },
     tests = {
+        "/admin/auth/group/bar/change/": "/admin/auth/group/OBJECT_ID/change/",
         "/admin/auth/group/foo/change/": "/admin/auth/group/OBJECT_ID/change/",
     },
 )
@@ -252,8 +255,8 @@ url(
         "other": "X",
     },
     tests = {
-        "/admin/auth/user/sjansen/password/": "/admin/auth/user/ID/password/",
         "/admin/auth/user/9/password/": "/admin/auth/user/ID/password/",
+        "/admin/auth/user/sjansen/password/": "/admin/auth/user/ID/password/",
     },
 )
 
@@ -329,6 +332,7 @@ url(
         "other": "X",
     },
     tests = {
+        "/admin/auth/user/bar/history/": "/admin/auth/user/OBJECT_ID/history/",
         "/admin/auth/user/foo/history/": "/admin/auth/user/OBJECT_ID/history/",
     },
 )
@@ -349,6 +353,7 @@ url(
         "other": "X",
     },
     tests = {
+        "/admin/auth/user/bar/delete/": "/admin/auth/user/OBJECT_ID/delete/",
         "/admin/auth/user/foo/delete/": "/admin/auth/user/OBJECT_ID/delete/",
     },
 )
@@ -369,8 +374,8 @@ url(
         "other": "X",
     },
     tests = {
-        "/admin/auth/user/foo/change/": "/admin/auth/user/OBJECT_ID/change/",
         "/admin/auth/user/bar/change/": "/admin/auth/user/OBJECT_ID/change/",
+        "/admin/auth/user/foo/change/": "/admin/auth/user/OBJECT_ID/change/",
     },
 )
 
@@ -420,7 +425,7 @@ url(
         "other": "X",
     },
     tests = {
-        "/.well-known/apple-app-site-association": "/.well-known/SUFFIX",
+        "/.well-known/": "/.well-known/SUFFIX",
     },
 )
 

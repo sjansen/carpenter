@@ -138,11 +138,20 @@ def create_test_cases(pattern, test_values):
     if pattern.suffix == "/":
         expected += "/"
         test_cases = [tc + "/" for tc in test_cases]
+    elif isinstance(pattern.suffix, RegexPart):
+        expected += "/SUFFIX"
+        test_cases = [tc + "/" for tc in test_cases]
 
-    return {
+    test_cases = {
         tc: expected
         for tc in test_cases
     }
+
+    if pattern.test_cases:
+        for k, v in pattern.test_cases.items():
+            test_cases[k] = v
+
+    return test_cases
 
 
 class Pattern(object):
@@ -387,8 +396,7 @@ URL_TEMPLATE = textwrap.dedent(
         query = {
             "other": "X",
         },
-        tests = {{% for test_case, expected in p.test_cases.items %}
-            "{{ test_case }}": "{{ expected }}",{% endfor %}{% for test_case, expected in test_cases.items %}
+        tests = {{% for test_case, expected in test_cases.items %}
             "{{ test_case }}": "{{ expected }}",{% endfor %}
         },
     {% endautoescape %}{% endwith %})
