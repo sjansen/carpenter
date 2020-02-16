@@ -59,3 +59,17 @@ url(
         "/c/": "/X",
     },
 )
+
+url(
+    "any-suffix",
+    path = {
+        "prefix": ["prefix"],
+        "suffix": (r".*", "SUFFIX"),
+    },
+    query = {},
+    tests = {
+        "/prefix": None,
+        "/prefix/": "/prefix/SUFFIX",
+        "/prefix/suffix": "/prefix/SUFFIX",
+    },
+)

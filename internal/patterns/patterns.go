@@ -138,7 +138,7 @@ func (p *Patterns) match(url *url.URL, matchAll bool) ([]*result, error) {
 
 	var results []*result
 	if url.Path == "/" && p.tree.id != "" {
-		matches, err := p.tree.matchFound(1, url.Query())
+		matches, err := p.tree.recordMatch(1, url.Query())
 		if err != nil {
 			return nil, err
 		}

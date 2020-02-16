@@ -337,11 +337,13 @@ func regexPatternsFixer(t *testing.T, expected, actual []*pattern) {
 			expectedPart.rewriter = actualPart.rewriter
 		}
 
-		if actual.suffix != nil {
+		if expected.suffix != nil && actual.suffix != nil {
 			actualPart := actual.suffix
-			require.IsType(&callableStringRewriter{}, actualPart.rewriter)
-			expectedPart := expected.suffix
-			expectedPart.rewriter = actualPart.rewriter
+			if expected.suffix.rewriter == nil {
+				require.IsType(&callableStringRewriter{}, actualPart.rewriter)
+				expectedPart := expected.suffix
+				expectedPart.rewriter = actualPart.rewriter
+			}
 		}
 
 		if actualParam, ok := actual.query.match["utf8"]; ok {
@@ -382,7 +384,7 @@ var regexPatterns = []*pattern{{
 	},
 }, {
 	id:    "suffix-regex",
-	slash: maySlash,
+	slash: neverSlash,
 	prefix: []part{
 		&plainPart{"corge"},
 	},
@@ -423,6 +425,23 @@ var regexPatterns = []*pattern{{
 		"/a":  "",
 		"/b":  "/X",
 		"/c/": "/X",
+	},
+}, {
+	id:    "any-suffix",
+	slash: neverSlash,
+	prefix: []part{
+		&plainPart{"prefix"},
+	},
+	suffix: &regexPart{
+		suffix:   true,
+		regex:    regexp.MustCompile(".*"),
+		rewriter: &staticStringRewriter{"SUFFIX"},
+	},
+	query: query{},
+	tests: map[string]string{
+		"/prefix":        "",
+		"/prefix/":       "/prefix/SUFFIX",
+		"/prefix/suffix": "/prefix/SUFFIX",
 	},
 }}
 
@@ -491,7 +510,7 @@ var regexTree = &Patterns{tree: tree{
 				},
 				tree: &tree{
 					id:    "suffix-regex",
-					slash: maySlash,
+					slash: neverSlash,
 					query: query{
 						dedup: keepLast,
 						match: map[string]*param{
@@ -515,6 +534,22 @@ var regexTree = &Patterns{tree: tree{
 			slash: maySlash,
 			query: query{},
 		},
+	}, {
+		part: &plainPart{"prefix"},
+		tree: &tree{
+			children: []*child{{
+				part: &regexPart{
+					suffix:   true,
+					regex:    regexp.MustCompile(".*"),
+					rewriter: &staticStringRewriter{"SUFFIX"},
+				},
+				tree: &tree{
+					id:    "any-suffix",
+					slash: neverSlash,
+					query: query{},
+				},
+			}},
+		},
 	}},
 }, tests: map[string]result{
 	"/a":                 {"reject-regex", ""},
@@ -531,4 +566,7 @@ var regexTree = &Patterns{tree: tree{
 	"/corge/waldo/":      {"suffix-regex", "/corge/WALDO/"},
 	"/corge/fred?utf8=✔": {"suffix-regex", "/corge/FRED?utf8=True"},
 	"/corge/fred?utf8=!": {"suffix-regex", "/corge/FRED?utf8=False"},
+	"/prefix":            {"any-suffix", ""},
+	"/prefix/":           {"any-suffix", "/prefix/SUFFIX"},
+	"/prefix/suffix":     {"any-suffix", "/prefix/SUFFIX"},
 }}

@@ -61,19 +61,19 @@ func (t *tree) match(path string, query url.Values, depth int, matchAll bool) ([
 		case t.id == "":
 			return nil, nil
 		case t.slash == maySlash:
-			return t.matchFound(depth, query)
+			return t.recordMatch(depth, query)
 		case t.slash == neverSlash:
-			return t.matchFound(depth, query)
+			return t.recordMatch(depth, query)
 		}
 		return nil, nil
 	case "/":
 		switch {
 		case t.id == "":
-			return nil, nil
+			return t.matchSuffix("", query, depth, matchAll)
 		case t.slash == maySlash:
-			return t.matchFound(depth, query)
+			return t.recordMatch(depth, query)
 		case t.slash == mustSlash:
-			return t.matchFound(depth, query)
+			return t.recordMatch(depth, query)
 		}
 		return nil, nil
 	}
@@ -134,7 +134,44 @@ func (t *tree) matchChildren(path string, query url.Values, depth int, matchAll 
 	return matches, nil
 }
 
-func (t *tree) matchFound(depth int, query url.Values) ([]*match, error) {
+func (t *tree) matchSuffix(path string, query url.Values, depth int, matchAll bool) ([]*match, error) {
+	var matches []*match
+	for _, child := range t.children {
+		part := child.part
+		if !part.greedy() {
+			continue
+		}
+
+		if part.match(path) {
+			tmp, err := t.recordMatch(depth, query)
+			if err != nil {
+				return nil, err
+			}
+
+			if tmp != nil {
+				thread := &starlark.Thread{}
+				normalized, err := child.part.normalize(thread, path)
+				if err != nil {
+					return nil, err
+				}
+
+				for _, m := range tmp {
+					m.id = child.tree.id
+					m.parts = append(m.parts, normalized)
+				}
+
+				if !matchAll {
+					return tmp, nil
+				}
+				matches = append(matches, tmp...)
+			}
+		}
+	}
+
+	return matches, nil
+}
+
+func (t *tree) recordMatch(depth int, query url.Values) ([]*match, error) {
 	q, err := t.rewriteQuery(query)
 	if err != nil {
 		return nil, err
