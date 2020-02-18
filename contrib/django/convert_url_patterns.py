@@ -16,7 +16,7 @@ except:
     converters = {}
 
 
-ANON_REGEX_PART  = re.compile(r"^(\(\?\!(?P<reject>[^)]+)\))?\(?(?P<regex>[^)]+)\)?$")
+ANON_REGEX_PART  = re.compile(r"^(\(\?\!(?P<reject>[^)]+)\))?(?P<regex>.+)$")
 NAMED_REGEX_PART = re.compile(r"^(\(\?\!(?P<reject>[^)]+)\))?\(\?P<(?P<name>[^>]+)>\(?(?P<regex>[^)]+)\)?\)$")
 NAMED_TYPE_PART  = re.compile(r"^<((?P<type>[^:>]+):)?(?P<name>[^:>]+)>$")
 PLAIN_PART       = re.compile(r"^[^.*?+^$|\\[\](){}]+$")
@@ -179,9 +179,8 @@ class Pattern(object):
             elif self.__match_plain(token):
                 continue
             m = ANON_REGEX_PART.match(token)
-            if m:
-                groups = m.groupdict()
-                self.__add_regex(groups["regex"], "", groups["reject"])
+            groups = m.groupdict()
+            self.__add_regex(groups["regex"], "", groups["reject"])
 
         if pattern.endswith("/$") or len(self.prefix) < 1:
             self.suffix = PlainPart("/")
