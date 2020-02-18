@@ -21,6 +21,7 @@ NAMED_REGEX_PART = re.compile(r"^(\(\?\!(?P<reject>[^)]+)\))?\(\?P<(?P<name>[^>]
 NAMED_TYPE_PART  = re.compile(r"^<((?P<type>[^:>]+):)?(?P<name>[^:>]+)>$")
 PLAIN_PART       = re.compile(r"^[^.*?+^$|\\[\](){}]+$")
 PLAIN_PART_GUESS = re.compile(r"^[.]?[a-zA-Z][-_a-zA-Z0-9]+(\\?[.][a-zA-Z]+)?$")
+SUFFIX_EMPTY     = re.compile(r"[a-zA-Z0-9]\$$")
 
 
 class Command(BaseCommand):
@@ -139,17 +140,22 @@ def create_test_cases(pattern, test_values):
                         tmp.append(tc+"/"+v)
             test_cases = tmp
 
-    if pattern.suffix == "/":
+    if pattern.suffix == "/" or isinstance(pattern.suffix, RegexPart):
         expected += "/"
         test_cases = [tc + "/" for tc in test_cases]
-    elif isinstance(pattern.suffix, RegexPart):
-        expected += "/SUFFIX"
-        test_cases = [tc + "/" for tc in test_cases]
 
-    return {
+    result = {
         tc: expected
         for tc in test_cases
     }
+
+    if isinstance(pattern.suffix, RegexPart):
+        expected += "SUFFIX"
+        test_cases = [tc + "TODO" for tc in test_cases]
+        for tc in test_cases:
+            result[tc] = expected
+
+    return result
 
 
 class Pattern(object):
@@ -184,6 +190,8 @@ class Pattern(object):
 
         if pattern.endswith("/$") or len(self.prefix) < 1:
             self.suffix = PlainPart("/")
+        elif SUFFIX_EMPTY.match(pattern):
+            self.suffix = PlainPart("")
         elif pattern.endswith("/"):
             self.suffix = RegexPart(".*", "SUFFIX")
         else:
@@ -337,8 +345,8 @@ EXPECTED_PATTERNS = {
     "groups/<gid>": [PlainPart("groups"), RegexPart(r"[^/]+", "gid")],
     "^users/(?P<uid>[^/]+)": [PlainPart("users"), RegexPart(r"[^/]+", "uid")],
     "^(?!users|groups)(?P<resource>[^/]+)/$": [RegexPart(r"[^/]+", "resource", r"users|groups")],
-    "help/(?!search)(.*)": [PlainPart("help"), RegexPart(r".*", "", r"search")],
-    "favicon.ico": [PlainPart("favicon.ico")],
+    "help/(?!search)(.*)": [PlainPart("help"), RegexPart(r"(.*)", "", r"search")],
+    "favicon.ico$": [PlainPart("favicon.ico")],
     ".well-known/": [PlainPart(".well-known")],
 }
 
@@ -356,7 +364,7 @@ EXPECTED_TEST_CASES = {
         "/b": "/TODO",
         "/c": "/TODO",
     },
-    "favicon.ico": {
+    "favicon.ico$": {
         "/favicon.ico": "/favicon.ico",
     },
     "^go/(?P<page>(a|b))": {
@@ -376,7 +384,8 @@ EXPECTED_TEST_CASES = {
         "/roles/": "/RESOURCE/",
     },
     ".well-known/": {
-        "/.well-known/": "/.well-known/SUFFIX",
+        "/.well-known/": "/.well-known/",
+        "/.well-known/TODO": "/.well-known/SUFFIX",
     },
 }
 
@@ -394,6 +403,7 @@ TEST_VALUES = {
     (r"[^/]+", "uid"): ["sjansen"],
     (r"[^/]+", "resource"): ["roles"],
     (r".*", ""): ["TODO"],
+    (r"(.*)", ""): ["TODO"],
 }
 
 
