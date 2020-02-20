@@ -11,6 +11,7 @@ import (
 
 	"github.com/sjansen/carpenter/internal/lazyio"
 	"github.com/sjansen/carpenter/internal/s3util"
+	"github.com/sjansen/carpenter/internal/sys"
 )
 
 const battlecry = "Spoon!"
@@ -22,11 +23,12 @@ func TestS3Opener(t *testing.T) {
 		t.Skip("skipping test")
 	}
 
+	io := sys.Discard()
 	cfg, err := s3util.NewTestConfig()
 	require.NoError(err)
 	require.NotNil(cfg)
 
-	uploader, err := s3util.NewUploader(cfg)
+	uploader, err := s3util.NewUploader(io, cfg)
 	require.NoError(err)
 	require.NotNil(uploader)
 

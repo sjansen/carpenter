@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
 	"github.com/sjansen/carpenter/internal/s3util"
+	"github.com/sjansen/carpenter/internal/sys"
 )
 
 var _ InputOpener = &S3Reader{}
@@ -22,13 +23,13 @@ type S3Reader struct {
 	Downloader *s3.S3
 }
 
-func NewS3Reader(uri string) (*S3Reader, error) {
+func NewS3Reader(io *sys.IO, uri string) (*S3Reader, error) {
 	parsed, err := s3util.ParseURI(uri)
 	if err != nil {
 		return nil, err
 	}
 	cfg := parsed.ToConfig()
-	downloader, err := s3util.NewDownloader(cfg)
+	downloader, err := s3util.NewDownloader(io, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -90,13 +91,13 @@ type S3Writer struct {
 	Uploader *s3manager.Uploader
 }
 
-func NewS3Writer(uri string) (*S3Writer, error) {
+func NewS3Writer(io *sys.IO, uri string) (*S3Writer, error) {
 	parsed, err := s3util.ParseURI(uri)
 	if err != nil {
 		return nil, err
 	}
 	cfg := parsed.ToConfig()
-	uploader, err := s3util.NewUploader(cfg)
+	uploader, err := s3util.NewUploader(io, cfg)
 	if err != nil {
 		return nil, err
 	}

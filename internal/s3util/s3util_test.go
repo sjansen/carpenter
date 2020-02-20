@@ -10,6 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sjansen/carpenter/internal/sys"
 )
 
 func TestRoundTrip(t *testing.T) {
@@ -19,15 +21,16 @@ func TestRoundTrip(t *testing.T) {
 		t.Skip("skipping test")
 	}
 
+	io := sys.Discard()
 	cfg, err := NewTestConfig()
 	require.NoError(err)
 	require.NotNil(cfg)
 
-	downloader, err := NewDownloader(cfg)
+	downloader, err := NewDownloader(io, cfg)
 	require.NoError(err)
 	require.NotNil(downloader)
 
-	uploader, err := NewUploader(cfg)
+	uploader, err := NewUploader(io, cfg)
 	require.NoError(err)
 	require.NotNil(uploader)
 

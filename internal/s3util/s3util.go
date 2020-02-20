@@ -5,6 +5,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+
+	"github.com/sjansen/carpenter/internal/sys"
 )
 
 const s3TestURI = "CARPENTER_TEST_S3_URI"
@@ -14,8 +16,8 @@ func SkipTest() bool {
 	return bucket == ""
 }
 
-func NewDownloader(cfg *Config) (*s3.S3, error) {
-	sess, err := cfg.newSession()
+func NewDownloader(io *sys.IO, cfg *Config) (*s3.S3, error) {
+	sess, err := cfg.newSession(io)
 	if err != nil {
 		return nil, err
 	}
@@ -23,8 +25,8 @@ func NewDownloader(cfg *Config) (*s3.S3, error) {
 	return downloader, nil
 }
 
-func NewUploader(cfg *Config) (*s3manager.Uploader, error) {
-	sess, err := cfg.newSession()
+func NewUploader(io *sys.IO, cfg *Config) (*s3manager.Uploader, error) {
+	sess, err := cfg.newSession(io)
 	if err != nil {
 		return nil, err
 	}

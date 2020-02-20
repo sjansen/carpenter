@@ -7,6 +7,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+
+	"github.com/sjansen/carpenter/internal/sys"
 )
 
 type Config struct {
@@ -17,7 +19,7 @@ type Config struct {
 	Endpoint string
 }
 
-func (cfg *Config) newSession() (*session.Session, error) {
+func (cfg *Config) newSession(io *sys.IO) (*session.Session, error) {
 	opts := session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}
@@ -27,6 +29,10 @@ func (cfg *Config) newSession() (*session.Session, error) {
 
 	config := &opts.Config
 	config.CredentialsChainVerboseErrors = aws.Bool(true)
+	config.LogLevel = aws.LogLevel(aws.LogDebugWithRequestRetries | aws.LogDebugWithRequestErrors)
+	config.Logger = aws.LoggerFunc(func(args ...interface{}) {
+		io.Log.Debug(args)
+	})
 	if cfg.Endpoint != "" {
 		config.Region = aws.String(cfg.Region)
 		config.Endpoint = aws.String(cfg.Endpoint)

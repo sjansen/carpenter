@@ -100,7 +100,7 @@ func loadPatterns(io *sys.IO, uri string) (*patterns.Patterns, error) {
 			return nil, err
 		}
 		cfg := parsed.ToConfig()
-		downloader, err := s3util.NewDownloader(cfg)
+		downloader, err := s3util.NewDownloader(io, cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -132,7 +132,7 @@ func newInputOpenWalker(io *sys.IO, uri string) (inputOpenWalker, error) {
 	switch {
 	case strings.HasPrefix(uri, "s3://") || strings.HasPrefix(uri, "S3://"):
 		log.Debugw("creating S3 input walker", "uri", uri)
-		return lazyio.NewS3Reader(uri)
+		return lazyio.NewS3Reader(io, uri)
 	default:
 		log.Debugw("creating FS input walker", "uri", uri)
 		uri = filepath.Clean(uri)
@@ -150,7 +150,7 @@ func newOutputOpener(io *sys.IO, uri string) (lazyio.OutputOpener, error) {
 	switch {
 	case strings.HasPrefix(uri, "s3://") || strings.HasPrefix(uri, "S3://"):
 		log.Debugw("creating S3 output writer", "uri", uri)
-		return lazyio.NewS3Writer(uri)
+		return lazyio.NewS3Writer(io, uri)
 	default:
 		log.Debugw("creating FS output writer", "uri", uri)
 		uri = filepath.Clean(uri)
