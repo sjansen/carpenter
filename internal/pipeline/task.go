@@ -14,6 +14,7 @@ import (
 )
 
 type Task struct {
+	id        string
 	patterns  *patterns.Patterns
 	tokenizer *tokenizer.Tokenizer
 	uaparser  *uaparser.Parser

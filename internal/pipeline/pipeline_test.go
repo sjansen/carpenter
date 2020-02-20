@@ -7,13 +7,15 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/sjansen/carpenter/internal/lazyio"
 	"github.com/sjansen/carpenter/internal/patterns"
 	"github.com/sjansen/carpenter/internal/pipeline"
+	"github.com/sjansen/carpenter/internal/sys"
 	"github.com/sjansen/carpenter/internal/tokenizer"
 	"github.com/sjansen/carpenter/internal/uaparser"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPipeline(t *testing.T) {
@@ -35,6 +37,7 @@ func TestPipeline(t *testing.T) {
 		Patterns:  patterns,
 		Tokenizer: tokenizer.ALB,
 		UAParser:  uaparser,
+		IO:        sys.Discard(),
 		Source:    &lazyio.FileReader{Dir: "testdata/src"},
 		Result:    result,
 		Debug:     debug,

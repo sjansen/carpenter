@@ -2,8 +2,11 @@ package sys
 
 import (
 	"io"
+	"io/ioutil"
 
 	"go.uber.org/zap"
+
+	"github.com/sjansen/carpenter/internal/logger"
 )
 
 // IO encapsulates side effects
@@ -12,6 +15,14 @@ type IO struct {
 
 	Stdout io.Writer
 	Stderr io.Writer
+}
+
+func Discard() *IO {
+	return &IO{
+		Log:    logger.Discard(),
+		Stdout: ioutil.Discard,
+		Stderr: ioutil.Discard,
+	}
 }
 
 var _ Logger = &zap.SugaredLogger{}
