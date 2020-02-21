@@ -32,11 +32,11 @@ def urls():
         },
     )
 
-    for x in resources:
+    for resource in resources:
         url(
-            "/%s/" % x,
+            "/%s/" % resource,
             path = {
-                "prefix": ["api", x],
+                "prefix": ["api", resource],
                 "suffix": "/",
             },
             query = {
@@ -47,16 +47,16 @@ def urls():
                 },
             },
             tests = {
-                "/api/%s/" % x: "/api/%s/" % x,
-                "/api/%s/?search=resistance" % x: "/api/%s/?search=X" % x,
+                "/api/%s/" % resource: "/api/%s/" % resource,
+                "/api/%s/?search=resistance" % resource: "/api/%s/?search=X" % resource,
             },
         )
 
-    for x in resources:
+    for resource in resources:
         url(
-            "/%s/:id/" % x,
+            "/%s/:id/" % resource,
             path = {
-                "prefix": ["api", x, ("[1-9][0-9]*", "ID")],
+                "prefix": ["api", resource, ("[1-9][0-9]*", "ID")],
                 "suffix": "/",
             },
             query = {
@@ -66,9 +66,9 @@ def urls():
                 },
             },
             tests = {
-                "/api/%s/1/" % x: "/api/%s/ID/" % x,
-                "/api/%s/1/?format=csv" % x: "/api/%s/ID/?format=INVALID" % x,
-                "/api/%s/1/?format=wookiee" % x: "/api/%s/ID/?format=wookiee" % x,
+                "/api/%s/1/" % resource: "/api/%s/ID/" % resource,
+                "/api/%s/1/?format=csv" % resource: "/api/%s/ID/?format=INVALID" % resource,
+                "/api/%s/1/?format=wookiee" % resource: "/api/%s/ID/?format=wookiee" % resource,
             },
         )
 
