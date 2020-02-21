@@ -1,0 +1,37 @@
+archives:
+- id: default
+  format_overrides:
+    - goos: windows
+      format: zip
+brews:
+- github:
+    owner: sjansen
+    name: homebrew-carpenter
+  commit_author:
+    name: sjansen
+    email: sjansen@buscaluz.org
+builds:
+- env:
+  - CGO_ENABLED=0
+  goarch:
+  - amd64
+  ldflags:
+  - -s -w -X main.build={{.Version}}
+checksum:
+  name_template: 'checksums.txt'
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+    - '.*'
+nfpms:
+- bindir: /usr/bin
+  formats:
+  - deb
+  - rpm
+  license: MIT
+  maintainer: Stuart Jansen <sjansen@buscaluz.org>
+release:
+  prerelease: true

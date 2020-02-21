@@ -17,3 +17,8 @@ test-coverage: test-docker
 
 test-docker:
 	@scripts/docker-up-test
+
+test-release:
+	git stash -u -k
+	goreleaser release --rm-dist --skip-publish
+	-git stash pop
