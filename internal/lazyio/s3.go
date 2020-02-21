@@ -59,9 +59,8 @@ func (r *S3Reader) Walk(fn func(string) error) error {
 		prefix += "/"
 	}
 	err := r.Downloader.ListObjectsV2Pages(&s3.ListObjectsV2Input{
-		Bucket:    aws.String(r.Bucket),
-		Prefix:    aws.String(prefix),
-		Delimiter: aws.String("/"),
+		Bucket: aws.String(r.Bucket),
+		Prefix: aws.String(prefix),
 	}, func(page *s3.ListObjectsV2Output, lastPage bool) bool {
 		for _, obj := range page.Contents {
 			if aws.Int64Value(obj.Size) > 0 {
@@ -70,7 +69,7 @@ func (r *S3Reader) Walk(fn func(string) error) error {
 				fn(suffix)
 			}
 		}
-		return lastPage
+		return !lastPage
 	})
 	return err
 }
