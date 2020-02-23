@@ -6,12 +6,15 @@ import (
 	"sort"
 	"strings"
 
+	"go.starlark.net/starlark"
+
 	"github.com/sjansen/carpenter/internal/sys"
 )
 
 type Patterns struct {
-	tests map[string]result
-	tree  tree
+	rename *starlark.Function
+	tests  map[string]result
+	tree   tree
 }
 
 type pattern struct {
@@ -59,6 +62,31 @@ func (p *Patterns) MatchAll(url *url.URL) (map[string]string, error) {
 		matches[result.id] = result.url
 	}
 	return matches, nil
+}
+
+func (p *Patterns) Rename(path string) (string, error) {
+	if p.rename == nil {
+		return path, nil
+	}
+
+	t := &starlark.Thread{}
+	args := starlark.Tuple{starlark.String(path)}
+	value, err := starlark.Call(t, p.rename, args, nil)
+	if err != nil {
+		return "", err
+	}
+	switch v := value.(type) {
+	case starlark.NoneType:
+		return "", nil
+	case starlark.String:
+		return v.GoString(), nil
+	default:
+		err = fmt.Errorf(
+			"invalid result: expected None or String, got %s (fn=%s)",
+			value.Type(), p.rename.Name(),
+		)
+		return "", err
+	}
 }
 
 func (p *Patterns) Test(sys *sys.IO) (map[string]string, error) {

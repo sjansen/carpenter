@@ -95,9 +95,10 @@ func TestLoadPatterns(t *testing.T) {
 		r, err := os.Open(filename)
 		require.NoError(err)
 
-		actual, err := loadPatterns(filename, r)
+		loader, err := loadPatterns(filename, r)
 		require.NoError(err)
 
+		actual := loader.patterns
 		if tc.fixer != nil {
 			tc.fixer(t, tc.expected, actual)
 		}

@@ -1,3 +1,8 @@
+def rename(path):
+    return "renamed-%s" % path
+
+set_rename_filter(rename)
+
 url(
     "root",
     path = {
@@ -7,6 +12,18 @@ url(
     query = {},
     tests = {
         "/": "/",
+    },
+)
+
+url(
+    "echo",
+    path = {
+        "prefix": [],
+        "suffix": (r".*", lambda x: x, r"^search/?$"),
+    },
+    query = {},
+    tests = {
+        "/.well-known/apple-app-site-association": "/.well-known/apple-app-site-association",
     },
 )
 

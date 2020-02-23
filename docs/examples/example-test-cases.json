@@ -1,5 +1,6 @@
 {
     "/": "root",
+    "/.well-known/apple-app-site-association": "echo",
     "/search?q=apples": "search",
     "/search/?q=oranges": "search"
 }

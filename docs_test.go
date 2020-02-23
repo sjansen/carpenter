@@ -35,7 +35,7 @@ func TestTransform(t *testing.T) {
 			dir, err := ioutil.TempDir("", format)
 			require.NoError(err)
 			cmd := &cmd.TransformCmd{
-				Patterns: "docs/examples/echo.star",
+				Patterns: "docs/examples/example.star",
 				SrcURI:   filepath.Join("docs", "examples", format, "src"),
 				DstURI:   filepath.Join(dir, "dst"),
 				ErrURI:   filepath.Join(dir, "err"),
@@ -45,12 +45,12 @@ func TestTransform(t *testing.T) {
 			require.NoError(err)
 
 			expected, err := ioutil.ReadFile(
-				filepath.Join("docs", "examples", format, "dst", "example.csv"),
+				filepath.Join("docs", "examples", format, "dst", "renamed-example.csv"),
 			)
 			require.NoError(err)
 
 			actual, err := ioutil.ReadFile(
-				filepath.Join(dir, "dst", "example.csv"),
+				filepath.Join(dir, "dst", "renamed-example.csv"),
 			)
 			require.NoError(err)
 

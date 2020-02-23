@@ -14,20 +14,24 @@ func init() {
 }
 
 type patternLoader struct {
-	*starlark.Builtin
+	*starlark.Builtin // enable l.Name()
+
+	globals  starlark.StringDict
 	patterns []*pattern
+	rename   *starlark.Function
 }
 
 func Load(filename string, src io.Reader) (*Patterns, error) {
-	loaded, err := loadPatterns(filename, src)
+	loader, err := loadPatterns(filename, src)
 	if err != nil {
 		return nil, err
 	}
 
 	patterns := &Patterns{
-		tests: map[string]result{},
+		rename: loader.rename,
+		tests:  map[string]result{},
 	}
-	for _, p := range loaded {
+	for _, p := range loader.patterns {
 		patterns.tree.addPattern(p, 0)
 		for raw, expected := range p.tests {
 			other, ok := patterns.tests[raw]
@@ -54,23 +58,31 @@ func Load(filename string, src io.Reader) (*Patterns, error) {
 	return patterns, nil
 }
 
-func loadPatterns(filename string, src io.Reader) ([]*pattern, error) {
+func loadPatterns(filename string, src io.Reader) (*patternLoader, error) {
+	loader := newLoader()
+	thread := &starlark.Thread{}
+	_, err := starlark.ExecFile(thread, filename, src, loader.globals)
+	if err != nil {
+		return nil, err
+	}
+	return loader, nil
+}
+
+func newLoader() *patternLoader {
 	loader := &patternLoader{
 		patterns: make([]*pattern, 0),
 	}
 
 	loader.Builtin = starlark.NewBuiltin("url", loader.addURL)
 
-	globals := starlark.StringDict{
+	loader.globals = starlark.StringDict{
+		"set_rename_filter": starlark.NewBuiltin(
+			"set_rename_filter", loader.setRenameFilter,
+		),
 		"url": loader,
 	}
-	thread := &starlark.Thread{}
-	_, err := starlark.ExecFile(thread, filename, src, globals)
-	if err != nil {
-		return nil, err
-	}
 
-	return loader.patterns, nil
+	return loader
 }
 
 func (l *patternLoader) addURL(
@@ -89,7 +101,7 @@ func (l *patternLoader) addURL(
 	}
 
 	if id == "" {
-		return nil, fmt.Errorf(`%s: invalid pattern ID: ""`, l.Name())
+		return nil, fmt.Errorf(`%s: invalid pattern ID: ""`, fn.Name())
 	}
 
 	p := &pattern{id: id}
@@ -117,6 +129,22 @@ func (l *patternLoader) getIterableFromDict(parent, key string, pattern *starlar
 		return nil, fmt.Errorf("%s: %q/%q expected Iterable, got %s", l.Name(), parent, key, value.Type())
 	}
 	return iter, nil
+}
+
+func (l *patternLoader) setRenameFilter(
+	_ *starlark.Thread,
+	fn *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
+	var rename *starlark.Function
+	if err := starlark.UnpackArgs(
+		fn.Name(), args, kwargs, "fn", &rename,
+	); err != nil {
+		return nil, err
+	}
+	l.rename = rename
+	return starlark.None, nil
 }
 
 func (l *patternLoader) transformPart(parent, child string, value starlark.Value) (part, error) {

@@ -111,6 +111,27 @@ func TestMatchErrors(t *testing.T) {
 	}
 }
 
+func TestRename(t *testing.T) {
+	require := require.New(t)
+
+	const filename = "testdata/rename.star"
+	r, err := os.Open(filename)
+	require.NoError(err)
+
+	patterns, err := Load(filename, r)
+	require.NoError(err)
+
+	for path, expected := range map[string]string{
+		"prefix/2020/02/22/example.log": "prefix/year=2020/month=02/day=22/example.log",
+		"prefix/example.log":            "prefix/example.log",
+		"prefix/skip.log":               "",
+	} {
+		actual, err := patterns.Rename(path)
+		require.NoError(err)
+		require.Equal(expected, actual)
+	}
+}
+
 func TestTest(t *testing.T) {
 	require := require.New(t)
 

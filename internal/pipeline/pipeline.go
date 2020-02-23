@@ -27,12 +27,19 @@ type Pipeline struct {
 	wg sync.WaitGroup
 }
 
-func (p *Pipeline) AddTask(path string) {
+func (p *Pipeline) AddTask(path string) error {
 	input := &lazyio.Input{
 		Path:   path,
 		Opener: p.Source,
 	}
 	base := input.StripExt()
+	renamed, err := p.Patterns.Rename(base)
+	switch {
+	case err != nil:
+		return err
+	case renamed == "":
+		return nil
+	}
 
 	task := &Task{
 		patterns:  p.Patterns,
@@ -41,7 +48,7 @@ func (p *Pipeline) AddTask(path string) {
 		src:       input,
 		dst: lazyio.CSV{
 			Opener: p.Result,
-			Path:   base + ".csv",
+			Path:   renamed + ".csv",
 		},
 	}
 
@@ -49,24 +56,25 @@ func (p *Pipeline) AddTask(path string) {
 		task.debug = debug{
 			normalize: lazyio.CSV{
 				Opener: p.Debug,
-				Path:   pathlib.Join("normalize", base+".csv"),
+				Path:   pathlib.Join("normalize", renamed+".csv"),
 			},
 			parse: lazyio.CSV{
 				Opener: p.Debug,
-				Path:   pathlib.Join("parse", base+".csv"),
+				Path:   pathlib.Join("parse", renamed+".csv"),
 			},
 			tokenize: lazyio.TXT{
 				Opener: p.Debug,
-				Path:   pathlib.Join("tokenize", base+".txt"),
+				Path:   pathlib.Join("tokenize", renamed+".txt"),
 			},
 			unrecognized: lazyio.CSV{
 				Opener: p.Debug,
-				Path:   pathlib.Join("unrecognized", base+".csv"),
+				Path:   pathlib.Join("unrecognized", renamed+".csv"),
 			},
 		}
 	}
 
 	p.ch <- task
+	return nil
 }
 
 func (p *Pipeline) Start() {
