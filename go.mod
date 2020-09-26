@@ -4,7 +4,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
-	github.com/aws/aws-sdk-go v1.29.11
+	github.com/aws/aws-sdk-go v1.34.32
 	github.com/google/uuid v1.1.1
 	github.com/mattn/go-isatty v0.0.12
 	github.com/shurcooL/httpfs v0.0.0-20181222201310-74dc9339e414 // indirect
@@ -18,7 +18,6 @@ require (
 	golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae // indirect
 	golang.org/x/tools v0.0.0-20200226224502-204d844ad48d // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
-	gopkg.in/yaml.v2 v2.2.8 // indirect
 	honnef.co/go/tools v0.0.1-2020.1.3 // indirect
 )
 
