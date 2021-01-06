@@ -5,7 +5,7 @@ require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20201120081800-1786d5ef83d4 // indirect
 	github.com/aws/aws-sdk-go v1.36.21
-	github.com/google/uuid v1.1.1
+	github.com/google/uuid v1.1.4
 	github.com/mattn/go-isatty v0.0.12
 	github.com/shurcooL/httpfs v0.0.0-20181222201310-74dc9339e414 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
