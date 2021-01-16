@@ -9,7 +9,7 @@ require (
 	github.com/mattn/go-isatty v0.0.12
 	github.com/shurcooL/httpfs v0.0.0-20181222201310-74dc9339e414 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.7.0
 	github.com/ua-parser/uap-go v0.0.0-20200325213135-e1c09f13e2fe
 	go.starlark.net v0.0.0-20201210151846-e81fc95f7bd5
 	go.uber.org/multierr v1.6.0 // indirect
