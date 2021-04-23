@@ -39,6 +39,8 @@ func (p *Pipeline) AddTask(path string) error {
 		return err
 	case renamed == "":
 		return nil
+	case renamed != base:
+		p.IO.Log.Debugw("renaming file", "base", base, "renamed", renamed)
 	}
 
 	task := &Task{
