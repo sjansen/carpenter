@@ -1,5 +1,7 @@
 module github.com/sjansen/carpenter
 
+go 1.16
+
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
@@ -7,8 +9,6 @@ require (
 	github.com/aws/aws-sdk-go v1.38.24
 	github.com/google/uuid v1.2.0
 	github.com/mattn/go-isatty v0.0.12
-	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
-	github.com/shurcooL/vfsgen v0.0.0-20200824052919-0d455de96546
 	github.com/stretchr/testify v1.7.0
 	github.com/ua-parser/uap-go v0.0.0-20210121150957-347a3497cc39
 	go.starlark.net v0.0.0-20210416142453-1607a96e3d72
@@ -22,5 +22,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	honnef.co/go/tools v0.0.1-2020.1.3 // indirect
 )
-
-go 1.12

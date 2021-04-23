@@ -1,27 +1,19 @@
 package uaparser
 
 import (
-	"io/ioutil"
+	_ "embed" //nolint
 
-	"github.com/sjansen/carpenter/internal/data"
 	"github.com/ua-parser/uap-go/uaparser"
 )
+
+//go:embed data/regexes.yaml
+var data []byte
 
 type Parser uaparser.Parser
 type Client uaparser.Client
 
 func UserAgentParser() (*Parser, error) {
-	r, err := data.Assets.Open("regexes.yaml")
-	if err != nil {
-		return nil, err
-	}
-
-	bytes, err := ioutil.ReadAll(r)
-	if err != nil {
-		return nil, err
-	}
-
-	uap, err := uaparser.NewFromBytes(bytes)
+	uap, err := uaparser.NewFromBytes(data)
 	if err != nil {
 		return nil, err
 	}
