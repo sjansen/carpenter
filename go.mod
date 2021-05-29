@@ -8,7 +8,7 @@ require (
 	github.com/alecthomas/units v0.0.0-20210208195552-ff826a37aa15 // indirect
 	github.com/aws/aws-sdk-go v1.38.24
 	github.com/google/uuid v1.2.0
-	github.com/mattn/go-isatty v0.0.12
+	github.com/mattn/go-isatty v0.0.13
 	github.com/stretchr/testify v1.7.0
 	github.com/ua-parser/uap-go v0.0.0-20210121150957-347a3497cc39
 	go.starlark.net v0.0.0-20210416142453-1607a96e3d72
