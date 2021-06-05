@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20210208195552-ff826a37aa15 // indirect
-	github.com/aws/aws-sdk-go v1.38.24
+	github.com/aws/aws-sdk-go v1.38.25
 	github.com/google/uuid v1.2.0
 	github.com/mattn/go-isatty v0.0.13
 	github.com/stretchr/testify v1.7.0
